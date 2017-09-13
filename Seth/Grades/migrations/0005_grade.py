@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gradebook', '0004_criterion_studying_test'),
+        ('Grades', '0004_criterion_studying_test'),
     ]
 
     operations = [
@@ -17,9 +17,9 @@ class Migration(migrations.Migration):
             name='Grade',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('student_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Student')),
-                ('teacher_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Teacher')),
-                ('test_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Test')),
+                ('student_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Student')),
+                ('teacher_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Teacher')),
+                ('test_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Test')),
             ],
         ),
     ]

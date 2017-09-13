@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gradebook', '0005_grade'),
+        ('Grades', '0005_grade'),
     ]
 
     operations = [
@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='advisor',
             name='studies',
-            field=models.ManyToManyField(to='gradebook.Study'),
+            field=models.ManyToManyField(to='Grades.Study'),
         ),
         migrations.AddField(
             model_name='module',

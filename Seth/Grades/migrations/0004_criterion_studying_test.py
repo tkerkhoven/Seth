@@ -9,7 +9,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gradebook', '0003_course_module_ed'),
+        ('Grades', '0003_course_module_ed'),
     ]
 
     operations = [
@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('condition', models.CharField(max_length=32)),
                 ('role', models.CharField(max_length=32)),
-                ('module_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Module_ed')),
-                ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Study')),
+                ('module_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Module_ed')),
+                ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Study')),
             ],
         ),
         migrations.CreateModel(
@@ -28,16 +28,16 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('role', models.CharField(max_length=32)),
-                ('module_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Module_ed')),
-                ('student_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Student')),
-                ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Study')),
+                ('module_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Module_ed')),
+                ('student_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Student')),
+                ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Study')),
             ],
         ),
         migrations.CreateModel(
             name='Test',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('course_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='gradebook.Course')),
+                ('course_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Course')),
             ],
         ),
     ]

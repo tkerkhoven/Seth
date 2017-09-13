@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('gradebook', '0002_study_teacher'),
+        ('Grades', '0002_study_teacher'),
     ]
 
     operations = [
@@ -16,14 +16,14 @@ class Migration(migrations.Migration):
             name='Course',
             fields=[
                 ('course_id', models.CharField(max_length=16, primary_key=True, serialize=False)),
-                ('teachers', models.ManyToManyField(to='gradebook.Teacher')),
+                ('teachers', models.ManyToManyField(to='Grades.Teacher')),
             ],
         ),
         migrations.CreateModel(
             name='Module_ed',
             fields=[
                 ('module_ed_id', models.CharField(max_length=16, primary_key=True, serialize=False)),
-                ('courses', models.ManyToManyField(to='gradebook.Course')),
+                ('courses', models.ManyToManyField(to='Grades.Course')),
             ],
         ),
     ]
