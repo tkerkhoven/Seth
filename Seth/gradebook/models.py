@@ -5,13 +5,17 @@ from django.db import models
 ####################################################################
 
 class Module(models.Model):
+
     name = models.CharField(max_length=32)
+    start = models.DateField()
+    stop = models.DateField()
+
 
 class Student(models.Model):
-    student_id = models.CharField(primary_key=True, max_length=16)
+    _id = models.CharField(primary_key=True, max_length=16)
 
-class Advisor(models.Model):
-    advisor_id = models.CharField(primary_key=True, max_length=16)
+    name = models.CharField(max_length=32, null=True)
+    mail = models.CharField(max_length=32, null=True)
 
 
 ####################################################################
@@ -22,21 +26,41 @@ class Study(models.Model):
     short_name = models.CharField(primary_key=True, max_length=10)
     modules = models.ManyToManyField(Module)
 
+    full_name = models.CharField(max_length=32, null=True)
+
 class Teacher(models.Model):
     teacher_id = models.CharField(primary_key=True, max_length=16)
     student_id = models.ForeignKey(Student)
+
+    name = models.CharField(max_length=32, null=True)
+    mail = models.CharField(max_length=32, null=True)
+
+    TEACHER_OPTIONS = (
+            ('T', 'Teacher'),
+            ('A', 'Teaching Assistant'),
+        )
+
+    job = models.CharField(max_length=1, choices=TEACHER_OPTIONS)
+
 
 ####################################################################
 ###############          Dependent Models 2          ###############
 ####################################################################
 
 class Course(models.Model):
-    course_id = models.CharField(primary_key=True, max_length=16)
+    _id = models.CharField(primary_key=True, max_length=16)
     teachers = models.ManyToManyField(Teacher)
 
 class Module_ed(models.Model):
-    module_ed_id = models.CharField(primary_key=True, max_length=16)
+    _id = models.CharField(primary_key=True, max_length=16)
     courses = models.ManyToManyField(Course)
+
+class Advisor(models.Model):
+    _id = models.CharField(primary_key=True, max_length=16)
+    studies = models.ManyToManyField(Study)
+
+    name = models.CharField(max_length=32, null=True)
+    mail = models.CharField(max_length=32, null=True)
 
 ####################################################################
 ###############          Dependent Models 3          ###############
