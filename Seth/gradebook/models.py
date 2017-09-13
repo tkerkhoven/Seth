@@ -1,33 +1,68 @@
 from django.db import models
 
-class Module(models.Model):
-    module_name = models.CharField(max_length=50)
-    # module_relevance_start = models.DateTimeField(auto_now_add=False)
-    # module_relevance_stop = models.DateTimeField(auto_now_add=False)
-    module_relevant = models.BooleanField(default=True)
+####################################################################
+###############          Independent Models          ###############
+####################################################################
 
-class Module_ed(models.Model):
-    module_code = models.CharField(primary_key=True, max_length=20)
-    module = models.ForeignKey(Module, on_delete=models.CASCADE)
-    module_start = models.DateTimeField(auto_now_add=False)
-    module_stop = models.DateTimeField(auto_now_add=False)
-    
+class Module(models.Model):
+    name = models.CharField(max_length=32)
 
 class Student(models.Model):
-    student_id = models.CharField(primary_key=True, max_length=10)
-    name = models.CharField(max_length=40)
+    student_id = models.CharField(primary_key=True, max_length=16)
+
+class Advisor(models.Model):
+    advisor_id = models.CharField(primary_key=True, max_length=16)
+
+
+####################################################################
+###############          Dependent Models 1          ###############
+####################################################################
 
 class Study(models.Model):
-    study_short = models.CharField(primary_key=True, max_length=10)
-    study_long = models.CharField(max_length=50)
+    short_name = models.CharField(primary_key=True, max_length=10)
+    modules = models.ManyToManyField(Module)
+
+class Teacher(models.Model):
+    teacher_id = models.CharField(primary_key=True, max_length=16)
+    student_id = models.ForeignKey(Student)
+
+####################################################################
+###############          Dependent Models 2          ###############
+####################################################################
+
+class Course(models.Model):
+    course_id = models.CharField(primary_key=True, max_length=16)
+    teachers = models.ManyToManyField(Teacher)
+
+class Module_ed(models.Model):
+    module_ed_id = models.CharField(primary_key=True, max_length=16)
+    courses = models.ManyToManyField(Course)
+
+####################################################################
+###############          Dependent Models 3          ###############
+####################################################################
+
+class Test(models.Model):
+    course_id = models.ForeignKey(Course)
 
 class Studying(models.Model):
-    student_id = models.ForeignKey(Student, on_delete=models.CASCADE)
-    module_code = models.ForeignKey(Module_ed, on_delete=models.CASCADE)
-    study = models.ForeignKey(Study, on_delete=models.CASCADE)
+    student_id = models.ForeignKey(Student)
+    study = models.ForeignKey(Study)
+    module_id = models.ForeignKey(Module_ed)
+    role = models.CharField(max_length=32)
+
+class Criterion(models.Model):
+    study = models.ForeignKey(Study)
+    module_id = models.ForeignKey(Module_ed)
+    condition = models.CharField(max_length=32)
+    role = models.CharField(max_length=32)
 
 
+####################################################################
+###############          Dependent Models 4          ###############
+####################################################################
 
-
-
-
+class Grade(models.Model):
+    test_id = models.ForeignKey(Test)
+    teacher_id = models.ForeignKey(Teacher)
+    student_id = models.ForeignKey(Student)
