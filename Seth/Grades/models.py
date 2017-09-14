@@ -57,6 +57,7 @@ class Study(models.Model):
 #     employee_id = models.CharField(blank=True, null=True, max_length=16)
 #     student_id = models.ForeignKey(Student, blank=True, null=True)
 
+
 #     user = models.ForeignKey(User, blank=True, null=True)
 
 #     TEACHER_OPTIONS = (             # Defaults to Teaching Assistant
