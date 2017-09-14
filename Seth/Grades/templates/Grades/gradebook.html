@@ -1,0 +1,18 @@
+<h1>{{ student.name }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+{% if student_list %}
+    <ul>
+    {% for student in student_list %}
+    	<li>{{ student.name }}
+    	{% for grade in grade_list %}
+        	| {{ grade.grade }}	
+        }
+        </li>
+    }
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No students are available.</p>
+{% endif %}
