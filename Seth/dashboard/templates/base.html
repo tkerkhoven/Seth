@@ -4,6 +4,7 @@
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
     <link href="{% static 'dashboard/css/styles.css' %}" rel="stylesheet" />
+    <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">
     <title>{% block title %}{% endblock %}</title>
 </head>
 <body>
@@ -16,17 +17,38 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="../dashboard">Home<span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Grades<span class="sr-only">(current)</span></a>
                 </li>
             </ul>
+            <div class="btn-group">
+                  <button type="button" class="btn btn-secondary dropdown-toggle nav-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa fa-plus"></i>
+                  </button>
+                  <div class="dropdown-menu dropdown-menu-left">
+                      <h6 class="dropdown-header">Current user: [blank]</h6>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" type="button">Your profile</button>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" type="button">Settings</button>
+                      <div class="dropdown-divider"></div>
+                      <button class="dropdown-item" type="button">Logout</button>
+                  </div>
+            </div>
            <div class="btn-group">
-              <button id="user-button" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="material-icons">face</i>
+              <button type="button" class="btn btn-secondary dropdown-toggle nav-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="material-icons">account_circle</i>
               </button>
               <div class="dropdown-menu dropdown-menu-left">
-                <button class="dropdown-item" type="button">Action</button>
-                <button class="dropdown-item" type="button">Another action</button>
-                <button class="dropdown-item" type="button">Something else here</button>
+                  <h6 class="dropdown-header">Current user: [blank]</h6>
+                  <div class="dropdown-divider"></div>
+                  <button class="dropdown-item" type="button">Your profile</button>
+                  <div class="dropdown-divider"></div>
+                  <button class="dropdown-item" type="button">Settings</button>
+                  <div class="dropdown-divider"></div>
+                  <button class="dropdown-item" type="button">Logout</button>
               </div>
             </div>
         </div>
@@ -37,5 +59,6 @@
     <script src="{% static 'popper/popper.js' %}"></script>
     <script src="{% static 'popper/popper-utils.js' %}"></script>
     <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'seth/js/scripts.js' %}"></script>
 </body>
 </html>
