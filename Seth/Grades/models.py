@@ -7,12 +7,11 @@ import datetime
 ####################################################################
 
 class Module(models.Model):
-
+    module_code = models.CharField(max_length=16, primary_key=True)
     name = models.CharField(max_length=32)
 
     def __str__(self):
-        return self.name
-
+        return '{} ({})'.format(self.name, self.module_code)
 
 class Student(models.Model):
     student_id = models.CharField(primary_key=True, max_length=16)
@@ -20,7 +19,7 @@ class Student(models.Model):
     user = models.ForeignKey(User, blank=True, null=True)
 
     def __str__(self):
-        return self.user.username
+        return '{} ({})'.format(self.user.username, self.student_id)
 
 
 ####################################################################
@@ -51,33 +50,46 @@ class Teacher(models.Model):
 
     def __str__(self):
         if self.user:
-            return self.user.username
+            return '{} ({})'.format(self.user.username, self.job)
         else:
-            return self.student_id.user.username
+            return '{} ({})'.format(self.student_id.user.username, self.job)
 
 ####################################################################
 ###############          Dependent Models 2          ###############
 ####################################################################
 
 class Course(models.Model):
+    code = models.CharField(max_length=16, default='')
+    code_extension = models.CharField(max_length=16, default='')
     teachers = models.ManyToManyField(Teacher)
 
     name = models.CharField(max_length=32, null=True)
 
-    def __str__(self):
-        return self.name
+    @property
+    def course_code(self):
+        return self.code + self.code_extension
 
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.course_code)
 
 class Module_ed(models.Model):
-    module = models.ManyToManyField(Module)
+
+    year = models.DateField(default=datetime.date.today())
+    module = models.ForeignKey(Module)
+    module_code_extension = models.CharField(max_length=16, default='')
+
     courses = models.ManyToManyField(Course)
     module_coordinator = models.ManyToManyField(Teacher)
 
     start = models.DateField(default=datetime.date(1,1,1))
     stop = models.DateField(default=datetime.date(1,1,1))
 
+    @property
+    def module_code(self):
+        return str(self.year.year)+self.module.module_code+self.module_code_extension
+
     def __str__(self):
-        return '{} ({} - {})'.format(self.module.get(), self.start, self.stop)
+        return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
 
 
 class Advisor(models.Model):
@@ -108,7 +120,7 @@ class Test(models.Model):
     time = models.DateField(default=datetime.date(1,1,1))
 
     def __str__(self):
-        return self.name
+        return '{} ({}) {}'.format(self.name, self._type, time)
 
 
 class Studying(models.Model):
