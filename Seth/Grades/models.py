@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 import datetime
 
 ####################################################################
@@ -8,21 +9,18 @@ import datetime
 class Module(models.Model):
 
     name = models.CharField(max_length=32)
-    start = models.DateField()  # Defaults to earliest date possible
-    stop = models.DateField()   # Defaults to earliest date possible
 
     def __str__(self):
         return self.name
 
 
 class Student(models.Model):
-    _id = models.CharField(primary_key=True, max_length=16)
+    student_id = models.CharField(primary_key=True, max_length=16)
 
-    name = models.CharField(max_length=32, null=True)
-    mail = models.CharField(max_length=32, null=True)
+    user = models.ForeignKey(User, blank=True, null=True)
 
     def __str__(self):
-        return self.name
+        return self.user.username
 
 
 ####################################################################
@@ -39,11 +37,10 @@ class Study(models.Model):
         return self.full_name
 
 class Teacher(models.Model):
-    teacher_id = models.CharField(primary_key=True, max_length=16)
-    student_id = models.ForeignKey(Student)
+    employee_id = models.CharField(blank=True, null=True, max_length=16)
+    student_id = models.ForeignKey(Student, blank=True, null=True)
 
-    name = models.CharField(max_length=32, null=True)
-    mail = models.CharField(max_length=32, null=True)
+    user = models.ForeignKey(User, blank=True, null=True)
 
     TEACHER_OPTIONS = (             # Defaults to Teaching Assistant
             ('T', 'Teacher'),
@@ -53,14 +50,16 @@ class Teacher(models.Model):
     job = models.CharField(max_length=1, choices=TEACHER_OPTIONS)
 
     def __str__(self):
-        return self.name
+        if self.user:
+            return self.user.username
+        else:
+            return self.student_id.user.username
 
 ####################################################################
 ###############          Dependent Models 2          ###############
 ####################################################################
 
 class Course(models.Model):
-    _id = models.CharField(primary_key=True, max_length=16)
     teachers = models.ManyToManyField(Teacher)
 
     name = models.CharField(max_length=32, null=True)
@@ -70,7 +69,6 @@ class Course(models.Model):
 
 
 class Module_ed(models.Model):
-    _id = models.CharField(primary_key=True, max_length=16)
     module = models.ManyToManyField(Module)
     courses = models.ManyToManyField(Course)
     module_coordinator = models.ManyToManyField(Teacher)
@@ -79,15 +77,14 @@ class Module_ed(models.Model):
     stop = models.DateField(default=datetime.date(1,1,1))
 
     def __str__(self):
-        return '{} ({} - {})'.format(self.module.name, self.start, self.stop)
+        return '{} ({} - {})'.format(self.module.get(), self.start, self.stop)
 
 
 class Advisor(models.Model):
-    _id = models.CharField(primary_key=True, max_length=16)
     studies = models.ManyToManyField(Study)
+    employee_id = models.CharField(primary_key=True, max_length=16)
+    user = models.ForeignKey(User, blank=True, null=True)
 
-    name = models.CharField(max_length=32, null=True)
-    mail = models.CharField(max_length=32, null=True)
     start = models.DateField(default=datetime.date(1,1,1))
     stop = models.DateField(default=datetime.date(1,1,1))
 
