@@ -37,7 +37,7 @@ class Study(models.Model):
         return self.full_name
 
 class Teacher(models.Model):
-    employee_id = models.CharField(blank=True, null=True, max_length=16)
+    employee_id = models.CharField(blank=True, max_length=16)
     student_id = models.ForeignKey(Student, blank=True, null=True)
 
     user = models.ForeignKey(User, blank=True, null=True)
