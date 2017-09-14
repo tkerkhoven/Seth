@@ -1,0 +1,41 @@
+{% load static %}
+<html>
+<head>
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <link href="{% static 'dashboard/css/styles.css' %}" rel="stylesheet" />
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+{#    <img src="{% static "images/sitelogo.png" %}" alt="Logo" />#}
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark justify-content-between">
+        <a class="navbar-brand" href="#">Seth</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+           <div class="btn-group">
+              <button id="user-button" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="material-icons">face</i>
+              </button>
+              <div class="dropdown-menu dropdown-menu-left">
+                <button class="dropdown-item" type="button">Action</button>
+                <button class="dropdown-item" type="button">Another action</button>
+                <button class="dropdown-item" type="button">Something else here</button>
+              </div>
+            </div>
+        </div>
+    </nav>
+    {% block content %}{% endblock %}
+
+    <script src="{% static 'jquery/jquery-3.2.1.min.js' %}"></script>
+    <script src="{% static 'popper/popper.js' %}"></script>
+    <script src="{% static 'popper/popper-utils.js' %}"></script>
+    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+</body>
+</html>
