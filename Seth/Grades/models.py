@@ -13,13 +13,31 @@ class Module(models.Model):
     def __str__(self):
         return '{} ({})'.format(self.name, self.module_code)
 
-class Student(models.Model):
-    student_id = models.CharField(primary_key=True, max_length=16)
+class Person(models.Model):
+    name = models.CharField(max_length=32)
+    id_prefix = models.CharField(max_length=8)
+    person_id = models.CharField(max_length=16)
+    ROLES = (
+        ('T', 'Teacher'),
+        ('S', 'Student'),
+        ('A', 'Teaching Assistant'),
+    )
+    role = models.CharField(max_length=1, choices=ROLES)
 
-    user = models.ForeignKey(User, blank=True, null=True)
+    @property
+    def full_id(self):
+        return id_prefix+person_id
 
     def __str__(self):
-        return '{} ({})'.format(self.user.username, self.student_id)
+        return '{} ({})\t\t{}'.format(self.name, self.full_id, role)
+
+# class Student(models.Model):
+#     student_id = models.CharField(primary_key=True, max_length=16)
+
+#     user = models.ForeignKey(User, blank=True, null=True)
+
+#     def __str__(self):
+#         return '{} ({})'.format(self.user.username, self.student_id)
 
 
 ####################################################################
@@ -35,24 +53,24 @@ class Study(models.Model):
     def __str__(self):
         return self.full_name
 
-class Teacher(models.Model):
-    employee_id = models.CharField(blank=True, null=True, max_length=16)
-    student_id = models.ForeignKey(Student, blank=True, null=True)
+# class Teacher(models.Model):
+#     employee_id = models.CharField(blank=True, null=True, max_length=16)
+#     student_id = models.ForeignKey(Student, blank=True, null=True)
 
-    user = models.ForeignKey(User, blank=True, null=True)
+#     user = models.ForeignKey(User, blank=True, null=True)
 
-    TEACHER_OPTIONS = (             # Defaults to Teaching Assistant
-            ('T', 'Teacher'),
-            ('A', 'Teaching Assistant'),
-        )
+#     TEACHER_OPTIONS = (             # Defaults to Teaching Assistant
+#             ('T', 'Teacher'),
+#             ('A', 'Teaching Assistant'),
+#         )
 
-    job = models.CharField(max_length=1, choices=TEACHER_OPTIONS)
+#     job = models.CharField(max_length=1, choices=TEACHER_OPTIONS)
 
-    def __str__(self):
-        if self.user:
-            return '{} ({})'.format(self.user.username, self.job)
-        else:
-            return '{} ({})'.format(self.student_id.user.username, self.job)
+#     def __str__(self):
+#         if self.user:
+#             return '{} ({})'.format(self.user.username, self.job)
+#         else:
+#             return '{} ({})'.format(self.student_id.user.username, self.job)
 
 ####################################################################
 ###############          Dependent Models 2          ###############
@@ -61,7 +79,7 @@ class Teacher(models.Model):
 class Course(models.Model):
     code = models.CharField(max_length=16, default='')
     code_extension = models.CharField(max_length=16, default='')
-    teachers = models.ManyToManyField(Teacher)
+    teachers = models.ManyToManyField(Person)
 
     name = models.CharField(max_length=32, null=True)
 
@@ -79,7 +97,7 @@ class Module_ed(models.Model):
     module_code_extension = models.CharField(max_length=16, default='')
 
     courses = models.ManyToManyField(Course)
-    module_coordinator = models.ManyToManyField(Teacher)
+    module_coordinator = models.ManyToManyField(Person)
 
     start = models.DateField(default=datetime.date(1,1,1))
     stop = models.DateField(default=datetime.date(1,1,1))
@@ -124,7 +142,7 @@ class Test(models.Model):
 
 
 class Studying(models.Model):
-    student_id = models.ForeignKey(Student)
+    student_id = models.ForeignKey(Person)
     study = models.ForeignKey(Study)
     module_id = models.ForeignKey(Module_ed)
     role = models.CharField(max_length=32)
@@ -145,8 +163,8 @@ class Criterion(models.Model):
 
 class Grade(models.Model):
     test_id = models.ForeignKey(Test)
-    teacher_id = models.ForeignKey(Teacher)
-    student_id = models.ForeignKey(Student)
+    teacher_id = models.ForeignKey(Person, related_name='Correcter')
+    student_id = models.ForeignKey(Person, related_name='Submitter')
     time = models.DateField(default=datetime.date(1,1,1))
     description = models.CharField(max_length=256, null=True)
     grade = models.SmallIntegerField(default=1)
