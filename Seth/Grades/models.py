@@ -78,6 +78,9 @@ class Module_ed(models.Model):
     start = models.DateField(default=datetime.date(1,1,1))
     stop = models.DateField(default=datetime.date(1,1,1))
 
+    def __str__(self):
+        return '{} ({} - {})'.format(self.module.name, self.start, self.stop)
+
 
 class Advisor(models.Model):
     _id = models.CharField(primary_key=True, max_length=16)
