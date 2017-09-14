@@ -22,13 +22,12 @@ body {
   right: 0;
   left: auto; }
 
-.dropdown-toggle::after {
-  display: none; }
-
-#user-button {
+.btn.nav-button {
   background-color: transparent;
   border: none; }
-  #user-button:focus {
+  .btn.nav-button:focus {
     border: none; }
+  .btn.nav-button.dropdown-toggle::after {
+    display: none; }
 
 /*# sourceMappingURL=styles.css.map */
