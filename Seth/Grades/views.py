@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views import generic
-from .models import Module, Student, Studying
+from .models import Module, Student, Studying, Module_ed, Course, Test, Grade
 
 class ModuleView(generic.ListView):
 	template_name = 'Grades/modules.html'
@@ -9,23 +9,42 @@ class ModuleView(generic.ListView):
 	def get_queryset(self):
 		return Module.objects.order_by('name')
 
-class GradeView(generic.ListView):
+class GradeView(generic.DetailView):
 	template_name = 'Grades/gradebook.html'
-	model =  Module
+	model = Module
 
 	def get_context_data(self, **kwargs):
-		context = super(ModuleView, self).get_context_data(**kwargs)
+		context = super(GradeView, self).get_context_data(**kwargs)
         
-		for m_id in Module.objects.get(id=self.kwargs['pk']).module_ed_set.all()[:1]:
-			sList = []
-			gList = []
-			for s_id in Module_ed.objects.get(id=m_id).studying_set.all():
-				sList.append(Studying.objects.get(id=s_id).student_id)
+		dList = []
+		tList = []
+		courseDict = dict()
+		testDict = dict()
 
-			for c_id in Module_ed.objects.get(id=m_id).courses:
-				for t_id in Course.objects.get(id=c_id).test_set.all():
-					gList.append(Test.objects.get(id=t_id).grade_set.all())
+		m_id = Module_ed.objects.get(module=self.kwargs['pk'])
+		for studying in Studying.objects.all().filter(module_id=m_id):
+			studentDict = dict()
 
-		context['student_list'] = sList
-		contest['grade_list'] = gList
+			studentDict['user'] = studying.student_id.user
+			print(studying.student_id.user)
+			for course in m_id.courses.all():
+
+				tList = []
+				if course.id not in courseDict.keys():
+					courseDict[course.id] = course.name
+
+				for test in Test.objects.all().filter(course_id=course):
+
+					if test not in tList:
+						tList.append(test)
+
+					for grade in Grade.objects.all().filter(student_id=studying.student_id).filter(test_id=test):
+						studentDict[test.id] = grade.grade
+					testDict[course.id] = tList
+
+			dList.append(studentDict)
+
+		context['studentdict'] = dList
+		context['coursedict'] = courseDict
+		context['testdict'] = testDict
 		return context
