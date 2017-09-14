@@ -6,6 +6,7 @@
 }
 
 .btn {
+
   &.nav-button {
     background-color: transparent;
     border: none;
@@ -14,6 +15,10 @@
     }
     &.dropdown-toggle::after{
       display: none;
+    }
+    &:active {
+      background-color: transparent;
+      border: none;
     }
   }
 }

@@ -1,5 +1,5 @@
 body {
-  padding-top: 65px; }
+  padding-top: 70px; }
 
 .material-icons.md-18 {
   font-size: 18px; }
@@ -18,6 +18,23 @@ body {
   .material-icons.md-light.md-inactive {
     color: rgba(255, 255, 255, 0.3); }
 
+.fa.fa-light {
+  color: white; }
+  .fa.fa-light.fa-inactive {
+    color: rgba(255, 255, 255, 0.3); }
+.fa.fa-dark {
+  color: rgba(0, 0, 0, 0.54); }
+  .fa.fa-dark.fa-inactive {
+    color: rgba(0, 0, 0, 0.26); }
+.fa.fa-18 {
+  font-size: 18px; }
+.fa.fa-24 {
+  font-size: 24px; }
+.fa.fa-36 {
+  font-size: 36px; }
+.fa.fa-48 {
+  font-size: 48px; }
+
 .dropdown-menu.dropdown-menu-left {
   right: 0;
   left: auto; }
@@ -29,5 +46,8 @@ body {
     border: none; }
   .btn.nav-button.dropdown-toggle::after {
     display: none; }
+  .btn.nav-button:active {
+    background-color: transparent;
+    border: none; }
 
 /*# sourceMappingURL=styles.css.map */
