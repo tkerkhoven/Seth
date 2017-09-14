@@ -33,8 +33,6 @@
                       <a class="dropdown-item" href="#">Your profile</a>
                       <div class="dropdown-divider"></div>
                       <a class="dropdown-item" href="#">Settings</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item" href="#">Logout</a>
                   </div>
             </div>
            <div class="btn-group">
@@ -42,13 +40,15 @@
                 <i class="material-icons">account_circle</i>
               </button>
               <div class="dropdown-menu dropdown-menu-left">
-                  <h6 class="dropdown-header">Current user: [blank]</h6>
+                  <h6 class="dropdown-header">Current user: {{ user.username }}</h6>
                   <div class="dropdown-divider"></div>
                   <a class="dropdown-item" href="#">Your profile</a>
                   <div class="dropdown-divider"></div>
                   <a class="dropdown-item" href="#">Settings</a>
+                  {% if user.is_authenticated %}
                   <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="#">Logout</a>
+                  <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                  {% endif %}
               </div>
             </div>
         </div>
