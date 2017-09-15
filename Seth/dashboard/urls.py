@@ -6,4 +6,5 @@ from . import views
 urlpatterns = [
     url(r'^$', views.home, name='home'),
     url(r'^dashboard/$', views.home, name='home'),
+    url(r'settings/$', views.settings, name='settings'),
 ]

@@ -31,11 +31,12 @@
         {#            <div class="col-lg-6"></div>#}
         {#            <div class="col-lg-1"></div>#}
         {#        </div>#}
+        {% for mod in modules %}
         <div class="row">
             <div class="col-lg-1"></div>
             <div class="col-lg-10">
                 <div class="card">
-                    <h4 class="card-header">Module [..]</h4>
+                    <h4 class="card-header">{{ mod.name}}</h4>
                     <div class="card-body">
                         <div id="accordion" role="tablist">
                             <div class="card">
@@ -100,6 +101,7 @@
             <div class="col-lg-1"></div>
         </div>
         <hr>
+        {% endfor %}
         <div class="row">
             <div class="col-lg-1"></div>
             <div class="col-lg-10">
