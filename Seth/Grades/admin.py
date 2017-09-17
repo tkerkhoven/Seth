@@ -11,6 +11,6 @@ class GradeAdmin(admin.ModelAdmin):
 
 admin.site.register(Grade, GradeAdmin)
 
-for object in [Person, Study, Studying, Module, Module_ed, Criterion, Course, Test, Advisor]:
+for object in [Person, Study, Studying, Module, Module_ed, Criterion, Course, Test]:
     admin.site.register(object)
 

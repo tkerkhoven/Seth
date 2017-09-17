@@ -13,23 +13,7 @@ class Module(models.Model):
     def __str__(self):
         return '{} ({})'.format(self.name, self.module_code)
 
-class Person(models.Model):
-    name = models.CharField(max_length=32)
-    id_prefix = models.CharField(max_length=8)
-    person_id = models.CharField(max_length=16)
-    ROLES = (
-        ('T', 'Teacher'),
-        ('S', 'Student'),
-        ('A', 'Teaching Assistant'),
-    )
-    role = models.CharField(max_length=1, choices=ROLES)
 
-    @property
-    def full_id(self):
-        return id_prefix+person_id
-
-    def __str__(self):
-        return '{} ({})\t\t{}'.format(self.name, self.full_id, role)
 
 # class Student(models.Model):
 #     student_id = models.CharField(primary_key=True, max_length=16)
@@ -52,6 +36,31 @@ class Study(models.Model):
 
     def __str__(self):
         return self.full_name
+
+class Person(models.Model):
+    name = models.CharField(max_length=32)
+    id_prefix = models.CharField(max_length=8)
+    person_id = models.CharField(max_length=16)
+    user = models.ForeignKey(User, blank=True, null=True) #ToDo: vm is dit de Django-user, is dit nodig voor elke Person?
+    start = models.DateField(default=datetime.date(1,1,1))
+    stop = models.DateField(default=datetime.date(9999,12,31))
+    ROLES = (
+        ('T', 'Teacher'),
+        ('S', 'Student'),
+        ('A', 'Teaching Assistant'),
+        ('V', 'Study Advisor')
+    )
+    role = models.CharField(max_length=1, choices=ROLES)
+    
+    # Iff role == 'V'
+    studies = models.ManyToManyField(Study)
+
+    @property
+    def full_id(self):
+        return id_prefix+person_id
+
+    def __str__(self):
+        return '{} ({})\t\t{}'.format(self.name, self.full_id, role)
 
 # class Teacher(models.Model):
 #     employee_id = models.CharField(blank=True, null=True, max_length=16)
@@ -111,16 +120,16 @@ class Module_ed(models.Model):
         return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
 
 
-class Advisor(models.Model):
-    studies = models.ManyToManyField(Study)
-    employee_id = models.CharField(primary_key=True, max_length=16)
-    user = models.ForeignKey(User, blank=True, null=True)
+# class Advisor(models.Model):
+#     studies = models.ManyToManyField(Study)
+#     employee_id = models.CharField(primary_key=True, max_length=16)
+#     user = models.ForeignKey(User, blank=True, null=True)
 
-    start = models.DateField(default=datetime.date(1,1,1))
-    stop = models.DateField(default=datetime.date(1,1,1))
+#     start = models.DateField(default=datetime.date(1,1,1))
+#     stop = models.DateField(default=datetime.date(1,1,1))
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 ####################################################################
 ###############          Dependent Models 3          ###############
