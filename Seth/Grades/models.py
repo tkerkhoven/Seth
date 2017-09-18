@@ -147,7 +147,10 @@ class Test(models.Model):
             ('P', 'Project')
         )
     _type = models.CharField(max_length=1, choices=TEST_TYPES)
-    time = models.DateField(default=datetime.date(1,1,1))
+    time = models.DateTimeField(default=datetime.datetime(1,1,1,0,0,0,0))
+
+    maximum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=10.0)
+    minimum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
 
     def __str__(self):
         return '{} ({}) {}'.format(self.name, self._type, time)
@@ -177,9 +180,9 @@ class Grade(models.Model):
     test_id = models.ForeignKey(Test)
     teacher_id = models.ForeignKey(Person, related_name='Correcter')
     student_id = models.ForeignKey(Person, related_name='Submitter')
-    time = models.DateField(default=datetime.date(1,1,1))
+    time = models.DateTimeField(default=datetime.datetime(1,1,1,0,0,0,0))
     description = models.CharField(max_length=256, null=True)
-    grade = models.SmallIntegerField(default=1)
+    grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
 
     def __str__(self):
         return self.grade.__str__()
