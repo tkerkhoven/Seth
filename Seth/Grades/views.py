@@ -25,7 +25,7 @@ class GradeView(generic.DetailView):
 		for studying in Studying.objects.all().filter(module_id=m_id):
 			studentDict = dict()
 
-			studentDict['id'] = studying.student_id
+			studentDict['id'] = studying.student_id.person_id
 			studentDict['user'] = studying.student_id.user
 			print(studying.student_id.user)
 			for course in m_id.courses.all():
