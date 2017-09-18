@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 import datetime
 
 ####################################################################
@@ -53,7 +54,7 @@ class Person(models.Model):
         ('V', 'Study Advisor')
     )
     role = models.CharField(max_length=1, choices=ROLES)
-    
+
     # Iff role == 'V'
     studies = models.ManyToManyField(Study)
 
@@ -104,7 +105,7 @@ class Course(models.Model):
 
 class Module_ed(models.Model):
 
-    year = models.DateField(default=datetime.date.today())
+    year = models.DateField(default=timezone.now) 
     module = models.ForeignKey(Module)
     module_code_extension = models.CharField(max_length=16, default='')
 
