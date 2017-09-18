@@ -59,10 +59,10 @@ class Person(models.Model):
 
     @property
     def full_id(self):
-        return id_prefix+person_id
+        return self.id_prefix+self.person_id
 
     def __str__(self):
-        return '{} ({})\t\t{}'.format(self.name, self.full_id, role)
+        return '{} ({})\t\t{}'.format(self.name, self.full_id, self.role)
 
 # class Teacher(models.Model):
 #     employee_id = models.CharField(blank=True, null=True, max_length=16)
@@ -153,7 +153,7 @@ class Test(models.Model):
     minimum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
 
     def __str__(self):
-        return '{} ({}) {}'.format(self.name, self._type, time)
+        return '{} ({}) {}'.format(self.name, self._type, self.time)
 
 
 class Studying(models.Model):
