@@ -9,6 +9,8 @@ import datetime
 class Module(models.Model):
     module_code = models.CharField(max_length=16, primary_key=True)
     name = models.CharField(max_length=32)
+    start = models.DateField(default=datetime.date(1,1,1))
+    stop = models.DateField(default=datetime.date(9999, 12, 31))
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.module_code)
@@ -110,7 +112,7 @@ class Module_ed(models.Model):
     module_coordinator = models.ManyToManyField(Person)
 
     start = models.DateField(default=datetime.date(1,1,1))
-    stop = models.DateField(default=datetime.date(1,1,1))
+    stop = models.DateField(default=datetime.date(9999,12,31))
 
     @property
     def module_code(self):
