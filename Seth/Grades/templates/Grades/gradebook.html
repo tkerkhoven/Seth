@@ -1,0 +1,45 @@
+{% load grade_extras %}
+
+<style>
+table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
+</style>
+
+<h1>{{ module.name }}</h1>
+
+{% if error_message %}
+    <p><strong>{{ error_message }}</strong></p>
+{% endif %}
+
+{% if studentdict %}
+    <table>
+    <tr>
+        <th>Student</th>
+        {% for key,values in testdict.items %}
+        <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
+        {% endfor %}
+    </tr>
+
+    <tr>
+        <td></td>
+        {% for key in testdict %}
+            {% for test in testdict|key:key %}
+                <td> {{ test.name }} </td>
+            {% endfor %}
+        {% endfor %}
+    </tr>
+
+    {% for dict in studentdict %}
+        <tr>
+            <td><a href="{% url 'grades.student' dict.id module.id %}"> {{ dict.user.last_name }} </a></td>
+            {% for key in testdict %}
+                {% for test in testdict|key:key %}
+                    <td>{{ dict|key:test.id }}</td>
+                {% endfor %}   
+            {% endfor %}    
+        </tr>
+    {% endfor %}
+    </table>
+
+{% else %}
+    <p>No courses are available.</p>
+{% endif %}
