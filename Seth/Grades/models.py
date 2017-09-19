@@ -157,6 +157,8 @@ class Test(models.Model):
     maximum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=10.0)
     minimum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
 
+    released = models.BooleanField(default=False)
+
     def __str__(self):
         return '{} ({}) {}'.format(self.name, self._type, self.time)
 
