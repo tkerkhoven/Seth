@@ -1,0 +1,9 @@
+{% if module_list %}
+    <ul>
+    {% for module in module_list %}
+        <li><a href="{% url 'grades:gradebook' module.id %}">{{ module.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No modules are available.</p>
+{% endif %}
