@@ -10,17 +10,15 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
     <p><strong>{{ error_message }}</strong></p>
 {% endif %}
 
-{% if student %}
+{% if module_student %}
     <table>
     <tr>
-        <th>Student</th>
         {% for key,values in testdict.items %}
             <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
         {% endfor %}
     </tr>
 
     <tr>
-        <td></td>
         {% for key in testdict %}
             {% for test in testdict|key:key %}
                 <td> {{ test.name }} </td>
@@ -28,7 +26,6 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
         {% endfor %}
     </tr>
     <tr>
-        <td><a href="{% url 'grades.student' dict.id module.id %}"> {{ dict.user.last_name }} </a></td>
         {% for key in testdict %}
             {% for test in testdict|key:key %}
                 <td>{{ gradedict|key:test.id }}</td>
@@ -37,6 +34,31 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
     </tr>
     </table>
 
+{% elif student %}
+
+    <table>
+        <tr>
+            {% for key,values in testdict.items %}
+            <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
+        {% endfor %}
+        </tr>
+
+        <tr>
+            {% for key in testdict %}
+                {% for test in testdict|key:key %}
+                    <td> {{ test.name }} </td>
+            {% endfor %}
+        {% endfor %}
+    </tr>
+    <tr>
+        {% for key in testdict %}
+            {% for test in testdict|key:key %}
+                <td>{{ gradedict|key:test }}</td>
+            {% endfor %}
+        {% endfor %}
+        </tr>
+    </table>
+
 {% else %}
-    <p>No courses are available.</p>
+<p>No courses available</p>
 {% endif %}
