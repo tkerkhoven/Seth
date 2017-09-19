@@ -15,7 +15,7 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
     <tr>
         <th>Student</th>
         {% for key,values in testdict.items %}
-        <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
+            <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
         {% endfor %}
     </tr>
 
