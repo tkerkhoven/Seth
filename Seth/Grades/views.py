@@ -14,7 +14,7 @@ class ModuleView(generic.ListView):
 
 class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook.html'
-    model = Module
+    model = Module_ed
 
     def get_context_data(self, **kwargs):
         context = super(GradeView, self).get_context_data(**kwargs)
@@ -23,8 +23,7 @@ class GradeView(generic.DetailView):
         course_dict = dict()
         test_dict = dict()
 
-        mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(
-            module=self.kwargs['pk'])
+        mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
             student_dict = dict()
 
@@ -95,12 +94,12 @@ class StudentView(generic.DetailView):
 
 class ModuleStudentView(generic.DetailView):
     template_name = 'Grades/modulestudent.html'
-    model = Module
+    model = Module_ed
 
     def get_context_data(self, **kwargs):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
-        mod_ed = Module_ed.objects.prefetch_related('courses').get(module=self.kwargs['pk'])
+        mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
         student = Person.objects.prefetch_related('user').get(user=self.kwargs['sid'])
 
         course_list = []
