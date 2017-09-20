@@ -1,89 +1,187 @@
-from django.shortcuts import render
 from django.views import generic
-from .models import Module, Studying, Module_ed, Course, Test, Grade
+from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
+from django.contrib.auth.models import User
+
 
 class ModuleView(generic.ListView):
-	template_name = 'Grades/modules.html'
-	model = Module
+    template_name = 'Grades/modules.html'
+    context_object_name = 'module_list'
 
-	def get_queryset(self):
-		return Module.objects.order_by('name')
+    def get_queryset(self):
+        module_set = Module.objects.prefetch_related('module_ed_set')
+        return module_set
+
 
 class GradeView(generic.DetailView):
-	template_name = 'Grades/gradebook.html'
-	model = Module
+    template_name = 'Grades/gradebook.html'
+    model = Module
 
-	def get_context_data(self, **kwargs):
-		context = super(GradeView, self).get_context_data(**kwargs)
-        
-		dList = []
-		tList = []
-		courseDict = dict()
-		testDict = dict()
+    def get_context_data(self, **kwargs):
+        context = super(GradeView, self).get_context_data(**kwargs)
 
-		m_id = Module_ed.objects.get(module=self.kwargs['pk'])
-		for studying in Studying.objects.all().filter(module_id=m_id):
-			studentDict = dict()
+        student_list = []
+        course_dict = dict()
+        test_dict = dict()
 
-			studentDict['id'] = studying.student_id
-			studentDict['user'] = studying.student_id.user
-			print(studying.student_id.user)
-			for course in m_id.courses.all():
+        mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(
+            module=self.kwargs['pk'])
+        for studying in mod_ed.studying_set.prefetch_related('student_id'):
+            student_dict = dict()
 
-				tList = []
-				if course.id not in courseDict.keys():
-					courseDict[course.id] = course.name
+            student_dict['user'] = studying.student_id.user
+            for course in mod_ed.courses.prefetch_related('test_set').all():
+                test_list = []
+                if course not in course_dict.keys():
+                    course_dict[course] = course.name
 
-				for test in Test.objects.all().filter(course_id=course):
+                for test in course.test_set.prefetch_related('grade_set').all():
 
-					if test not in tList:
-						tList.append(test)
+                    if test not in test_list:
+                        test_list.append(test)
 
-					for grade in Grade.objects.all().filter(student_id=studying.student_id).filter(test_id=test):
-						studentDict[test.id] = grade.grade
-					testDict[course.id] = tList
+                    for grade in test.grade_set.filter(student_id=studying.student_id):
+                        student_dict[test] = grade.grade
+                    test_dict[course] = test_list
 
-			dList.append(studentDict)
+            student_list.append(student_dict)
 
-		context['studentdict'] = dList
-		context['coursedict'] = courseDict
-		context['testdict'] = testDict
-		return context
+        context['studentdict'] = student_list
+        context['coursedict'] = course_dict
+        context['testdict'] = test_dict
+        return context
+
 
 class StudentView(generic.DetailView):
-	template_name = 'Grades/student.html'
-	model = Course
+    template_name = 'Grades/student.html'
+    model = User
 
-	def get_context_data(self, **kwargs):
-		context = super(StudentView, self).get_context_data(**kwargs)
+    def get_context_data(self, **kwargs):
+        context = super(StudentView, self).get_context_data(**kwargs)
 
-		mod = Module_ed.objects.get(module=self.kwargs['pk'])
-		stu = Student.objects.get(student_id=self.kwargs['sid'])
+        grade_dict = dict()
+        test_dict = dict()
+        course_dict = dict()
 
-		tList = []
-		courseDict = dict()
-		testDict = dict()
-		gradeDict = dict()
+        person = Person.objects.get(user=self.kwargs['pk'])
 
-		for course in mod.courses.all():
-			tList = []
+        for studying in Studying.objects.filter(student_id=person).prefetch_related('module_id'):
+            course_list = []
 
-			if course.id not in courseDict.keys():
-				courseDict[course.id] = course.name	
+            mod_ed = studying.module_id
+            for course in mod_ed.courses.prefetch_related('test_set').all():
+                test_list = []
 
-			for test in Test.objects.all().filer(course_id=course):
+                if course not in course_list:
+                    course_list.append(course)
 
-				if test not in tList:
-					tList.append(test)
+                for test in course.test_set.prefetch_related('grade_set').all():
 
-				for grade in Grade.objects.all().filter(student_id=studying.student_id).filter(test_id=test):
-					gradeDict[test.id] = grade.grade
+                    if test not in test_list:
+                        test_list.append(test)
 
-				testDict[course.id] = tList
+                    for grade in test.grade_set.filter(student_id=person):
+                        grade_dict[test] = grade.grade
 
-		context['student'] = stu
-		context['user'] = stu.user
-		context['coursedict'] = courseDict
-		context['testdict'] = testDict
-		context['gradedict'] = gradeDict
+                test_dict[course] = test_list
+            course_dict[mod_ed] = course_list
 
+        context['student'] = person
+        context['gradedict'] = grade_dict
+        context['testdict'] = test_dict
+        context['coursedict'] = course_dict
+
+        return context
+
+
+class ModuleStudentView(generic.DetailView):
+    template_name = 'Grades/modulestudent.html'
+    model = Module
+
+    def get_context_data(self, **kwargs):
+        context = super(ModuleStudentView, self).get_context_data(**kwargs)
+
+        mod_ed = Module_ed.objects.prefetch_related('courses').get(module=self.kwargs['pk'])
+        student = Person.objects.prefetch_related('user').get(user=self.kwargs['sid'])
+
+        course_list = []
+        test_dict = dict()
+        grade_dict = dict()
+
+        for course in mod_ed.courses.prefetch_related('test_set').all():
+            test_list = []
+
+            if course not in course_list:
+                course_list.append(course)
+
+            for test in course.test_set.prefetch_related('grade_set').all():
+
+                if test not in test_list:
+                    test_list.append(test)
+
+                for grade in test.grade_set.filter(student_id=student):
+                    grade_dict[test] = grade.grade
+
+                test_dict[course] = test_list
+
+        context['student'] = student
+        context['courselist'] = course_list
+        context['testdict'] = test_dict
+        context['gradedict'] = grade_dict
+
+        return context
+
+
+class CourseView(generic.DetailView):
+    template_name = 'Grades/course.html'
+    model = Course
+
+    def get_context_data(self, **kwargs):
+        context = super(CourseView, self).get_context_data(**kwargs)
+
+        test_dict = dict()
+        student_list = []
+
+        course = Course.objects.get(id=self.kwargs['pk'])
+
+        for mod_ed in Module_ed.objects.filter(courses=course).prefetch_related('studying_set'):
+            for studying in mod_ed.studying_set.prefetch_related('student_id').all():
+                if studying.student_id not in student_list:
+                    student_list.append(studying.student_id)
+
+        for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
+
+            grade_dict = dict()
+            for grade in test.grade_set.prefetch_related('student_id').all():
+                grade_dict[grade.student_id] = grade.grade
+            test_dict[test] = grade_dict
+
+        context['course'] = course
+        context['studentlist'] = student_list
+        context['testdict'] = test_dict
+        return context
+
+
+class TestView(generic.DetailView):
+    template_name = 'Grades/test.html'
+    model = Test
+
+    def get_context_data(self, **kwargs):
+        context = super(TestView, self).get_context_data(**kwargs)
+
+        grade_dict = dict()
+        student_list = []
+
+        test = Test.objects.get(id=self.kwargs['pk'])
+
+        for mod_ed in Module_ed.objects.filter(courses=test.course_id).prefetch_related('studying_set'):
+            for studying in mod_ed.studying_set.prefetch_related('student_id').all():
+                if studying.student_id not in student_list:
+                    student_list.append(studying.student_id)
+
+        for grade in test.grade_set.prefetch_related('student_id').all():
+            grade_dict[grade.student_id] = grade.grade
+
+        context['test'] = test
+        context['studentlist'] = student_list
+        context['gradedict'] = grade_dict
+        return context
