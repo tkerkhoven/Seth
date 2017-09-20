@@ -4,10 +4,11 @@ from django.contrib.auth.models import User
 
 class ModuleView(generic.ListView):
     template_name = 'Grades/modules.html'
-    model = Module
+    context_object_name = 'module_list'
 
     def get_queryset(self):
-        return Module.objects.order_by('name')
+        module_set = Module.objects.prefetch_related('module_ed_set')
+        return module_set
 
 class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook.html'
