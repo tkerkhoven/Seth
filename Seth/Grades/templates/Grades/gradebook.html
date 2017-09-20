@@ -30,7 +30,7 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
 
     {% for dict in studentdict %}
         <tr>
-            <td><a href="{% url 'grades:modstudent' pk=module.module_code sid=dict.id %}"> {{ dict.user.last_name }} </a></td>
+            <td><a href="{% url 'grades:modstudent' pk=module.module_code sid=dict.user.id %}"> {{ dict.user.last_name }} </a></td>
             {% for course in coursedict.keys %}
                 {% for test in testdict|key:course %}
                     <td>{{ dict|key:test }}</td>

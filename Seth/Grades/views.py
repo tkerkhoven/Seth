@@ -21,23 +21,22 @@ class GradeView(generic.DetailView):
         course_dict = dict()
         test_dict = dict()
 
-        mod_ed = Module_ed.objects.get(module=self.kwargs['pk'])
-        for studying in Studying.objects.filter(module_id=mod_ed.id).prefetch_related('student_id'):
+        mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(module=self.kwargs['pk'])
+        for studying in mod_ed.studying_set.prefetch_related('student_id'):
             student_dict = dict()
 
-            student_dict['id'] = studying.student_id.user.id
             student_dict['user'] = studying.student_id.user
-            for course in mod_ed.courses.all():
+            for course in mod_ed.courses.prefetch_related('test_set').all():
                 test_list = []
                 if course not in course_dict.keys():
                     course_dict[course] = course.name
 
-                for test in Test.objects.filter(course_id=course):
+                for test in course.test_set.prefetch_related('grade_set').all():
 
                     if test not in test_list:
                         test_list.append(test)
 
-                    for grade in Grade.objects.filter(student_id=studying.student_id).filter(test_id=test):
+                    for grade in test.grade_set.filter(student_id=studying.student_id):
                         student_dict[test] = grade.grade
                     test_dict[course] = test_list
 
@@ -65,18 +64,18 @@ class StudentView(generic.DetailView):
             course_list = []
 
             mod_ed = studying.module_id
-            for course in mod_ed.courses.all():
+            for course in mod_ed.courses.prefetch_related('test_set').all():
                 test_list = []
 
                 if course not in course_list:
                     course_list.append(course)
 
-                for test in Test.objects.filter(course_id=course):
+                for test in course.test_set.prefetch_related('grade_set').all():
 
                     if test not in test_list:
                         test_list.append(test)
 
-                    for grade in Grade.objects.filter(student_id=person).filter(test_id=test):
+                    for grade in test.grade_set.filter(student_id=person):
                         grade_dict[test] = grade.grade
 
                 test_dict[course] = test_list
@@ -103,18 +102,18 @@ class ModuleStudentView(generic.DetailView):
         test_dict = dict()
         grade_dict = dict()
 
-        for course in mod_ed.courses.all():
+        for course in mod_ed.courses.prefetch_related('test_set').all():
             test_list = []
 
             if course not in course_list:
                 course_list.append(course)
 
-            for test in Test.objects.filter(course_id=course):
+            for test in course.test_set.prefetch_related('grade_set').all():
 
                 if test not in test_list:
                     test_list.append(test)
 
-                for grade in Grade.objects.filter(student_id=student).filter(test_id=test):
+                for grade in test.grade_set.filter(student_id=student):
                     grade_dict[test] = grade.grade
 
                 test_dict[course] = test_list
