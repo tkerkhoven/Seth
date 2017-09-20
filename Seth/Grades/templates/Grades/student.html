@@ -58,16 +58,16 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
 
             <tr>
                 {% for course in coursedict|key:mod %}
-                    {% for test in testdict|key:course %}
-                        <td> {{ test.name }} </td>
-                    {% endfor %}
+                {% for test in testdict|key:course %}
+                    <td> {{ test.name }} </td>
+                {% endfor %}
                 {% endfor %}
             </tr>
             <tr>
                 {% for course in coursedict|key:mod %}
-                    {% for test in testdict|key:course %}
-                        <td>{{ gradedict|key:test }}</td>
-                    {% endfor %}
+                {% for test in testdict|key:course %}
+                    <td>{{ gradedict|key:test }}</td>
+                {% endfor %}
                 {% endfor %}
             </tr>
         </table>

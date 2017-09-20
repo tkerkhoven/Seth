@@ -22,9 +22,9 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
     <tr>
         <td></td>
         {% for course in coursedict.keys %}
-            {% for test in testdict|key:course %}
-                <td><a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></td>
-            {% endfor %}
+        {% for test in testdict|key:course %}
+            <td><a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></td>
+        {% endfor %}
         {% endfor %}
     </tr>
 
@@ -32,9 +32,9 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
         <tr>
             <td><a href="{% url 'grades:modstudent' pk=module_ed.id sid=dict.user.id %}"> {{ dict.user.last_name }} </a></td>
             {% for course in coursedict.keys %}
-                {% for test in testdict|key:course %}
-                    <td>{{ dict|key:test }}</td>
-                {% endfor %}   
+            {% for test in testdict|key:course %}
+                <td>{{ dict|key:test }}</td>
+            {% endfor %}
             {% endfor %}    
         </tr>
     {% endfor %}
