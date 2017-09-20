@@ -2,6 +2,7 @@ from django.views import generic
 from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
 from django.contrib.auth.models import User
 
+
 class ModuleView(generic.ListView):
     template_name = 'Grades/modules.html'
     context_object_name = 'module_list'
@@ -9,6 +10,7 @@ class ModuleView(generic.ListView):
     def get_queryset(self):
         module_set = Module.objects.prefetch_related('module_ed_set')
         return module_set
+
 
 class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook.html'
@@ -21,7 +23,8 @@ class GradeView(generic.DetailView):
         course_dict = dict()
         test_dict = dict()
 
-        mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(module=self.kwargs['pk'])
+        mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(
+            module=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
             student_dict = dict()
 
@@ -46,6 +49,7 @@ class GradeView(generic.DetailView):
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
         return context
+
 
 class StudentView(generic.DetailView):
     template_name = 'Grades/student.html'
@@ -88,6 +92,7 @@ class StudentView(generic.DetailView):
 
         return context
 
+
 class ModuleStudentView(generic.DetailView):
     template_name = 'Grades/modulestudent.html'
     model = Module
@@ -125,6 +130,7 @@ class ModuleStudentView(generic.DetailView):
 
         return context
 
+
 class CourseView(generic.DetailView):
     template_name = 'Grades/course.html'
     model = Course
@@ -153,6 +159,7 @@ class CourseView(generic.DetailView):
         context['studentlist'] = student_list
         context['testdict'] = test_dict
         return context
+
 
 class TestView(generic.DetailView):
     template_name = 'Grades/test.html'
