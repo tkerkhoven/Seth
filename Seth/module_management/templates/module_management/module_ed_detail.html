@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Module Edition {{ module_ed.module_code }} Details</title>
+</head>
+
+<body>
+
+<h1>{{ module_ed.module.name }} {{ module_ed.year.year }} Details</h1>
+
+<ul>
+    <li>Module Code: {{ module_ed.module_code }}</li>
+    <li>Year: {{ module_ed.year.year }}</li>
+    <li>Start: {{ module_ed.start }}</li>
+    <li>Stop: {{ module_ed.stop }}</li>
+    <li>
+        Courses:
+        <ul>
+            {% for course in module_ed.courses.all %}
+                <li>{{ course.course_code }} - {{ course.name }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+</ul>
+
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Module "{{ module.name }}" Details</title>
+</head>
+
+<body>
+
+<h1>{{ module.name }} Details</h1>
+
+<ul>
+    <li>Module Code: {{ module.module_code }}</li>
+    <li>Module Name: {{ module.name }}</li>
+    <li>Start: {{ module.start }}</li>
+    <li>Stop: {{ module.stop }}</li>
+    <li>
+        Module Editions:
+        <ul>
+            {% for mod_ed in module.module_ed_set.all %}
+                <li>{{ mod_ed.module_code }}</li>
+            {% endfor %}
+        </ul>
+    </li>
+</ul>
+
+</body>
+
+</html>
