@@ -21,9 +21,16 @@
                 <li class="nav-item active">
                     <a class="nav-link" href="{% url 'home' %}">Home<span class="sr-only">(current)</span></a>
                 </li>
+                {% if grades_installed %}
                 <li class="nav-item active">
                     <a class="nav-link" href="#">Grades<span class="sr-only">(current)</span></a>
                 </li>
+                {% endif %}
+                {% if importer_installed %}
+                <li class="nav-item active">
+                    <a class="nav-link" href="{%  url 'import_index' %}">Importer<span class="sr-only">(current)</span></a>
+                </li>
+                {% endif %}
             </ul>
             <div class="btn-group">
                   <button type="button" class="btn dropdown-toggle nav-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

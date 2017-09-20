@@ -4,9 +4,17 @@ from Grades.models import Module_ed
 
 # Create your views here.
 
+
 class IndexView(generic.ListView):
-    template_name = 'importer/'
+    template_name = 'importer/index.html'
     model = Module_ed
 
     def get_queryset(self):
-        Module_ed.objects.order_by('start')
+        return Module_ed.objects.order_by('start')
+
+class ImportModuleView(generic.ListView):
+    template_name = 'importer/importmodule.html'
+    model = Module_ed
+
+    def get_queryset(self):
+        return Module_ed.objects.order_by('start')

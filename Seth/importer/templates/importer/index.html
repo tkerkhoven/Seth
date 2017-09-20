@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Importer
+{% endblock %}
+
+{% block content %}
+    {% if module_ed_list %}
+        {% for mod in module_ed_list %}
+            <h3>{{ mod }}</h3>
+        {% endfor %}
+    {% else %}
+        <h3>No module_eds available</h3>
+    {% endif %}
+{% endblock %}

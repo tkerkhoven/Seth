@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Import module {{ id }}
+{% endblock %}
+
+{% block content %}
+    {% for mod in module_ed_list %}
+        <h3>{{ mod }}</h3>
+    {% empty %}
+        <h3>No module_eds available</h3>
+    {% endfor %}
+{% endblock %}
