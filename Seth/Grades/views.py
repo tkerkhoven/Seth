@@ -60,6 +60,7 @@ class StudentView(generic.DetailView):
         grade_dict = dict()
         test_dict = dict()
         course_dict = dict()
+        mod_width = dict()
 
         person = Person.objects.get(user=self.kwargs['pk'])
 
@@ -67,6 +68,7 @@ class StudentView(generic.DetailView):
             course_list = []
 
             mod_ed = studying.module_id
+            width = 0
             for course in mod_ed.courses.prefetch_related('test_set').all():
                 test_list = []
 
@@ -75,6 +77,7 @@ class StudentView(generic.DetailView):
 
                 for test in course.test_set.prefetch_related('grade_set').all():
 
+                    width += 1
                     if test not in test_list:
                         test_list.append(test)
 
@@ -83,11 +86,13 @@ class StudentView(generic.DetailView):
 
                 test_dict[course] = test_list
             course_dict[mod_ed] = course_list
+            mod_width[mod_ed] = width
 
         context['student'] = person
         context['gradedict'] = grade_dict
         context['testdict'] = test_dict
         context['coursedict'] = course_dict
+        context['modwidth'] = mod_width
 
         return context
 
