@@ -4,60 +4,39 @@
 table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
 </style>
 
-<h1>{{ user.first_name }} {{ user.last_name }}</h1>
-
 {% if error_message %}
     <p><strong>{{ error_message }}</strong></p>
 {% endif %}
 
-{% if module_student %}
-    <table>
-    <tr>
-        {% for key,values in testdict.items %}
-            <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
-        {% endfor %}
-    </tr>
+{% if student %}
 
-    <tr>
-        {% for key in testdict %}
-            {% for test in testdict|key:key %}
-                <td> {{ test.name }} </td>
-            {% endfor %}
-        {% endfor %}
-    </tr>
-    <tr>
-        {% for key in testdict %}
-            {% for test in testdict|key:key %}
-                <td>{{ gradedict|key:test.id }}</td>
-            {% endfor %}   
-        {% endfor %}    
-    </tr>
-    </table>
+    <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
 
-{% elif student %}
+    {% for mod in coursedict.keys %}
+        <h2> {{ mod.module.name }} </h2>
+        <table>
+            <tr>
+                {% for course in coursedict|key:mod %}
+                    <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
+                {% endfor %}
+            </tr>
 
-    <table>
-        <tr>
-            {% for key,values in testdict.items %}
-            <th colspan="{{ values|length }}"> {{ coursedict|key:key }} </th>
-        {% endfor %}
-        </tr>
-
-        <tr>
-            {% for key in testdict %}
-                {% for test in testdict|key:key %}
-                    <td> {{ test.name }} </td>
-            {% endfor %}
-        {% endfor %}
-    </tr>
-    <tr>
-        {% for key in testdict %}
-            {% for test in testdict|key:key %}
-                <td>{{ gradedict|key:test }}</td>
-            {% endfor %}
-        {% endfor %}
-        </tr>
-    </table>
+            <tr>
+                {% for course in coursedict|key:mod %}
+                    {% for test in testdict|key:course %}
+                        <td> {{ test.name }} </td>
+                    {% endfor %}
+                {% endfor %}
+            </tr>
+            <tr>
+                {% for course in coursedict|key:mod %}
+                    {% for test in testdict|key:course %}
+                        <td>{{ gradedict|key:test }}</td>
+                    {% endfor %}
+                {% endfor %}
+            </tr>
+        </table>
+    {% endfor %}
 
 {% else %}
 <p>No courses available</p>

@@ -8,7 +8,6 @@ def key(d, key_name):
         value = d[key_name]
     except:
         from django.conf import settings
-
         value = 'N/A'
 
     return value
