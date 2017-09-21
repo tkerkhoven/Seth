@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.views import generic
 from .models import Module, Studying, Module_ed, Course, Test, Grade, Person
 from django.urls import reverse_lazy
+from .forms import UserUpdateForm
+
 
 
 class ModuleView(generic.ListView):
@@ -134,8 +136,10 @@ class PersonDetailView(generic.DetailView):
 
 class UpdateUser(generic.UpdateView):
     model = Person
-    fields = ('name', 'start', 'stop', 'role', 'studies')
+    # fields = ('name', 'start', 'stop', 'role', 'studies')
     template_name_suffix = '/update-user'
+    form_class = UserUpdateForm
+
     # success_url = reverse_lazy('grades:user', args=(!!self.object.id!!))
 
     # def get_context_data(self):
@@ -152,6 +156,22 @@ class UpdateUser(generic.UpdateView):
     def get_absolute_url(self):
         return u'/grades/user/%d' % self.id
 
-    # def get_object(self, queryset=None):
-    #     obj = Person.objects.get(id=self.kwargs['pk'])
-    #     return obj
+    def get_initial(self):
+        initial = super(UpdateUser, self).get_initial()
+
+        person = Person.objects.get(id=self.object.id)
+        data = {
+            'name': person.name,
+            'id_prefix': person.id_prefix,
+            'person_id': person.person_id,
+            'start': person.start,
+            'stop': person.stop,
+            'role': person.role,
+            'studies': person.studies
+        }
+        # initial['name'] = person.name
+        return initial
+
+        # def get_object(self, queryset=None):
+        #     obj = Person.objects.get(id=self.kwargs['pk'])
+        #     return obj

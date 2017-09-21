@@ -23,7 +23,7 @@ Studies: {{ study }} <br>
 Full ID: {{ person.full_id }}
 <br><br>
 <!--<a href="/grades/update-user">Edit:</a>-->
-<form action="update-user/" method="post">{% csrf_token %}
+<form action="update-user/" method="get">{% csrf_token %}
     <!--{{ form.as_p }-->
     <input type="submit" value="Edit">
 </form>
