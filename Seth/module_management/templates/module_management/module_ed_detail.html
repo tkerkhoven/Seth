@@ -19,7 +19,7 @@
         Courses:
         <ul>
             {% for course in module_ed.courses.all %}
-                <li>{{ course.course_code }} - {{ course.name }}</li>
+                <li><a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }} - {{ course.name }}</a></li>
             {% endfor %}
         </ul>
     </li>

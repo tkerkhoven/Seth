@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ test.name }} Details</title>
+</head>
+
+<body>
+
+<h1>{{ test.name }} Details</h1>
+
+<ul>
+    <li>Course: {{ test.course_id.course_code }} - {{ test.course_id.name }}</li>
+    <li>Test Name: {{ test.name }}</li>
+    <li>Test Type: {{ test.get_type }}</li>
+    <li>Test Time: {{ test.time }}</li>
+    <li>Minimum Grade: {{ test.minimum_grade }}</li>
+    <li>Maximum Grade: {{ test.maximum_grade }}</li>
+    <li>Test Grades TODO link{#TODO link#}</li>
+    <li>
+        Teachers:
+        <ul>
+
+        </ul>
+    </li>
+    <li>
+        Tests:
+        <ul>
+
+        </ul>
+    </li>
+</ul>
+
+</body>
+
+</html>
