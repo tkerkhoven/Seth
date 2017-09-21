@@ -23,6 +23,8 @@ class GradeView(generic.DetailView):
         context = super(GradeView, self).get_context_data(**kwargs)
 
         student_list = []
+        test_width_dict = dict()
+        course_width_dict = dict()
         course_dict = dict()
         test_dict = dict()
 
@@ -33,16 +35,21 @@ class GradeView(generic.DetailView):
             student_dict['user'] = studying.student_id.user
             for course in mod_ed.courses.prefetch_related('test_set').all():
                 test_list = []
+
                 if course not in course_dict.keys():
                     course_dict[course] = course.name
 
                 for test in course.test_set.prefetch_related('grade_set').all():
+                    gradelist = []
 
                     if test not in test_list:
                         test_list.append(test)
 
                     for grade in test.grade_set.filter(student_id=studying.student_id):
-                        student_dict[test] = grade
+                        gradelist.append(grade)
+
+                    gradelist.sort(key = lambda gr: grade.time)
+                    student_dict[test] = gradelist
                     test_dict[course] = test_list
 
             student_list.append(student_dict)
