@@ -126,7 +126,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-
     'static/Seth'
 ]
 
@@ -136,3 +135,7 @@ LOGIN_REDIRECT_URL = '/'
 FIXTURE_DIRS = (
    './fixtures/',
 )
+
+# Django-excel requires these, used in importer.
+FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",
+                        "django_excel.TemporaryExcelFileUploadHandler")

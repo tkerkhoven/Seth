@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Import module {{ id }}
+    Import grades into module {{ module_ed.module.name }}
 {% endblock %}
 
 {% block content %}
-    {% for mod in module_ed_list %}
-        <h3>{{ mod }}</h3>
-    {% empty %}
-        <h3>No module_eds available</h3>
-    {% endfor %}
+        <form action="{% url 'import_module' pk %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <input type="submit" value="Upload" /></p>
+        </form>
 {% endblock %}
