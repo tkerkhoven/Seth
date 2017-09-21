@@ -1,6 +1,9 @@
+from django.http import HttpResponse
 from django.views import generic
 from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
 from django.contrib.auth.models import User
+import csv
+from django.utils.encoding import smart_str
 
 
 class ModuleView(generic.ListView):
@@ -39,7 +42,7 @@ class GradeView(generic.DetailView):
                         test_list.append(test)
 
                     for grade in test.grade_set.filter(student_id=studying.student_id):
-                        student_dict[test] = grade.grade
+                        student_dict[test] = grade
                     test_dict[course] = test_list
 
             student_list.append(student_dict)
@@ -82,7 +85,7 @@ class StudentView(generic.DetailView):
                         test_list.append(test)
 
                     for grade in test.grade_set.filter(student_id=person):
-                        grade_dict[test] = grade.grade
+                        grade_dict[test] = grade
 
                 test_dict[course] = test_list
             course_dict[mod_ed] = course_list
@@ -123,7 +126,7 @@ class ModuleStudentView(generic.DetailView):
                     test_list.append(test)
 
                 for grade in test.grade_set.filter(student_id=student):
-                    grade_dict[test] = grade.grade
+                    grade_dict[test] = grade
 
                 test_dict[course] = test_list
 
@@ -156,7 +159,7 @@ class CourseView(generic.DetailView):
 
             grade_dict = dict()
             for grade in test.grade_set.prefetch_related('student_id').all():
-                grade_dict[grade.student_id] = grade.grade
+                grade_dict[grade.student_id] = grade
             test_dict[test] = grade_dict
 
         context['course'] = course
@@ -183,9 +186,39 @@ class TestView(generic.DetailView):
                     student_list.append(studying.student_id)
 
         for grade in test.grade_set.prefetch_related('student_id').all():
-            grade_dict[grade.student_id] = grade.grade
+            grade_dict[grade.student_id] = grade
 
         context['test'] = test
         context['studentlist'] = student_list
         context['gradedict'] = grade_dict
         return context
+
+
+def export(request, *args, **kwargs):
+    mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(id=kwargs['pk'])
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=' + mod_ed.module.name + '.csv'
+    writer = csv.writer(response, csv.excel)
+    response.write(u'\ufeff'.encode('utf8'))
+
+    output = u'Student'
+    for course in mod_ed.courses.prefetch_related('test_set').all():
+        for test in course.test_set.all():
+            output += ',' + test.name
+
+    writer.writerow([
+        smart_str(output),
+    ])
+
+    for studying in mod_ed.studying_set.prefetch_related('student_id'):
+
+        output = u'' + studying.student_id.user.last_name + ' (' + studying.student_id.id_prefix + studying.student_id.person_id + ')'
+        for course in mod_ed.courses.prefetch_related('test_set').all():
+            for test in course.test_set.prefetch_related('grade_set').all():
+                for grade in test.grade_set.filter(student_id=studying.student_id):
+                    output += ',' + str(grade.grade)
+        writer.writerow([
+            smart_str(output)
+        ])
+    return response

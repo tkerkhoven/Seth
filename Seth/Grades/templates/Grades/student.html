@@ -38,7 +38,9 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
             {% for mod in coursedict.keys %}
             {% for course in coursedict|key:mod %}
             {% for test in testdict|key:course %}
-                <td>{{ gradedict|key:test }}</td>
+            {% with grade=gradedict|key:test %}
+                <td>{{ grade.grade }}</td>
+            {% endwith %}
             {% endfor %}
             {% endfor %}
             {% endfor %}
@@ -66,7 +68,9 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
             <tr>
                 {% for course in coursedict|key:mod %}
                 {% for test in testdict|key:course %}
-                    <td>{{ gradedict|key:test }}</td>
+                {% with grade=gradedict|key:test %}
+                    <td>{{ grade.grade }}</td>
+                {% endwith %}
                 {% endfor %}
                 {% endfor %}
             </tr>
