@@ -11,7 +11,8 @@
 <h1>{{ test.name }} Details</h1>
 
 <ul>
-    <li>Course: {{ test.course_id.course_code }} - {{ test.course_id.name }}</li>
+    <li>Course: <a href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
+        - {{ test.course_id.name }}</a></li>
     <li>Test Name: {{ test.name }}</li>
     <li>Test Type: {{ test.get_type }}</li>
     <li>Test Time: {{ test.time }}</li>
