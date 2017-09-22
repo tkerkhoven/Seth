@@ -3,7 +3,7 @@
 <head>
 
     <script src="https://use.fontawesome.com/63604c1065.js"></script>
-    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
+    <link href="{% static 'bootstrap_new/dist/css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
     <link href="{% static 'dashboard/css/styles.css' %}" rel="stylesheet" />
 {#    <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">#}
@@ -11,57 +11,13 @@
 </head>
 <body>
 {#    <img src="{% static "images/sitelogo.png" %}" alt="Logo" />#}
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark justify-content-between">
-        <a class="navbar-brand" href="#">Seth</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-                <li class="nav-item active">
-                    <a class="nav-link" href="../dashboard">Home<span class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="#">Grades<span class="sr-only">(current)</span></a>
-                </li>
-            </ul>
-            <div class="btn-group">
-                  <button type="button" class="btn dropdown-toggle nav-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <i class="material-icons md-light md-36">add</i>
-                  </button>
-                  <div class="dropdown-menu dropdown-menu-left">
-                      <a class="dropdown-item" href="#">Add module</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item" href="#">Add grades</a>
-                  </div>
-            </div>
-           <div class="btn-group">
-              <button type="button" class="btn dropdown-toggle nav-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="material-icons md-light md-36">account_circle</i> <!-- Probably add circle with initials when logged in, like in Trello -->
-{#                  <i class="fa fa-user-circle fa-light fa-24"></i>#}
-              </button>
-              <div class="dropdown-menu dropdown-menu-left">
-                  {% if user.is_authenticated %}
-                  <h6 class="dropdown-header">Current user: {{ user.username }}</h6>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="#">Your profile [pending deletion]</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{% url 'settings' %}">Settings</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-                  {% else %}
-                  <a class="dropdown-item" href="{% url 'login' %}">Log in</a>
-                  {% endif %}
-              </div>
-            </div>
-        </div>
-    </nav>
+
     {% block content %}{% endblock %}
 
     <script src="{% static 'jquery/jquery-3.2.1.min.js' %}"></script>
     <script src="{% static 'popper/popper.js' %}"></script>
     <script src="{% static 'popper/popper-utils.js' %}"></script>
-    <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'bootstrap_new/dist/js/bootstrap.min.js' %}"></script>
     <script src="{% static 'seth/js/scripts.js' %}"></script>
 </body>
 </html>
