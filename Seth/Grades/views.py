@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.views import generic
-from Grades.forms import ReleaseForm
+from Grades.forms import ReleaseForm, ActionForm
 from .models import Module, Studying, Module_ed, Course, Test, Grade, Person
 from django.urls import reverse_lazy, reverse
 from .forms import UserUpdateForm
@@ -12,7 +12,6 @@ from .models import Module, Studying, Person, Module_ed, Test, Course
 from django.contrib.auth.models import User
 import csv
 from django.utils.encoding import smart_str
-
 
 class ModuleView(generic.ListView):
     template_name = 'Grades/modules.html'
@@ -33,8 +32,6 @@ class GradeView(generic.DetailView):
         student_list = []
         course_dict = dict()
         test_dict = dict()
-        grade_num_dict = dict()
-        num_grades = 0
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
@@ -49,7 +46,6 @@ class GradeView(generic.DetailView):
 
                 for test in course.test_set.prefetch_related('grade_set').all():
                     gradelist = []
-                    num_grades += 1
 
                     if test not in test_list:
                         test_list.append(test)
@@ -58,8 +54,6 @@ class GradeView(generic.DetailView):
                         gradelist.append(grade)
 
                     gradelist.sort(key=lambda gr: grade.time)
-                    if gradelist != []:
-                        grade_num_dict[gradelist[-1]] = num_grades-1
 
                     student_dict[test] = gradelist
                     test_dict[course] = test_list
@@ -69,15 +63,6 @@ class GradeView(generic.DetailView):
         context['studentdict'] = student_list
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
-
-        ReleaseFormSet = formset_factory(ReleaseForm, extra=num_grades)
-
-        grade_released_list = []
-        for grade in grade_num_dict.keys():
-            grade_released_list.append({'grade': grade.released})
-
-        context['formset'] = ReleaseFormSet(initial=grade_released_list)
-        context['gradenum'] = grade_num_dict
         return context
 
 
@@ -305,6 +290,11 @@ class TestView(generic.DetailView):
         context['test'] = test
         context['studentlist'] = student_list
         context['gradedict'] = grade_dict
+
+        ReleaseFormSet = formset_factory(ReleaseForm, extra=len(student_list))
+
+        context['formset'] = ReleaseFormSet()
+        context['actform'] = ActionForm()
         return context
 
 
@@ -346,21 +336,22 @@ def export(request, *args, **kwargs):
     return response
 
 def release(request):
-    ReleaseFormSet = formset_factory(ReleaseForm, extra=2)
+    ReleaseFormSet = formset_factory(ReleaseForm)
 
     if request.method == 'POST':
-        try:
-            release_formset = ReleaseFormSet(request.POST)
-        except ValidationError:
-            if release_formset.is_valid():
-                for release_form in release_formset:
-                    grade = release_form.cleaned_data.get('grade')
-                    grade.released = True
-                    grade.save()
-    else:
-        release_formset = ReleaseFormSet()
+        form = ActionForm(request.POST)
+        formset = ReleaseFormSet(request.POST)
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        if form.is_valid() and formset.is_valid():
+            for release_form in formset:
+                grade = release_form.cleaned_data.get('grade')
+                print(grade)
+                grade.released = True
+                grade.save()
+    else:
+        form = ActionForm()
+        formset = ReleaseFormSet()
+
     # TODO: Send mail
 
-    return response
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

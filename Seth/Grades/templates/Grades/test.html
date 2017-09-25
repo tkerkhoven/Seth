@@ -19,22 +19,37 @@
                 {% endif %}
 
                 {% if test %}
+
                     <h3 class="display-4"> {{ test }} </h3>
                     <hr>
+
+                    <form action="{% url 'grades:release' %}" method="POST">
+                    {% csrf_token %}
+
+                    {{ actform.action }}
+                    <input class="btn btn-secondary" type="submit" value="Go" />
+
                     <table class="table table-striped table-bordered table-responsive">
                         <tr>
+                            <th></th>
                             <th>Student</th>
                             <th>Grade</th>
                         </tr>
                         {% for student in studentlist %}
                             <tr>
-                                <td>{{ student.user.last_name }}</td>
+                                {% with form=formset|key:forloop.counter0 %}
+                                    <td> {{ form.grade }} </td>
+                                {% endwith %}
+
+                                <td> {{ student.user.last_name }} </td>
                                 {% with grade=gradedict|key:student|last %}
                                     <td>{{ grade|grade_od }}</td>
                                 {% endwith %}
                             </tr>
                         {% endfor %}
                     </table>
+
+                    </form>
 
                 {% else %}
                 <p>No tests available</p>
