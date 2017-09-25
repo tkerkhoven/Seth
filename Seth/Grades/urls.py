@@ -18,6 +18,5 @@ urlpatterns = [
     url(r'^courses/(?P<pk>([0-9]+))/$', views.CourseView.as_view(), name='course'),
     url(r'^tests/(?P<pk>[0-9]+)/$', views.TestView.as_view(), name='test'),
     url(r'^exports/(?P<pk>([0-9]+))/$', views.export, name='export'),
-    url(r'^release/(?P<pk>([0-9]+))/$', views.release, name='release'),
-    url(r'^retract/(?P<pk>([0-9]+))/$', views.release, name='retract'),
+    url(r'^release/$', views.release, name='release'),
 ]
