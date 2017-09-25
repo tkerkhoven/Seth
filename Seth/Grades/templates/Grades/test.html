@@ -1,0 +1,30 @@
+{% load grade_extras %}
+
+<style>
+table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
+</style>
+
+{% if error_message %}
+    <p><strong>{{ error_message }}</strong></p>
+{% endif %}
+
+{% if test %}
+    <h2> {{ test }} </h2>
+    <table>
+        <tr>
+            <th>Student</th>
+            <th>Grade</th>
+        </tr>
+        {% for student in studentlist %}
+            <tr>
+                <td>{{ student.user.last_name }}</td>
+                {% with grade=gradedict|key:student|last %}
+                    <td>{{ grade|grade_od }}</td>
+                {% endwith %}
+            </tr>
+        {% endfor %}
+    </table>
+
+{% else %}
+<p>No tests available</p>
+{% endif %}
