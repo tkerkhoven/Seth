@@ -18,7 +18,7 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
         {% for student in studentlist %}
             <tr>
                 <td>{{ student.user.last_name }}</td>
-                {% with grade=gradedict|key:student %}
+                {% with grade=gradedict|key:student|last %}
                     <td>{{ grade.grade }}</td>
                 {% endwith %}
             </tr>

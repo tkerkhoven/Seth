@@ -28,7 +28,7 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
     <tr>
         {% for course in courselist %}
         {% for test in testdict|key:course %}
-        {% with grade=gradedict|key:test %}
+        {% with grade=gradedict|key:test|last %}
             <td>{{ grade.grade }}</td>
         {% endwith %}
         {% endfor %}
