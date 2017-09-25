@@ -1,6 +1,9 @@
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
+from .models import Module, Studying, Module_ed, Course, Test, Grade, Person
+from django.urls import reverse_lazy, reverse
+from .forms import UserUpdateForm
 from .models import Module, Studying, Person, Module_ed, Test, Course
 from django.contrib.auth.models import User
 import csv
@@ -47,7 +50,7 @@ class GradeView(generic.DetailView):
                     for grade in test.grade_set.filter(student_id=studying.student_id):
                         gradelist.append(grade)
 
-                    gradelist.sort(key = lambda gr: grade.time)
+                    gradelist.sort(key=lambda gr: grade.time)
                     student_dict[test] = gradelist
                     test_dict[course] = test_list
 
@@ -65,7 +68,6 @@ class StudentView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(StudentView, self).get_context_data(**kwargs)
-
         grade_dict = dict()
         test_dict = dict()
         course_dict = dict()
@@ -94,7 +96,7 @@ class StudentView(generic.DetailView):
                     for grade in test.grade_set.filter(student_id=person).filter(released=True):
                         gradelist.append(grade)
 
-                    gradelist.sort(key = lambda gr: grade.time)
+                    gradelist.sort(key=lambda gr: grade.time)
                     grade_dict[test] = gradelist
                     test_dict[course] = test_list
             course_dict[mod_ed] = course_list
@@ -107,6 +109,79 @@ class StudentView(generic.DetailView):
         context['modwidth'] = mod_width
 
         return context
+
+
+class PersonsView(generic.ListView):
+    template_name = 'Grades/users.html'
+    model = Person
+
+    def get_context_data(self, **kwargs):
+        context = super(PersonsView, self).get_context_data(**kwargs)
+
+        persons = Person.objects.all()
+        person_dict = dict()
+        for person in persons.all():
+            data = dict()
+            data['name'] = person.name
+            data['role'] = person.role
+            data['full_id'] = person.full_id
+            person_dict[person.id] = data
+            print(person.name)
+        context['persons'] = person_dict
+        return context
+
+
+class PersonDetailView(generic.DetailView):
+    template_name = 'Grades/user.html'
+    model = Person
+
+    def get_context_data(self, **kwargs):
+        context = super(PersonDetailView, self).get_context_data(**kwargs)
+        person = Person.objects.get(id=self.kwargs['pk'])
+        data = dict()
+        data['name'] = person.name
+        data['id'] = person.id
+        data['start'] = person.start
+        data['stop'] = person.stop
+        data['role'] = person.role
+        data['studies'] = person.studies
+        print(person.studies)
+        data['full_id'] = person.full_id
+        context['person'] = data
+        return context
+
+
+class UpdateUser(generic.UpdateView):
+    model = Person
+    template_name_suffix = '/update-user'
+    form_class = UserUpdateForm
+
+    def get_success_url(self):
+        return reverse_lazy('grades:user', args=(self.object.id,))
+
+    def get_absolute_url(self):
+        return u'/grades/user/%d' % self.id
+
+    def get_initial(self):
+        initial = super(UpdateUser, self).get_initial()
+        return initial
+
+        # def get_object(self, queryset=None):
+        #     obj = Person.objects.get(id=self.kwargs['pk'])
+        #     return obj
+
+
+class DeleteUser(generic.DeleteView):
+    model = Person
+    success_url = reverse_lazy('grades:users')
+
+
+class CreatePerson(generic.CreateView):
+    model = Person
+    fields = '__all__'
+
+    def get_success_url(self):
+        return reverse_lazy('grades:user', args=(self.object.id,))
 
 
 class ModuleStudentView(generic.DetailView):
@@ -251,6 +326,7 @@ def export(request, *args, **kwargs):
         ])
     return response
 
+
 def release(request, *args, **kwargs):
     response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
@@ -259,9 +335,10 @@ def release(request, *args, **kwargs):
         grade.released = True
         grade.save()
 
-    #TODO: Send mail
+    # TODO: Send mail
 
     return response
+
 
 def retract(request, *args, **kwargs):
     response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -271,6 +348,6 @@ def retract(request, *args, **kwargs):
         grade.released = False
         grade.save()
 
-    #TODO: Send mail
+    # TODO: Send mail
 
     return response

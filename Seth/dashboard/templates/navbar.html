@@ -10,7 +10,7 @@
                 </li>
                 {% if grades_installed %}
                 <li class="nav-item active">
-                    <a class="nav-link" href="#">Grades<span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{% url 'grades:modules' %}">Grades<span class="sr-only">(current)</span></a>
                 </li>
                 {% endif %}
                 {% if importer_installed %}
@@ -21,6 +21,11 @@
                 {% if module_management_installed %}
                 <li class="nav-item active">
                     <a class="nav-link" href="{% url 'module_management:module_overview' %}">Module Management<span class="sr-only">(current)</span></a>
+                </li>
+                {% endif %}
+                {% if hr_installed %}
+                <li class="nav-item active">
+                    <a class="nav-link" href="{%  url 'grades:users' %}">Human Resources<span class="sr-only">(current)</span></a>
                 </li>
                 {% endif %}
             </ul>
