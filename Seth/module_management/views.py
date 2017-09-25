@@ -15,6 +15,11 @@ class IndexView(generic.ListView):
         module_list = Module.objects.prefetch_related('module_ed_set').filter(module_ed__module_coordinator__user=user)
         return module_list
 
+    def get_context_data(self, **kwargs):
+        context = super(IndexView, self).get_context_data(**kwargs)
+        context['mod_eds'] = Module_ed.objects.filter(module_coordinator__user=self.request.user)
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
