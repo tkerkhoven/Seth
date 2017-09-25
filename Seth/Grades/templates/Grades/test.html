@@ -3,9 +3,10 @@
 {% block title %}Test{% endblock %}
 
 {% block content %}
-
+    
     {% include 'navbar.html' %}
     {% load grade_extras %}
+
 
 {#    <style>#}
 {#    table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}#}
@@ -28,7 +29,9 @@
                         {% for student in studentlist %}
                             <tr>
                                 <td>{{ student.user.last_name }}</td>
-                                <td>{{ gradedict|key:student }}</td>
+                                {% with grade=gradedict|key:student|last %}
+                                    <td>{{ grade|grade_od }}</td>
+                                {% endwith %}
                             </tr>
                         {% endfor %}
                     </table>

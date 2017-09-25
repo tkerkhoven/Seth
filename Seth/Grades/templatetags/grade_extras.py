@@ -11,3 +11,13 @@ def key(d, key_name):
         value = 'N/A'
 
     return value
+
+@register.filter(name='grade_od')
+def gradeordash(d):
+    try:
+        value = d.grade
+    except:
+        from django.conf import settings
+        value = '-'
+
+    return value

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dashboard',
+    'importer',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dashboard.context_processors.installed_apps.installed_apps',
             ],
         },
     },
@@ -124,7 +126,6 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-
     'static/Seth'
 ]
 
@@ -137,3 +138,7 @@ LOGOUT_REDIRECT_URL = '/successfully_logged_out/'
 FIXTURE_DIRS = (
    './fixtures/',
 )
+
+# Django-excel requires these, used in importer.
+FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",
+                        "django_excel.TemporaryExcelFileUploadHandler")
