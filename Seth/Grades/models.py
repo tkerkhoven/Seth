@@ -119,7 +119,7 @@ class Module_ed(models.Model):
     module_code_extension = models.CharField(max_length=16, default='')
 
     courses = models.ManyToManyField(Course)
-    coordinator = models.ManyToManyField(Person, through='Module_coordinator')
+    module_coordinator = models.ManyToManyField(Person, through='Coordinator')
 
     start = models.DateField(default=datetime.date(1, 1, 1))
     stop = models.DateField(default=datetime.date(9999, 12, 31))
@@ -135,7 +135,7 @@ class Module_ed(models.Model):
         return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
 
 
-class Module_coordinator(models.Model):
+class Coordinator(models.Model):
     person = models.ForeignKey(Person)
     module = models.ForeignKey(Module_ed)
     mc_assistant = models.BooleanField(default=False)
