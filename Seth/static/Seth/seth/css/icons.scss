@@ -1,0 +1,58 @@
+$light-color: rgba(255,255,255,1);
+$light-inactive: rgba(255,255,255,0.3);
+$dark-color: rgba(0,0,0,0.54);
+$dark-inactive: rgba(0,0,0,0.26);
+
+.material-icons {
+  &.md-18 {
+    font-size: 18px;
+  }
+  &.md-24 {
+    font-size: 24px;
+  }
+  &.md-36 {
+    font-size: 36px;
+  }
+  &.md-48 {
+    font-size: 48px;
+  }
+  &.md-dark {
+    color: $dark-color;
+    &.md-inactive {
+      color: $dark-inactive;
+    }
+  }
+  &.md-light {
+    color: $light-color;
+    &.md-inactive {
+      color: $light-inactive;
+    }
+  }
+}
+
+.fa {
+  &.fa-light {
+    color: $light-color;
+    &.fa-inactive {
+      color: $light-inactive;
+    }
+  }
+  &.fa-dark {
+    color: $dark-color;
+    &.fa-inactive {
+      color: $dark-inactive;
+    }
+  }
+  &.fa-18 {
+    font-size: 18px;
+  }
+  &.fa-24 {
+    font-size: 24px;
+  }
+  &.fa-36 {
+    font-size: 36px;
+  }
+  &.fa-48 {
+    font-size: 48px;
+  }
+}
