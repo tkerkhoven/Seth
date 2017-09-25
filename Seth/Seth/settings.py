@@ -127,6 +127,9 @@ STATICFILES_DIRS = [
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 
+LOGOUT_URL = '/logout/'
+LOGOUT_REDIRECT_URL = '/successfully_logged_out/'
+
 FIXTURE_DIRS = (
     './fixtures/',
 )

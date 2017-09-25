@@ -1,30 +1,45 @@
-{% load grade_extras %}
+{% extends 'base.html' %}
 
-<style>
-table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
-</style>
+{% block title %}Test{% endblock %}
 
-{% if error_message %}
-    <p><strong>{{ error_message }}</strong></p>
-{% endif %}
+{% block content %}
+    
+    {% include 'navbar.html' %}
+    {% load grade_extras %}
 
-{% if test %}
-    <h2> {{ test }} </h2>
-    <table>
-        <tr>
-            <th>Student</th>
-            <th>Grade</th>
-        </tr>
-        {% for student in studentlist %}
-            <tr>
-                <td>{{ student.user.last_name }}</td>
-                {% with grade=gradedict|key:student|last %}
-                    <td>{{ grade|grade_od }}</td>
-                {% endwith %}
-            </tr>
-        {% endfor %}
-    </table>
 
-{% else %}
-<p>No tests available</p>
-{% endif %}
+{#    <style>#}
+{#    table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}#}
+{#    </style>#}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                {% if error_message %}
+                    <p><strong>{{ error_message }}</strong></p>
+                {% endif %}
+
+                {% if test %}
+                    <h3 class="display-4"> {{ test }} </h3>
+                    <hr>
+                    <table class="table table-striped table-bordered table-responsive">
+                        <tr>
+                            <th>Student</th>
+                            <th>Grade</th>
+                        </tr>
+                        {% for student in studentlist %}
+                            <tr>
+                                <td>{{ student.user.last_name }}</td>
+                                {% with grade=gradedict|key:student|last %}
+                                    <td>{{ grade|grade_od }}</td>
+                                {% endwith %}
+                            </tr>
+                        {% endfor %}
+                    </table>
+
+                {% else %}
+                <p>No tests available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
