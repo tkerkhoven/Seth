@@ -1,7 +1,9 @@
 {% if module_list %}
     <ul>
     {% for module in module_list %}
-        <li><a href="{% url 'grades:gradebook' module.id %}">{{ module.name }}</a></li>
+    {% for mod_ed in module.module_ed_set.all %}
+        <li><a href="{% url 'grades:gradebook' mod_ed.id %}">{{ module.name }}</a></li>
+    {% endfor %}
     {% endfor %}
     </ul>
 {% else %}

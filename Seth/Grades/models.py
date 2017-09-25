@@ -1,6 +1,9 @@
-from django.db import models
-from django.contrib.auth.models import User
 import datetime
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils import timezone
+
 
 ####################################################################
 ###############          Independent Models          ###############
@@ -9,12 +12,11 @@ import datetime
 class Module(models.Model):
     module_code = models.CharField(max_length=16, primary_key=True)
     name = models.CharField(max_length=32)
-    start = models.DateField(default=datetime.date(1,1,1))
+    start = models.DateField(default=datetime.date(1, 1, 1))
     stop = models.DateField(default=datetime.date(9999, 12, 31))
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.module_code)
-
 
 
 # class Student(models.Model):
@@ -39,13 +41,15 @@ class Study(models.Model):
     def __str__(self):
         return self.full_name
 
+
 class Person(models.Model):
     name = models.CharField(max_length=32)
     id_prefix = models.CharField(max_length=8)
     person_id = models.CharField(max_length=16)
-    user = models.ForeignKey(User, blank=True, null=True) #ToDo: vm is dit de Django-user, is dit nodig voor elke Person?
-    start = models.DateField(default=datetime.date(1,1,1))
-    stop = models.DateField(default=datetime.date(9999,12,31))
+    user = models.ForeignKey(User, blank=True,
+                             null=True)  # ToDo: vm is dit de Django-user, is dit nodig voor elke Person?
+    start = models.DateField(default=datetime.date(1, 1, 1))
+    stop = models.DateField(default=datetime.date(9999, 12, 31))
     ROLES = (
         ('T', 'Teacher'),
         ('S', 'Student'),
@@ -53,16 +57,17 @@ class Person(models.Model):
         ('V', 'Study Advisor')
     )
     role = models.CharField(max_length=1, choices=ROLES)
-    
+
     # Iff role == 'V'
     studies = models.ManyToManyField(Study)
 
     @property
     def full_id(self):
-        return self.id_prefix+self.person_id
+        return self.id_prefix + self.person_id
 
     def __str__(self):
         return '{} ({})\t\t{}'.format(self.name, self.full_id, self.role)
+
 
 # class Teacher(models.Model):
 #     employee_id = models.CharField(blank=True, null=True, max_length=16)
@@ -102,21 +107,21 @@ class Course(models.Model):
     def __str__(self):
         return '{} ({})'.format(self.name, self.course_code)
 
-class Module_ed(models.Model):
 
-    year = models.DateField(default=datetime.date.today())
+class Module_ed(models.Model):
+    year = models.DateField(default=timezone.now)
     module = models.ForeignKey(Module)
     module_code_extension = models.CharField(max_length=16, default='')
 
     courses = models.ManyToManyField(Course)
     module_coordinator = models.ManyToManyField(Person)
 
-    start = models.DateField(default=datetime.date(1,1,1))
-    stop = models.DateField(default=datetime.date(9999,12,31))
+    start = models.DateField(default=datetime.date(1, 1, 1))
+    stop = models.DateField(default=datetime.date(9999, 12, 31))
 
     @property
     def module_code(self):
-        return str(self.year.year)+self.module.module_code+self.module_code_extension
+        return str(self.year.year) + self.module.module_code + self.module_code_extension
 
     def __str__(self):
         return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
@@ -141,13 +146,13 @@ class Test(models.Model):
     course_id = models.ForeignKey(Course)
 
     name = models.CharField(max_length=32, null=True)
-    TEST_TYPES = (             # Defaults to Exam
-            ('E', 'Exam'),
-            ('A', 'Assignment'),
-            ('P', 'Project')
-        )
+    TEST_TYPES = (  # Defaults to Exam
+        ('E', 'Exam'),
+        ('A', 'Assignment'),
+        ('P', 'Project')
+    )
     _type = models.CharField(max_length=1, choices=TEST_TYPES)
-    time = models.DateTimeField(default=datetime.datetime(1,1,1,0,0,0,0))
+    time = models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0, 0, 0))
 
     maximum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=10.0)
     minimum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
@@ -172,6 +177,7 @@ class Criterion(models.Model):
     def __str__(self):
         return self.condition
 
+
 ####################################################################
 ###############          Dependent Models 4          ###############
 ####################################################################
@@ -180,7 +186,7 @@ class Grade(models.Model):
     test_id = models.ForeignKey(Test)
     teacher_id = models.ForeignKey(Person, related_name='Correcter')
     student_id = models.ForeignKey(Person, related_name='Submitter')
-    time = models.DateTimeField(default=datetime.datetime(1,1,1,0,0,0,0))
+    time = models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0, 0, 0))
     description = models.CharField(max_length=256, null=True)
     grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
 
