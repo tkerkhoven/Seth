@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dashboard',
-    'module_management.apps.ModuleManagementConfig',
+    'module_management',
     'importer',
 ]
 

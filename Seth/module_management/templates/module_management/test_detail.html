@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+    {% include 'navbar.html' %}
     <ul>
         <li>Course: <a
                 href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}

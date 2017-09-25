@@ -120,8 +120,6 @@ class ModuleEdUpdateView(generic.UpdateView):
     model = Module_ed
     fields = ['year', 'module_code_extension', 'courses', 'start', 'stop']
 
-    # success_url = reverse_lazy('module_management:module_ed_detail')
-
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
         user = request.user

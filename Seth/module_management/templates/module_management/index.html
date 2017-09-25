@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+    {% include 'navbar.html' %}
     <ul>
         {% for mod in module_list %}
             <li><a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod.module_code }} - {{ mod.name }}</a>
