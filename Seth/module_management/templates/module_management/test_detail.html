@@ -1,28 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>{{ test.name }} Details</title>
-</head>
+{% block title %}
+    Details: {{ test }}
+{% endblock %}
 
-<body>
+{% block content %}
+    <ul>
+        <li>Course: <a
+                href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
+            - {{ test.course_id.name }}</a></li>
+        <li>Test Name: {{ test.name }}</li>
+        <li>Test Type: {{ test.get_type }}</li>
+        <li>Test Time: {{ test.time }}</li>
+        <li>Minimum Grade: {{ test.minimum_grade }}</li>
+        <li>Maximum Grade: {{ test.maximum_grade }}</li>
+        <li><a href="{% url 'grades:test' test.pk %}">Test Grades</a></li>
+    </ul>
 
-<h1>{{ test.name }} Details</h1>
-
-<ul>
-    <li>Course: <a href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
-        - {{ test.course_id.name }}</a></li>
-    <li>Test Name: {{ test.name }}</li>
-    <li>Test Type: {{ test.get_type }}</li>
-    <li>Test Time: {{ test.time }}</li>
-    <li>Minimum Grade: {{ test.minimum_grade }}</li>
-    <li>Maximum Grade: {{ test.maximum_grade }}</li>
-    <li>Test Grades TODO link{#TODO link#}</li>
-</ul>
-
-<a href="{% url 'module_management:test_update' test.pk %}">Edit</a>
-
-</body>
-
-</html>
+    <a href="{% url 'module_management:test_update' test.pk %}">Edit</a>
+{% endblock %}

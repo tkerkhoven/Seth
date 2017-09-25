@@ -1,38 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>{{ course.name }} - {{ course.course_code }} Details</title>
-</head>
+{% block title %}
+    Details: {{ course }}
+{% endblock %}
 
-<body>
+{% block content %}
+    <ul>
+        <li>Course Code: {{ course.course_code }}</li>
+        <li>Course Name: {{ course.name }}</li>
+        <li>
+            Teachers:
+            <ul>
+                {% for teacher in course.teacher.all %}
+                    <li>{{ teacher.name }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+        <li>
+            Tests:
+            <ul>
+                {% for test in course.test_set.all %}
+                    <li><a href="{% url 'module_management:test_detail' test.pk %}">{{ test.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </li>
+        <li><a href="{% url 'grades:course' course.pk %}">Course Grades</a></li>
+    </ul>
 
-<h1>{{ course.name }} - {{ course.course_code }} Details</h1>
-
-<ul>
-    <li>Course Code: {{ course.course_code }}</li>
-    <li>Course Name: {{ course.name }}</li>
-    <li>
-        Teachers:
-        <ul>
-            {% for teacher in course.teacher.all %}
-                <li>{{ teacher.name }}</li>
-            {% endfor %}
-        </ul>
-    </li>
-    <li>
-        Tests:
-        <ul>
-            {% for test in course.test_set.all %}
-                <li><a href="{% url 'module_management:test_detail' test.pk %}">{{ test.name }}</a></li>
-            {% endfor %}
-        </ul>
-    </li>
-</ul>
-
-<a href="{% url 'module_management:course_update' course.pk %}">Edit</a>
-
-</body>
-
-</html>
+    <a href="{% url 'module_management:course_update' course.pk %}">Edit</a>
+{% endblock %}

@@ -1,30 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Module "{{ module.name }}" Details</title>
-</head>
+{% block title %}
+    Details: {{ module }}
+{% endblock %}
 
-<body>
-
-<h1>{{ module.name }} Details</h1>
-
-<ul>
-    <li>Module Code: {{ module.module_code }}</li>
-    <li>Module Name: {{ module.name }}</li>
-    <li>Start: {{ module.start }}</li>
-    <li>Stop: {{ module.stop }}</li>
-    <li>
-        Module Editions:
-        <ul>
-            {% for mod_ed in module.module_ed_set.all %}
-                <li><a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a></li>
-            {% endfor %}
-        </ul>
-    </li>
-</ul>
-
-</body>
-
-</html>
+{% block content %}
+    <ul>
+        <li>Module Code: {{ module.module_code }}</li>
+        <li>Module Name: {{ module.name }}</li>
+        <li>Start: {{ module.start }}</li>
+        <li>Stop: {{ module.stop }}</li>
+        <li>
+            Module Editions:
+            <ul>
+                {% for mod_ed in module.module_ed_set.all %}
+                    <li><a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+    </ul>
+{% endblock %}

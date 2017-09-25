@@ -1,32 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Module Edition {{ module_ed.module_code }} Details</title>
-</head>
+{% block title %}
+    Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.year.year }}
+{% endblock %}
 
-<body>
+{% block content %}
+    <ul>
+        <li>Module Code: {{ module_ed.module_code }}</li>
+        <li>Year: {{ module_ed.year.year }}</li>
+        <li>Start: {{ module_ed.start }}</li>
+        <li>Stop: {{ module_ed.stop }}</li>
+        <li>
+            Courses:
+            <ul>
+                {% for course in module_ed.courses.all %}
+                    <li><a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
+                        - {{ course.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </li>
+        <li><a href="{% url 'grades:gradebook' module_ed.pk %}">Module Edition Grades</a></li>
+    </ul>
 
-<h1>{{ module_ed.module.name }} {{ module_ed.year.year }} Details</h1>
-
-<ul>
-    <li>Module Code: {{ module_ed.module_code }}</li>
-    <li>Year: {{ module_ed.year.year }}</li>
-    <li>Start: {{ module_ed.start }}</li>
-    <li>Stop: {{ module_ed.stop }}</li>
-    <li>
-        Courses:
-        <ul>
-            {% for course in module_ed.courses.all %}
-                <li><a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }} - {{ course.name }}</a></li>
-            {% endfor %}
-        </ul>
-    </li>
-</ul>
-
-<a href="{% url 'module_management:module_ed_update' module_ed.pk %}">Edit</a>
-
-</body>
-
-</html>
+    <a href="{% url 'module_management:module_ed_update' module_ed.pk %}">Edit</a>
+{% endblock %}

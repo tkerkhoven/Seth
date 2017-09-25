@@ -1,4 +1,12 @@
-<form action="" method="post">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Apply" />
-</form>
+{% extends 'base.html' %}
+
+{% block title %}
+    Edit: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.year.year }}
+{% endblock %}
+
+{% block content %}
+    <form action="" method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Apply"/>
+    </form>
+{% endblock %}
