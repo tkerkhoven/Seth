@@ -1,6 +1,7 @@
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
+from .models import Module, Studying, Person, Module_ed, Test, Course
 from django.contrib.auth.models import User
 import csv
 from django.utils.encoding import smart_str
@@ -90,7 +91,7 @@ class StudentView(generic.DetailView):
                     if test not in test_list:
                         test_list.append(test)
 
-                    for grade in test.grade_set.filter(student_id=person):
+                    for grade in test.grade_set.filter(student_id=person).filter(released=True):
                         gradelist.append(grade)
 
                     gradelist.sort(key = lambda gr: grade.time)
@@ -248,4 +249,28 @@ def export(request, *args, **kwargs):
         writer.writerow([
             smart_str(output)
         ])
+    return response
+
+def release(request, *args, **kwargs):
+    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
+
+    for grade in test.grade_set.all():
+        grade.released = True
+        grade.save()
+
+    #TODO: Send mail
+
+    return response
+
+def retract(request, *args, **kwargs):
+    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
+
+    for grade in test.grade_set.all():
+        grade.released = False
+        grade.save()
+
+    #TODO: Send mail
+
     return response
