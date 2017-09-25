@@ -1,6 +1,8 @@
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sessions.models import Session
 from django import forms
-from django.http.response import HttpResponseBadRequest
+from django.http.response import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import generic
 from django.utils import timezone
@@ -11,32 +13,21 @@ from Grades.models import Module_ed, Grade, Test, Person
 from importer.forms import GradeUploadForm
 
 
-class IndexView(generic.ListView):
+class IndexView(LoginRequiredMixin, generic.ListView):
     template_name = 'importer/index.html'
     model = Module_ed
 
     def get_queryset(self):
-        return Module_ed.objects.order_by('start')
+        return Module_ed.objects.filter(module_coordinator=Person.objects.get(user=self.request.user)).order_by('start')
 
-# class ImportModuleView(generic.FormView):
-#     template_name = 'importer/importmodule.html'
-#     form_class = UploadFileForm
-#
-#     def form_valid(self, form):
-#         form.save_book_to_database(
-#             models=[Grade],
-#             initializers=[None],
-#             mapdicts=[
-#                 ['student_id', 'teacher_id', 'test_id', 'grade', 'description', 'time']]
-#         )
-#         return super(ImportModuleView, self).form_valid(form)
-
-
-
+@login_required
 def import_module(request, pk):
+
+    if not Module_ed.objects.filter(module_coordinator=Person.objects.get(user=request.user)).filter(pk=pk):
+        return HttpResponseForbidden()
+
     if request.method == "POST":
-        form = GradeUploadForm(request.POST,
-                              request.FILES)
+        form = GradeUploadForm(pk, request.POST, request.FILES)
 
         def test_func(row):
             student = Person.objects.filter(person_id=row[0])[0]
@@ -82,9 +73,11 @@ def import_module(request, pk):
         else:
             return HttpResponseBadRequest()
     else:
-        form = GradeUploadForm()
+        if Module_ed.objects.filter(pk=pk):
+            form = GradeUploadForm(pk)
+            return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
 
-        # Does not work
-        #form.test = forms.ModelChoiceField(queryset=Test.objects.filter(course_id__module_ed__pk=pk), label='Test to register grades for', to_field_name="pk")
+        else:
+            return HttpResponseBadRequest()
 
-        return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
+

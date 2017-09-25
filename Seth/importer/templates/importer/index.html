@@ -7,7 +7,7 @@
 {% block content %}
     {% if module_ed_list %}
         {% for mod in module_ed_list %}
-            <h3>{{ mod }}</h3>
+            <a href="{% url 'import_module' mod.pk %}"><h3>{{ mod }}</h3></a>
         {% endfor %}
     {% else %}
         <h3>No module_eds available</h3>
