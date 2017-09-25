@@ -1,16 +1,15 @@
-{% load grade_extras %}
+{% extends 'base.html' %}
 
-<style>
-table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
-</style>
+{% block title %}Student{% endblock %}
 
-{% if error_message %}
-    <p><strong>{{ error_message }}</strong></p>
-{% endif %}
+{% block content %}
 
-{% if student %}
+    {% include 'navbar.html' %}
+    {% load grade_extras %}
 
-    <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
+    <style>
+    table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
+    </style>
 
     <table>
         <tr>
@@ -47,25 +46,34 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
         </tr>
     </table>
 
-    <hr>
+    {% if student %}
 
-    {% for mod in coursedict.keys %}
-        <h2> {{ mod.module.name }} </h2>
+        <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
+
         <table>
             <tr>
+                {% for mod in coursedict.keys %}
+                    <th colspan="{{ modwidth|key:mod }}">{{ mod.module.name }}</th>
+                {% endfor %}
+            </tr>
+            <tr>
+                {% for mod in coursedict.keys %}
                 {% for course in coursedict|key:mod %}
                     <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
                 {% endfor %}
+                {% endfor %}
             </tr>
-
             <tr>
+                {% for mod in coursedict.keys %}
                 {% for course in coursedict|key:mod %}
                 {% for test in testdict|key:course %}
                     <td> {{ test.name }} </td>
                 {% endfor %}
                 {% endfor %}
+                {% endfor %}
             </tr>
             <tr>
+                {% for mod in coursedict.keys %}
                 {% for course in coursedict|key:mod %}
                 {% for test in testdict|key:course %}
                 {% with grade=gradedict|key:test|last %}
@@ -73,10 +81,39 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
                 {% endwith %}
                 {% endfor %}
                 {% endfor %}
+                {% endfor %}
             </tr>
         </table>
-    {% endfor %}
 
-{% else %}
-<p>No courses available</p>
-{% endif %}
+        <hr>
+
+        {% for mod in coursedict.keys %}
+            <h2> {{ mod.module.name }} </h2>
+            <table>
+                <tr>
+                    {% for course in coursedict|key:mod %}
+                        <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
+                    {% endfor %}
+                </tr>
+
+                <tr>
+                    {% for course in coursedict|key:mod %}
+                    {% for test in testdict|key:course %}
+                        <td> {{ test.name }} </td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for course in coursedict|key:mod %}
+                    {% for test in testdict|key:course %}
+                        <td>{{ gradedict|key:test }}</td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+            </table>
+        {% endfor %}
+
+    {% else %}
+    <p>No courses available</p>
+    {% endif %}
+{% endblock %}

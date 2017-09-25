@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dashboard',
+    'module_management.apps.ModuleManagementConfig',
     'importer',
 ]
 
@@ -131,6 +132,9 @@ STATICFILES_DIRS = [
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
+
+LOGOUT_URL = '/logout/'
+LOGOUT_REDIRECT_URL = '/successfully_logged_out/'
 
 FIXTURE_DIRS = (
    './fixtures/',
