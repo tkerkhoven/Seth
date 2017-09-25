@@ -34,15 +34,6 @@ class Module(models.Model):
 ###############          Dependent Models 1          ###############
 ####################################################################
 
-class Study(models.Model):
-    short_name = models.CharField(primary_key=True, max_length=10)
-    modules = models.ManyToManyField(Module)
-
-    full_name = models.CharField(max_length=32, null=True)
-
-    def __str__(self):
-        return self.full_name
-
 
 class Person(models.Model):
     name = models.CharField(max_length=32)
@@ -60,15 +51,24 @@ class Person(models.Model):
     )
     role = models.CharField(max_length=1, choices=ROLES)
 
-    # Iff role == 'V'
-    studies = models.ManyToManyField(Study)
-
     @property
     def full_id(self):
         return self.id_prefix + self.person_id
 
     def __str__(self):
         return '{} ({})\t\t{}'.format(self.name, self.full_id, self.role)
+
+
+class Study(models.Model):
+    short_name = models.CharField(primary_key=True, max_length=10)
+    modules = models.ManyToManyField(Module)
+
+    full_name = models.CharField(max_length=32, null=True)
+
+    advisors = models.ManyToManyField(Person)
+
+    def __str__(self):
+        return self.full_name
 
 
 # class Teacher(models.Model):
@@ -119,7 +119,7 @@ class Module_ed(models.Model):
     module_code_extension = models.CharField(max_length=16, default='')
 
     courses = models.ManyToManyField(Course)
-    module_coordinator = models.ManyToManyField(Person)
+    module_coordinator = models.ManyToManyField(Person, through='Coordinator')
 
     start = models.DateField(default=datetime.date(1, 1, 1))
     stop = models.DateField(default=datetime.date(9999, 12, 31))
@@ -133,6 +133,12 @@ class Module_ed(models.Model):
 
     def __str__(self):
         return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
+
+
+class Coordinator(models.Model):
+    person = models.ForeignKey(Person)
+    module = models.ForeignKey(Module_ed)
+    mc_assistant = models.BooleanField(default=False)
 
 
 # class Advisor(models.Model):
