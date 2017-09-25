@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'dashboard',
-    'module_management.apps.ModuleManagementConfig'
+    'module_management.apps.ModuleManagementConfig',
+    'importer',
 ]
 
 MIDDLEWARE = [
@@ -66,6 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dashboard.context_processors.installed_apps.installed_apps',
             ],
         },
     },
@@ -124,9 +126,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    'static/Seth'
+]
 
 LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
+LOGOUT_URL = '/logout/'
+LOGOUT_REDIRECT_URL = '/successfully_logged_out/'
 
 FIXTURE_DIRS = (
    './fixtures/',
 )
+
+# Django-excel requires these, used in importer.
+FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",
+                        "django_excel.TemporaryExcelFileUploadHandler")

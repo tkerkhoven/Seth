@@ -1,6 +1,8 @@
-from django.db import models
-from django.contrib.auth.models import User
 import datetime
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils import timezone
 
 
 ####################################################################
@@ -107,7 +109,7 @@ class Course(models.Model):
 
 
 class Module_ed(models.Model):
-    year = models.DateField(default=datetime.date.today())
+    year = models.DateField(default=timezone.now)
     module = models.ForeignKey(Module)
     module_code_extension = models.CharField(max_length=16, default='')
 
@@ -187,6 +189,7 @@ class Grade(models.Model):
     time = models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0, 0, 0))
     description = models.CharField(max_length=256, null=True)
     grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
+    released = models.BooleanField(default=False)
 
     def __str__(self):
         return self.grade.__str__()

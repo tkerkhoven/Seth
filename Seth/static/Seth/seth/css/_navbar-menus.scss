@@ -1,0 +1,25 @@
+.dropdown-menu {
+  &.dropdown-menu-left {
+    right: 0;
+    left: auto;
+  }
+}
+
+.btn {
+
+  &.nav-button {
+    background-color: transparent;
+    border: none;
+    &:focus {
+      border: none;
+    }
+    &.dropdown-toggle::after{
+      display: none;
+    }
+    &:active {
+      background-color: transparent;
+      border: none;
+    }
+  }
+}
+
