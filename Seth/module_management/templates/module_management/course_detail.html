@@ -11,7 +11,7 @@
 <h1>{{ course.name }} - {{ course.course_code }} Details</h1>
 
 <ul>
-    <li>Course Code: {{ course.code }}</li>
+    <li>Course Code: {{ course.course_code }}</li>
     <li>Course Name: {{ course.name }}</li>
     <li>
         Teachers:
@@ -30,6 +30,8 @@
         </ul>
     </li>
 </ul>
+
+<a href="{% url 'module_management:course_update' course.pk %}">Edit</a>
 
 </body>
 

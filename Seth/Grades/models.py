@@ -7,6 +7,8 @@ from django.db import models
 ####################################################################
 ###############          Independent Models          ###############
 ####################################################################
+from django.urls import reverse
+
 
 class Module(models.Model):
     module_code = models.CharField(max_length=16, primary_key=True)
@@ -103,6 +105,9 @@ class Course(models.Model):
     def course_code(self):
         return self.code + self.code_extension
 
+    def get_absolute_url(self):
+        return reverse('module_management:course_detail', kwargs={'pk': self.pk})
+
     def __str__(self):
         return '{} ({})'.format(self.name, self.course_code)
 
@@ -121,6 +126,9 @@ class Module_ed(models.Model):
     @property
     def module_code(self):
         return str(self.year.year) + self.module.module_code + self.module_code_extension
+
+    def get_absolute_url(self):
+        return reverse('module_management:module_ed_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
         return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
@@ -168,6 +176,9 @@ class Test(models.Model):
             'A': 'Assignment',
             'P': 'Project'
         }[self._type]
+
+    def get_absolute_url(self):
+        return reverse('module_management:test_detail', kwargs={'pk': self.pk})
 
 
 class Studying(models.Model):
