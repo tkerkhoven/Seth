@@ -18,12 +18,12 @@ class IndexView(LoginRequiredMixin, generic.ListView):
     model = Module_ed
 
     def get_queryset(self):
-        return Module_ed.objects.filter(module_coordinator=Person.objects.get(user=self.request.user)).order_by('start')
+        return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
 
 @login_required
 def import_module(request, pk):
 
-    if not Module_ed.objects.filter(module_coordinator=Person.objects.get(user=request.user)).filter(pk=pk):
+    if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
         return HttpResponseForbidden()
 
     if request.method == "POST":
