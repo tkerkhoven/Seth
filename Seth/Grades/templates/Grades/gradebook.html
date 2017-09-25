@@ -11,6 +11,11 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
 {% endif %}
 
 {% if studentdict %}
+
+    <form action="{% url 'grades:export' module_ed.id %}">
+        <input type="submit" value="Export to .csv" />
+    </form>
+
     <table>
     <tr>
         <th>Student</th>
@@ -33,11 +38,34 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
             <td><a href="{% url 'grades:modstudent' pk=module_ed.id sid=dict.user.id %}"> {{ dict.user.last_name }} </a></td>
             {% for course in coursedict.keys %}
             {% for test in testdict|key:course %}
-                <td>{{ dict|key:test }}</td>
+            {% with grade=dict|key:test|last %}
+                <td>{{ grade|grade_od }}</td>
+            {% endwith %}
             {% endfor %}
             {% endfor %}    
         </tr>
     {% endfor %}
+
+        <tr>
+            <td></td>
+            {% for course in coursedict.keys %}
+            {% for test in testdict|key:course %}
+                <td>
+                    {% with grade=dict|key:test|last %}
+                    {% if grade.released %}
+                        <form action="{% url 'grades:retract' test.id %}">
+                            <input type="submit" value="Retract grades" />
+                        </form>
+                    {% else %}
+                        <form action="{% url 'grades:release' test.id %}">
+                            <input type="submit" value="Release grades" />
+                        </form>
+                    {% endif %}
+                    {% endwith %}
+                </td>
+            {% endfor %}
+            {% endfor %}
+        </tr>
     </table>
 
 {% else %}

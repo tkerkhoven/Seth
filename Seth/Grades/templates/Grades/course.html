@@ -21,7 +21,9 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
             <tr>
                 <td>{{ student.user.last_name }}</td>
                 {% for test in testdict.keys %}
-                    <td>{{ testdict|key:test|key:student }}</td>
+                {% with grade=testdict|key:test|key:student|last %}
+                    <td>{{ grade|grade_od }}</td>
+                {% endwith %}
                 {% endfor %}
             </tr>
         {% endfor %}

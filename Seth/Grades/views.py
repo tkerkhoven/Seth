@@ -1,6 +1,10 @@
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
+from .models import Module, Studying, Person, Module_ed, Test, Course
 from django.contrib.auth.models import User
+import csv
+from django.utils.encoding import smart_str
 
 
 class ModuleView(generic.ListView):
@@ -30,16 +34,21 @@ class GradeView(generic.DetailView):
             student_dict['user'] = studying.student_id.user
             for course in mod_ed.courses.prefetch_related('test_set').all():
                 test_list = []
+
                 if course not in course_dict.keys():
                     course_dict[course] = course.name
 
                 for test in course.test_set.prefetch_related('grade_set').all():
+                    gradelist = []
 
                     if test not in test_list:
                         test_list.append(test)
 
                     for grade in test.grade_set.filter(student_id=studying.student_id):
-                        student_dict[test] = grade.grade
+                        gradelist.append(grade)
+
+                    gradelist.sort(key = lambda gr: grade.time)
+                    student_dict[test] = gradelist
                     test_dict[course] = test_list
 
             student_list.append(student_dict)
@@ -76,15 +85,18 @@ class StudentView(generic.DetailView):
                     course_list.append(course)
 
                 for test in course.test_set.prefetch_related('grade_set').all():
+                    gradelist = []
 
                     width += 1
                     if test not in test_list:
                         test_list.append(test)
 
-                    for grade in test.grade_set.filter(student_id=person):
-                        grade_dict[test] = grade.grade
+                    for grade in test.grade_set.filter(student_id=person).filter(released=True):
+                        gradelist.append(grade)
 
-                test_dict[course] = test_list
+                    gradelist.sort(key = lambda gr: grade.time)
+                    grade_dict[test] = gradelist
+                    test_dict[course] = test_list
             course_dict[mod_ed] = course_list
             mod_width[mod_ed] = width
 
@@ -118,13 +130,16 @@ class ModuleStudentView(generic.DetailView):
                 course_list.append(course)
 
             for test in course.test_set.prefetch_related('grade_set').all():
+                gradelist = []
 
                 if test not in test_list:
                     test_list.append(test)
 
                 for grade in test.grade_set.filter(student_id=student):
-                    grade_dict[test] = grade.grade
+                    gradelist.append(grade)
 
+                gradelist.sort(key=lambda gr: grade.time)
+                grade_dict[test] = gradelist
                 test_dict[course] = test_list
 
         context['student'] = student
@@ -156,7 +171,11 @@ class CourseView(generic.DetailView):
 
             grade_dict = dict()
             for grade in test.grade_set.prefetch_related('student_id').all():
-                grade_dict[grade.student_id] = grade.grade
+                if grade.student_id not in grade_dict.keys():
+                    grade_dict[grade.student_id] = []
+                grade_dict[grade.student_id].append(grade)
+                grade_dict[grade.student_id].sort(key=lambda gr: grade.time)
+
             test_dict[test] = grade_dict
 
         context['course'] = course
@@ -183,9 +202,75 @@ class TestView(generic.DetailView):
                     student_list.append(studying.student_id)
 
         for grade in test.grade_set.prefetch_related('student_id').all():
-            grade_dict[grade.student_id] = grade.grade
+            if grade.student_id not in grade_dict.keys():
+                grade_dict[grade.student_id] = [grade]
+            else:
+                grade_dict[grade.student_id].append(grade)
+                grade_dict[grade.student_id].sort(key=lambda gr: grade.time)
 
         context['test'] = test
         context['studentlist'] = student_list
         context['gradedict'] = grade_dict
         return context
+
+
+def export(request, *args, **kwargs):
+    mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(id=kwargs['pk'])
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=' + mod_ed.module.name + '.csv'
+    writer = csv.writer(response, csv.excel)
+    response.write(u'\ufeff'.encode('utf8'))
+
+    output = u'Student'
+    for course in mod_ed.courses.prefetch_related('test_set').all():
+        for test in course.test_set.all():
+            output += ',' + test.name
+
+    writer.writerow([
+        smart_str(output),
+    ])
+
+    for studying in mod_ed.studying_set.prefetch_related('student_id'):
+
+        output = u'' + studying.student_id.user.last_name + ' (' + studying.student_id.id_prefix + studying.student_id.person_id + ')'
+        for course in mod_ed.courses.prefetch_related('test_set').all():
+            for test in course.test_set.prefetch_related('grade_set').all():
+
+                gradelist = []
+                for grade in test.grade_set.filter(student_id=studying.student_id):
+                    gradelist.append(grade)
+
+                gradelist.sort(key=lambda gr: grade.time)
+                if gradelist != []:
+                    output += ',' + str(gradelist[-1].grade)
+                else:
+                    output += ',-'
+        writer.writerow([
+            smart_str(output)
+        ])
+    return response
+
+def release(request, *args, **kwargs):
+    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
+
+    for grade in test.grade_set.all():
+        grade.released = True
+        grade.save()
+
+    #TODO: Send mail
+
+    return response
+
+def retract(request, *args, **kwargs):
+    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
+
+    for grade in test.grade_set.all():
+        grade.released = False
+        grade.save()
+
+    #TODO: Send mail
+
+    return response
