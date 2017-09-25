@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Module Overview</title>
+</head>
+
+<body>
+
+<h1>Module Overview</h1>
+
+<ul>
+    {% for mod in module_list %}
+        <li>{{ mod.module_code }} - {{ mod.name }}
+            <ul>
+                {% for mod_ed in mod.module_ed_set.all %}
+                    <li>{{ mod_ed.module_code }}</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% endfor %}
+</ul>
+
+</body>
+
+</html>
