@@ -16,6 +16,8 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
         <input type="submit" value="Export to .csv" />
     </form>
 
+    <form action="{% url 'grades:release' %}" method="POST">
+    {% csrf_token %}
     <table>
     <tr>
         <th>Student</th>
@@ -39,34 +41,22 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
             {% for course in coursedict.keys %}
             {% for test in testdict|key:course %}
             {% with grade=dict|key:test|last %}
-                <td>{{ grade|grade_od }}</td>
+            {% with g=gradenum|key:grade %}
+            {% with f=formset|key:g %}
+                <td>{{ grade|grade_od }} {{ f.grade }}</td>
+            {% endwith %}
+            {% endwith %}
             {% endwith %}
             {% endfor %}
             {% endfor %}    
         </tr>
     {% endfor %}
-
-        <tr>
-            <td></td>
-            {% for course in coursedict.keys %}
-            {% for test in testdict|key:course %}
-                <td>
-                    {% with grade=dict|key:test|last %}
-                    {% if grade.released %}
-                        <form action="{% url 'grades:retract' test.id %}">
-                            <input type="submit" value="Retract grades" />
-                        </form>
-                    {% else %}
-                        <form action="{% url 'grades:release' test.id %}">
-                            <input type="submit" value="Release grades" />
-                        </form>
-                    {% endif %}
-                    {% endwith %}
-                </td>
-            {% endfor %}
-            {% endfor %}
-        </tr>
     </table>
+
+    <input type="submit" name="retract" value="Retract grades" />
+    <input type="submit" name="release" value="Release grades" />
+    </form>
+
 
 {% else %}
     <p>No courses are available.</p>

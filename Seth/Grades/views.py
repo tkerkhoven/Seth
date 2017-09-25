@@ -1,6 +1,11 @@
+from django.forms import formset_factory
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.views import generic
+
+from Grades.forms import ReleaseForm
 from .models import Module, Studying, Person, Module_ed, Test, Course
 from django.contrib.auth.models import User
 import csv
@@ -26,6 +31,8 @@ class GradeView(generic.DetailView):
         student_list = []
         course_dict = dict()
         test_dict = dict()
+        grade_num_dict = dict()
+        num_grades = 0
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
@@ -40,6 +47,7 @@ class GradeView(generic.DetailView):
 
                 for test in course.test_set.prefetch_related('grade_set').all():
                     gradelist = []
+                    num_grades += 1
 
                     if test not in test_list:
                         test_list.append(test)
@@ -47,7 +55,9 @@ class GradeView(generic.DetailView):
                     for grade in test.grade_set.filter(student_id=studying.student_id):
                         gradelist.append(grade)
 
-                    gradelist.sort(key = lambda gr: grade.time)
+                    gradelist.sort(key=lambda gr: grade.time)
+                    if gradelist != []:
+                        grade_num_dict[gradelist[-1]] = num_grades-1
                     student_dict[test] = gradelist
                     test_dict[course] = test_list
 
@@ -56,6 +66,15 @@ class GradeView(generic.DetailView):
         context['studentdict'] = student_list
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
+
+        ReleaseFormSet = formset_factory(ReleaseForm, extra=num_grades)
+
+        grade_released_list = []
+        for grade in grade_num_dict.keys():
+            grade_released_list.append({'grade': grade.released})
+
+        context['formset'] = ReleaseFormSet(initial=grade_released_list)
+        context['gradenum'] = grade_num_dict
         return context
 
 
@@ -94,7 +113,7 @@ class StudentView(generic.DetailView):
                     for grade in test.grade_set.filter(student_id=person).filter(released=True):
                         gradelist.append(grade)
 
-                    gradelist.sort(key = lambda gr: grade.time)
+                    gradelist.sort(key=lambda gr: grade.time)
                     grade_dict[test] = gradelist
                     test_dict[course] = test_list
             course_dict[mod_ed] = course_list
@@ -117,7 +136,7 @@ class ModuleStudentView(generic.DetailView):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
-        student = Person.objects.prefetch_related('user').get(user=self.kwargs['sid'])
+        student = Person.objects.prefetch_related('user').filter(role= 'S').get(user=self.kwargs['sid'])
 
         course_list = []
         test_dict = dict()
@@ -251,26 +270,20 @@ def export(request, *args, **kwargs):
         ])
     return response
 
-def release(request, *args, **kwargs):
-    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
 
-    for grade in test.grade_set.all():
-        grade.released = True
-        grade.save()
+def release(request):
+    ReleaseFormSet = formset_factory(ReleaseForm, extra=2)
 
-    #TODO: Send mail
+    if request.method == 'POST':
+        try:
+            release_formset = ReleaseFormSet(request.POST)
+        except ValidationError:
+            if release_formset.is_valid():
+                for release_form in release_formset:
+                    grade = release_form.cleaned_data.get('grade')
+                    grade.released = True
+                    grade.save()
+    else:
+        release_formset = ReleaseFormSet()
 
-    return response
-
-def retract(request, *args, **kwargs):
-    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
-
-    for grade in test.grade_set.all():
-        grade.released = False
-        grade.save()
-
-    #TODO: Send mail
-
-    return response
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
