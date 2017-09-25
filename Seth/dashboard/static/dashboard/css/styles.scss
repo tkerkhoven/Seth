@@ -1,9 +1,18 @@
 $padding: 70px;
+$brand-primary: red;
 
 body {
   padding-top: $padding;
 }
 
-@import '../../../../static/Seth/seth/css/icons';
+.text-primary {
+  color: $brand-primary;
+}
 
-@import '../../../../static/Seth/seth/css/navbar-menus';
+.bg-dark {
+  background-color: red;
+}
+
+@import '../../../../static/Seth/seth/css/_icons';
+
+@import '../../../../static/Seth/seth/css/_navbar-menus';
