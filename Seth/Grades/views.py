@@ -1,9 +1,8 @@
 from django.shortcuts import render
 from django.views import generic
 from .models import Module, Studying, Module_ed, Course, Test, Grade, Person
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from .forms import UserUpdateForm
-
 
 
 class ModuleView(generic.ListView):
@@ -136,19 +135,8 @@ class PersonDetailView(generic.DetailView):
 
 class UpdateUser(generic.UpdateView):
     model = Person
-    # fields = ('name', 'start', 'stop', 'role', 'studies')
     template_name_suffix = '/update-user'
     form_class = UserUpdateForm
-
-    # success_url = reverse_lazy('grades:user', args=(!!self.object.id!!))
-
-    # def get_context_data(self):
-    #     context = super(PersonDetailView, self).get_context_data(**kwargs)
-    #     person = Person.objects.get(id=self.kwargs['pk'])
-    #
-    #     data = dict()
-    #     data['id'] = person.id
-    #     context['person'] = data
 
     def get_success_url(self):
         return reverse_lazy('grades:user', args=(self.object.id,))
@@ -158,20 +146,21 @@ class UpdateUser(generic.UpdateView):
 
     def get_initial(self):
         initial = super(UpdateUser, self).get_initial()
-
-        person = Person.objects.get(id=self.object.id)
-        data = {
-            'name': person.name,
-            'id_prefix': person.id_prefix,
-            'person_id': person.person_id,
-            'start': person.start,
-            'stop': person.stop,
-            'role': person.role,
-            'studies': person.studies
-        }
-        # initial['name'] = person.name
         return initial
 
         # def get_object(self, queryset=None):
         #     obj = Person.objects.get(id=self.kwargs['pk'])
         #     return obj
+
+
+class DeleteUser(generic.DeleteView):
+    model = Person
+    success_url = reverse_lazy('grades:users')
+
+
+class CreatePerson(generic.CreateView):
+    model = Person
+    fields = '__all__'
+
+    def get_success_url(self):
+        return reverse_lazy('grades:user', args=(self.object.id,))

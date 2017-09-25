@@ -27,6 +27,11 @@ Full ID: {{ person.full_id }}
     <!--{{ form.as_p }-->
     <input type="submit" value="Edit">
 </form>
+<form action="remove-user/" method="get">{% csrf_token %}
+    <!--{{ form.as_p }-->
+    <input type="submit" value="Remove">
+</form>
+
 
 </body>
 </html>

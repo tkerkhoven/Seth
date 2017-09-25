@@ -12,6 +12,11 @@
 table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
 </style>
 
+    <form action="create-user/" method="get">{% csrf_token %}
+    <!--{{ form.as_p }-->
+    <input type="submit" value="Create new User">
+    </form>
+
 
     <h1>Persons</h1>
     {% if persons %}
