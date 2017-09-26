@@ -14,13 +14,13 @@
                     <hr>
                     <ul>
                     {% for mod in module_ed_list %}
-                        <a href="{% url 'import_module' mod.pk %}"><li>{{ mod }}</li></a>
+                        <li><a href="{% url 'import_module' mod.pk %}">{{ mod }}</a> - <a href="{% url 'export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
                             <ul>
                             {% for course in mod.courses.all %}
                                 <li>{{ course.name }}</li>
                                 <ul>
                                 {% for test in course.coursebacktable.all %}
-                                    <a href="{% url 'import_test' test.pk %}"><li>{{ test.name }}</li></a>
+                                    <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a href="{% url 'export_test' test.pk %}"><i class="material-icons">view_list</i></a></li>
                                 {% endfor %}
                                 </ul>
                             {% endfor %}

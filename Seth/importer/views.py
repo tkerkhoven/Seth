@@ -7,12 +7,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.views import generic
 from django.utils import timezone
 from django.db.models import Q
+import django_excel as excel
 from xlsxwriter.utility import xl_rowcol_to_cell
 
 from Grades.models import Module_ed, Grade, Test, Person, Course
+from importer.forms import GradeUploadForm, TestGradeUploadForm
 
 # Create your views here.
-from importer.forms import GradeUploadForm, TestGradeUploadForm
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -105,6 +106,10 @@ def import_test(request, pk):
                     return HttpResponseBadRequest()
 
                 for row in sheet[table][1:]:
+                    if not Person.objects.filter(person_id=row[student_id_field]):
+                        return HttpResponseBadRequest('Student {} does not exist. Add this user first before retrying.'.format(row[student_id_field]))
+                    if row[grade_field] == '':
+                        continue
                     Grade(
                         student_id=Person.objects.filter(person_id=row[student_id_field])[0],
                         teacher_id=Person.objects.filter(user=request.user.pk)[0],
@@ -123,3 +128,28 @@ def import_test(request, pk):
 
         else:
             return HttpResponseBadRequest('Test does not exist')
+
+
+def export_module(request, pk):
+    module = Module_ed.objects.get(pk=pk)
+    students = Person.objects.filter(studying__module_id=module)
+    tests = Test.objects.filter(course_id__module_ed=module)
+
+    table = [['student_id']+[test.pk for test in tests]]
+
+    for student in students:
+        table.append([student.person_id] + [None for _ in range(len(tests))])
+
+    return excel.make_response_from_array(table, 'xlsx')
+
+
+def export_test(request, pk):
+    test = Test.objects.get(pk=pk)
+    students = Person.objects.filter(studying__module_id__courses=test.course_id)
+
+    table = [['student_id', 'grade', 'description']]
+
+    for student in students:
+        table.append([student.person_id, '', ''])
+
+    return excel.make_response_from_array(table, 'xlsx')
