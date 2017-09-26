@@ -20,7 +20,6 @@
                             <th>User id</th>
                             <th>User number</th>
                             <th>Full name</th>
-                            <th>Role</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,7 +28,6 @@
                             <td> <a href="{% url 'human_resource:user' pk=key %}"> {{ key }}</a></td>
                             <td> {{ value.full_id }} </td>
                             <td> {{ value.name }} </td>
-                            <td> {{ value.role }} </td>
                         </tr>
                         {% endfor %}
                     </tbody>
