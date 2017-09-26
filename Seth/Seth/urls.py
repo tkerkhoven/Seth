@@ -1,3 +1,7 @@
+from django.conf import settings
+from django.conf.urls.static import static
+
+
 """Seth URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -15,11 +19,12 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include('dashboard.urls')),
     url(r'^', include('django.contrib.auth.urls')),
+    url(r'^importer/', include('importer.urls')),
     url(r'^grades/', include('Grades.urls')),
+    url(r'^module_management/', include('module_management.urls'))
 ]

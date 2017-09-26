@@ -1,0 +1,18 @@
+$padding: 70px;
+$brand-primary: red;
+
+body {
+  padding-top: $padding;
+}
+
+.text-primary {
+  color: $brand-primary;
+}
+
+.bg-dark {
+  background-color: red;
+}
+
+@import '../../../../static/Seth/seth/css/_icons';
+
+@import '../../../../static/Seth/seth/css/_navbar-menus';

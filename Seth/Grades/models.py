@@ -2,12 +2,14 @@ import datetime
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
 
 ####################################################################
 ###############          Independent Models          ###############
 ####################################################################
+
 
 class Module(models.Model):
     module_code = models.CharField(max_length=16, primary_key=True)
@@ -32,15 +34,6 @@ class Module(models.Model):
 ###############          Dependent Models 1          ###############
 ####################################################################
 
-class Study(models.Model):
-    short_name = models.CharField(primary_key=True, max_length=10)
-    modules = models.ManyToManyField(Module)
-
-    full_name = models.CharField(max_length=32, null=True)
-
-    def __str__(self):
-        return self.full_name
-
 
 class Person(models.Model):
     name = models.CharField(max_length=32)
@@ -58,15 +51,24 @@ class Person(models.Model):
     )
     role = models.CharField(max_length=1, choices=ROLES)
 
-    # Iff role == 'V'
-    studies = models.ManyToManyField(Study)
-
     @property
     def full_id(self):
         return self.id_prefix + self.person_id
 
     def __str__(self):
         return '{} ({})\t\t{}'.format(self.name, self.full_id, self.role)
+
+
+class Study(models.Model):
+    short_name = models.CharField(primary_key=True, max_length=10)
+    modules = models.ManyToManyField(Module)
+
+    full_name = models.CharField(max_length=32, null=True)
+
+    advisors = models.ManyToManyField(Person)
+
+    def __str__(self):
+        return self.full_name
 
 
 # class Teacher(models.Model):
@@ -104,6 +106,9 @@ class Course(models.Model):
     def course_code(self):
         return self.code + self.code_extension
 
+    def get_absolute_url(self):
+        return reverse('module_management:course_detail', kwargs={'pk': self.pk})
+
     def __str__(self):
         return '{} ({})'.format(self.name, self.course_code)
 
@@ -114,7 +119,7 @@ class Module_ed(models.Model):
     module_code_extension = models.CharField(max_length=16, default='')
 
     courses = models.ManyToManyField(Course)
-    module_coordinator = models.ManyToManyField(Person)
+    module_coordinator = models.ManyToManyField(Person, through='Coordinator')
 
     start = models.DateField(default=datetime.date(1, 1, 1))
     stop = models.DateField(default=datetime.date(9999, 12, 31))
@@ -123,8 +128,17 @@ class Module_ed(models.Model):
     def module_code(self):
         return str(self.year.year) + self.module.module_code + self.module_code_extension
 
+    def get_absolute_url(self):
+        return reverse('module_management:module_ed_detail', kwargs={'pk': self.pk})
+
     def __str__(self):
         return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
+
+
+class Coordinator(models.Model):
+    person = models.ForeignKey(Person)
+    module = models.ForeignKey(Module_ed)
+    mc_assistant = models.BooleanField(default=False)
 
 
 # class Advisor(models.Model):
@@ -146,6 +160,7 @@ class Test(models.Model):
     course_id = models.ForeignKey(Course)
 
     name = models.CharField(max_length=32, null=True)
+    # Update TEST_TYPES in @property:get_type()
     TEST_TYPES = (  # Defaults to Exam
         ('E', 'Exam'),
         ('A', 'Assignment'),
@@ -161,6 +176,18 @@ class Test(models.Model):
 
     def __str__(self):
         return '{} ({}) {}'.format(self.name, self._type, self.time)
+
+    # Should be the same as TEST_TYPES
+    @property
+    def get_type(self):
+        return {
+            'E': 'Exam',
+            'A': 'Assignment',
+            'P': 'Project'
+        }[self._type]
+
+    def get_absolute_url(self):
+        return reverse('module_management:test_detail', kwargs={'pk': self.pk})
 
 
 class Studying(models.Model):
@@ -191,6 +218,7 @@ class Grade(models.Model):
     time = models.DateTimeField(default=datetime.datetime(1, 1, 1, 0, 0, 0, 0))
     description = models.CharField(max_length=256, null=True)
     grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
+    released = models.BooleanField(default=False)
 
     def __str__(self):
         return self.grade.__str__()
