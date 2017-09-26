@@ -8,7 +8,4 @@ class ReleaseForm(forms.Form):
         grade = self.cleaned_data['email']
         return grade
 
-class UserUpdateForm(forms.ModelForm):
-    class Meta:
-        model = Person
-        fields = ['name', 'id_prefix', 'person_id', 'start', 'stop', 'role',]
+
