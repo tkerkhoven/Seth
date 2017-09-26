@@ -14,74 +14,27 @@
     {% if student %}
 
         <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
-
-        <table>
-            <tr>
-                {% for mod in coursedict.keys %}
-                    <th colspan="{{ modwidth|key:mod }}">{{ mod.module.name }}</th>
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for mod in coursedict.keys %}
-                {% for course in coursedict|key:mod %}
-                    <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
-                {% endfor %}
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for mod in coursedict.keys %}
-                {% for course in coursedict|key:mod %}
-                {% for test in testdict|key:course %}
-                    <td> {{ test.name }} </td>
-                {% endfor %}
-                {% endfor %}
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for mod in coursedict.keys %}
-                {% for course in coursedict|key:mod %}
-                {% for test in testdict|key:course %}
-                {% with grade=gradedict|key:test|last %}
-                    <td>
-                        {% if grade.released %}
-                        {{ grade|grade_od }}
-                        {% else %}
-                        -
-                        {% endif%}
-                    </td>
-                {% endwith %}
-                {% endfor %}
-                {% endfor %}
-                {% endfor %}
-            </tr>
-        </table>
-
         <hr>
 
         {% for mod in coursedict.keys %}
             <h2> {{ mod.module.name }} </h2>
-            <table>
-                <tr>
-                    {% for course in coursedict|key:mod %}
-                        <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
-                    {% endfor %}
-                </tr>
-
-                <tr>
-                    {% for course in coursedict|key:mod %}
-                    {% for test in testdict|key:course %}
-                        <td> {{ test.name }} </td>
-                    {% endfor %}
-                    {% endfor %}
-                </tr>
-                <tr>
-                    {% for course in coursedict|key:mod %}
-                    {% for test in testdict|key:course %}
-                        <td>{{ gradedict|key:test }}</td>
-                    {% endfor %}
-                    {% endfor %}
-                </tr>
-            </table>
+            {% for course in coursedict|key:mod %}
+                <h3>{{ course }}</h3>
+                <table>
+                    <tr>
+                        {% for test in testdict|key:course %}
+                            <th> {{ test.name }} </th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        {% for test in testdict|key:course %}
+                        {% with grade=gradedict|key:test|last %}
+                            <td>{{ grade|grade_od }}</td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                </table>
+            {% endfor %}
         {% endfor %}
 
     {% else %}

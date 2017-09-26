@@ -110,6 +110,7 @@ class StudentView(generic.DetailView):
 
         context['student'] = person
         context['gradedict'] = grade_dict
+        print(grade_dict)
         context['testdict'] = test_dict
         context['coursedict'] = course_dict
         context['modwidth'] = mod_width
