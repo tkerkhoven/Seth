@@ -40,7 +40,7 @@ class GradeView(generic.DetailView):
             for test in course.test_set.prefetch_related('grade_set'):
 
                 grade_dict = dict()
-                all_released = True
+                all_released = 0
 
                 for grade in test.grade_set.prefetch_related('student_id').all():
                     if grade.student_id not in grade_dict.keys():
@@ -50,11 +50,11 @@ class GradeView(generic.DetailView):
 
                 for key in grade_dict.keys():
                     grade_dict[key].sort(key=lambda gr: grade.time)
-                    if not grade_dict[key][-1].released:
-                        all_released = False
+                    if grade_dict[key][-1].released:
+                        all_released += 1
 
                 test_dict[test] = grade_dict
-                test_all_released[test] = all_released
+                test_all_released[test] = (all_released == len(student_list))
                 test_list.append(test)
             course_dict[course] = test_list
 
@@ -122,7 +122,7 @@ class ModuleStudentView(generic.DetailView):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
-        student = Person.objects.prefetch_related('user').filter(role='S').get(user=self.kwargs['sid'])
+        student = Person.objects.prefetch_related('user').get(user=self.kwargs['sid'])
 
         course_list = []
         test_dict = dict()
@@ -203,7 +203,9 @@ class TestView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(TestView, self).get_context_data(**kwargs)
 
-        if self.request.session['change'] == 1:
+        if 'change' not in self.request.session.keys():
+            context['change'] = False
+        elif self.request.session['change'] == 1:
             context['change'] = 'The chosen grade(s) have successfully been released.'
         elif self.request.session['change'] == 2:
             context['change'] = 'The chosen grade(s) have successfully been retracted.'
