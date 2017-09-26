@@ -142,7 +142,6 @@ class PersonsView(generic.ListView):
         for person in persons.all():
             data = dict()
             data['name'] = person.name
-            data['role'] = person.role
             data['full_id'] = person.full_id
             person_dict[person.id] = data
             print(person.name)
@@ -162,7 +161,6 @@ class PersonDetailView(generic.DetailView):
         data['id'] = person.id
         data['start'] = person.start
         data['stop'] = person.stop
-        data['role'] = person.role
         data['full_id'] = person.full_id
         context['person'] = data
         return context
