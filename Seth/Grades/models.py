@@ -151,7 +151,7 @@ class Module_ed(models.Model):
 ####################################################################
 
 class Test(models.Model):
-    course_id = models.ForeignKey(Course)
+    course_id = models.ForeignKey(Course, related_name='coursebacktable')
 
     name = models.CharField(max_length=32, null=True)
     # Update TEST_TYPES in @property:get_type()
