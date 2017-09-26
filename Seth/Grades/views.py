@@ -153,8 +153,6 @@ class PersonDetailView(generic.DetailView):
         data['start'] = person.start
         data['stop'] = person.stop
         data['role'] = person.role
-        data['studies'] = person.studies
-        print(person.studies)
         data['full_id'] = person.full_id
         context['person'] = data
         return context
