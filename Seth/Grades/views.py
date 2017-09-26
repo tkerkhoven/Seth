@@ -37,10 +37,10 @@ class GradeView(generic.DetailView):
             if studying.student_id not in student_list:
                 student_list.append(studying.student_id)
 
-        for course in mod_ed.courses.prefetch_related('test_set').all():
+        for course in mod_ed.courses.prefetch_related('test_set'):
             test_list = []
 
-            for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
+            for test in course.test_set.prefetch_related('grade_set'):
 
                 grade_dict = dict()
                 all_released = True
