@@ -11,41 +11,6 @@
     table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
     </style>
 
-    <table>
-        <tr>
-            {% for mod in coursedict.keys %}
-                <th colspan="{{ modwidth|key:mod }}">{{ mod.module.name }}</th>
-            {% endfor %}
-        </tr>
-        <tr>
-            {% for mod in coursedict.keys %}
-            {% for course in coursedict|key:mod %}
-                <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
-            {% endfor %}
-            {% endfor %}
-        </tr>
-        <tr>
-            {% for mod in coursedict.keys %}
-            {% for course in coursedict|key:mod %}
-            {% for test in testdict|key:course %}
-                <td> {{ test.name }} </td>
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-        </tr>
-        <tr>
-            {% for mod in coursedict.keys %}
-            {% for course in coursedict|key:mod %}
-            {% for test in testdict|key:course %}
-            {% with grade=gradedict|key:test %}
-                <td>{{ grade|grade_od}}</td>
-            {% endwith %}
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-        </tr>
-    </table>
-
     {% if student %}
 
         <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
@@ -77,7 +42,13 @@
                 {% for course in coursedict|key:mod %}
                 {% for test in testdict|key:course %}
                 {% with grade=gradedict|key:test|last %}
-                    <td>{{ grade|grade_od }}</td>
+                    <td>
+                        {% if grade.released %}
+                        {{ grade|grade_od }}
+                        {% else %}
+                        -
+                        {% endif%}
+                    </td>
                 {% endwith %}
                 {% endfor %}
                 {% endfor %}

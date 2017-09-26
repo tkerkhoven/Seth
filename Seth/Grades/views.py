@@ -1,17 +1,15 @@
-from django.forms import formset_factory
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.views import generic
-from Grades.forms import ReleaseForm, ActionForm
-from .models import Module, Studying, Module_ed, Course, Test, Grade, Person
-from django.urls import reverse_lazy, reverse
+from .models import Grade
+from django.urls import reverse_lazy
 from .forms import UserUpdateForm
 from .models import Module, Studying, Person, Module_ed, Test, Course
 from django.contrib.auth.models import User
 import csv
+import re
 from django.utils.encoding import smart_str
+
 
 class ModuleView(generic.ListView):
     template_name = 'Grades/modules.html'
@@ -32,6 +30,7 @@ class GradeView(generic.DetailView):
         student_list = []
         course_dict = dict()
         test_dict = dict()
+        test_all_released = dict()
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
@@ -50,9 +49,13 @@ class GradeView(generic.DetailView):
                     if test not in test_list:
                         test_list.append(test)
 
+                    all_released = True
                     for grade in test.grade_set.filter(student_id=studying.student_id):
                         gradelist.append(grade)
+                        if not grade.released:
+                            all_released = False
 
+                    test_all_released[test] = all_released
                     gradelist.sort(key=lambda gr: grade.time)
 
                     student_dict[test] = gradelist
@@ -63,6 +66,8 @@ class GradeView(generic.DetailView):
         context['studentdict'] = student_list
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
+        context['testallreleased'] = test_all_released
+
         return context
 
 
@@ -196,7 +201,7 @@ class ModuleStudentView(generic.DetailView):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
-        student = Person.objects.prefetch_related('user').filter(role= 'S').get(user=self.kwargs['sid'])
+        student = Person.objects.prefetch_related('user').filter(role='S').get(user=self.kwargs['sid'])
 
         course_list = []
         test_dict = dict()
@@ -237,6 +242,7 @@ class CourseView(generic.DetailView):
         context = super(CourseView, self).get_context_data(**kwargs)
 
         test_dict = dict()
+        test_all_released = dict()
         student_list = []
 
         course = Course.objects.get(id=self.kwargs['pk'])
@@ -249,17 +255,23 @@ class CourseView(generic.DetailView):
         for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
 
             grade_dict = dict()
+            all_released = True
             for grade in test.grade_set.prefetch_related('student_id').all():
                 if grade.student_id not in grade_dict.keys():
                     grade_dict[grade.student_id] = []
                 grade_dict[grade.student_id].append(grade)
                 grade_dict[grade.student_id].sort(key=lambda gr: grade.time)
 
+                if not grade.released:
+                    all_released = False
+
             test_dict[test] = grade_dict
+            test_all_released[test] = all_released
 
         context['course'] = course
         context['studentlist'] = student_list
         context['testdict'] = test_dict
+        context['testallreleased'] = test_all_released
         return context
 
 
@@ -269,6 +281,12 @@ class TestView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(TestView, self).get_context_data(**kwargs)
+
+        if self.request.session['change'] == 1:
+            context['change'] = 'The chosen grade(s) have successfully been released.'
+        elif self.request.session['change'] == 2:
+            context['change'] = 'The chosen grade(s) have successfully been retracted.'
+        self.request.session['change'] = 0
 
         grade_dict = dict()
         student_list = []
@@ -290,11 +308,6 @@ class TestView(generic.DetailView):
         context['test'] = test
         context['studentlist'] = student_list
         context['gradedict'] = grade_dict
-
-        ReleaseFormSet = formset_factory(ReleaseForm, extra=len(student_list))
-
-        context['formset'] = ReleaseFormSet()
-        context['actform'] = ActionForm()
         return context
 
 
@@ -335,22 +348,26 @@ def export(request, *args, **kwargs):
         ])
     return response
 
+
 def release(request):
-    ReleaseFormSet = formset_factory(ReleaseForm)
 
-    if request.method == 'POST':
-        form = ActionForm(request.POST)
-        formset = ReleaseFormSet(request.POST)
+    regex = re.compile("check[0-9]+")
+    action = request.POST['action']
 
-        if form.is_valid() and formset.is_valid():
-            for release_form in formset:
-                grade = release_form.cleaned_data.get('grade')
-                print(grade)
+    for key in request.POST:
+        key_search = re.search('check([0-9]+)', key)
+        if key_search:
+            grade_id = int(key_search.group(1))
+            grade = Grade.objects.get(id=grade_id)
+
+            if action == 'release':
                 grade.released = True
                 grade.save()
-    else:
-        form = ActionForm()
-        formset = ReleaseFormSet()
+                request.session['change'] = 1
+            elif action == 'retract':
+                grade.released = False
+                grade.save()
+                request.session['change'] = 2
 
     # TODO: Send mail
 
