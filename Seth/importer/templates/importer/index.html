@@ -12,9 +12,21 @@
                 {% if module_ed_list %}
                     <h3 class="display-3">Choose module</h3>
                     <hr>
+                    <ul>
                     {% for mod in module_ed_list %}
-                        <a href="{% url 'import_module' mod.pk %}"><h3>{{ mod }}</h3></a>
+                        <a href="{% url 'import_module' mod.pk %}"><li>{{ mod }}</li></a>
+                            <ul>
+                            {% for course in mod.courses.all %}
+                                <li>{{ course.name }}</li>
+                                <ul>
+                                {% for test in course.coursebacktable.all %}
+                                    <a href="{% url 'import_test' test.pk %}"><li>{{ test.name }}</li></a>
+                                {% endfor %}
+                                </ul>
+                            {% endfor %}
+                            </ul>
                     {% endfor %}
+                    </ul>
                 {% else %}
                     <h3 class="display-2">No module_eds available</h3>
                 {% endif %}

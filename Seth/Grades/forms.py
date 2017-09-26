@@ -7,5 +7,3 @@ class ReleaseForm(forms.Form):
     def clean_grade(self):
         grade = self.cleaned_data['email']
         return grade
-
-
