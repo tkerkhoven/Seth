@@ -3,7 +3,10 @@ from django.contrib import admin
 # Register your models here.
 from Grades.models import *
 
+class CoordinatorAdmin(admin.ModelAdmin):
+    list_display = ['person', 'module', 'mc_assistant']
 
+admin.site.register(Coordinator, CoordinatorAdmin)
 
 class GradeAdmin(admin.ModelAdmin):
     list_display = ('test_id', 'time', 'student_id', 'grade')
