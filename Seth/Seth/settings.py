@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'dashboard',
     'module_management',
     'importer',
+    'human_resource'
 ]
 
 MIDDLEWARE = [
