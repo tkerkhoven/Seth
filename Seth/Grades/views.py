@@ -34,40 +34,37 @@ class GradeView(generic.DetailView):
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
-            student_dict = dict()
+            if studying.student_id not in student_list:
+                student_list.append(studying.student_id)
 
-            student_dict['user'] = studying.student_id.user
-            for course in mod_ed.courses.prefetch_related('test_set').all():
-                test_list = []
+        for course in mod_ed.courses.prefetch_related('test_set').all():
+            test_list = []
 
-                if course not in course_dict.keys():
-                    course_dict[course] = course.name
+            for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
 
-                for test in course.test_set.prefetch_related('grade_set').all():
-                    gradelist = []
+                grade_dict = dict()
+                all_released = True
 
-                    if test not in test_list:
-                        test_list.append(test)
+                for grade in test.grade_set.prefetch_related('student_id').all():
+                    if grade.student_id not in grade_dict.keys():
+                        grade_dict[grade.student_id] = []
 
-                    all_released = True
-                    for grade in test.grade_set.filter(student_id=studying.student_id):
-                        gradelist.append(grade)
-                        if not grade.released:
-                            all_released = False
+                    grade_dict[grade.student_id].append(grade)
 
-                    test_all_released[test] = all_released
-                    gradelist.sort(key=lambda gr: grade.time)
+                for key in grade_dict.keys():
+                    grade_dict[key].sort(key=lambda gr: grade.time)
+                    if not grade_dict[key][-1].released:
+                        all_released = False
 
-                    student_dict[test] = gradelist
-                    test_dict[course] = test_list
+                test_dict[test] = grade_dict
+                test_all_released[test] = all_released
+                test_list.append(test)
+            course_dict[course] = test_list
 
-            student_list.append(student_dict)
-
-        context['studentdict'] = student_list
+        context['studentlist'] = student_list
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
         context['testallreleased'] = test_all_released
-
         return context
 
 
@@ -348,7 +345,6 @@ def export(request, *args, **kwargs):
 
 
 def release(request):
-
     regex = re.compile("check[0-9]+")
     action = request.POST['action']
 
