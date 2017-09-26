@@ -1,10 +1,7 @@
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Grade
-from django.urls import reverse_lazy
-from .forms import UserUpdateForm
-from .models import Module, Studying, Person, Module_ed, Test, Course
+from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
 from django.contrib.auth.models import User
 import csv
 import re
@@ -116,76 +113,6 @@ class StudentView(generic.DetailView):
         context['modwidth'] = mod_width
 
         return context
-
-
-class PersonsView(generic.ListView):
-    template_name = 'Grades/users.html'
-    model = Person
-
-    def get_context_data(self, **kwargs):
-        context = super(PersonsView, self).get_context_data(**kwargs)
-
-        persons = Person.objects.all()
-        person_dict = dict()
-        for person in persons.all():
-            data = dict()
-            data['name'] = person.name
-            data['full_id'] = person.full_id
-            person_dict[person.id] = data
-            print(person.name)
-        context['persons'] = person_dict
-        return context
-
-
-class PersonDetailView(generic.DetailView):
-    template_name = 'Grades/user.html'
-    model = Person
-
-    def get_context_data(self, **kwargs):
-        context = super(PersonDetailView, self).get_context_data(**kwargs)
-        person = Person.objects.get(id=self.kwargs['pk'])
-        data = dict()
-        data['name'] = person.name
-        data['id'] = person.id
-        data['start'] = person.start
-        data['stop'] = person.stop
-        data['full_id'] = person.full_id
-        context['person'] = data
-        return context
-
-
-class UpdateUser(generic.UpdateView):
-    model = Person
-    template_name_suffix = '/update-user'
-    form_class = UserUpdateForm
-
-    def get_success_url(self):
-        return reverse_lazy('grades:user', args=(self.object.id,))
-
-    def get_absolute_url(self):
-        return u'/grades/user/%d' % self.id
-
-    def get_initial(self):
-        initial = super(UpdateUser, self).get_initial()
-        return initial
-
-        # def get_object(self, queryset=None):
-        #     obj = Person.objects.get(id=self.kwargs['pk'])
-        #     return obj
-
-
-class DeleteUser(generic.DeleteView):
-    model = Person
-    success_url = reverse_lazy('grades:users')
-
-
-class CreatePerson(generic.CreateView):
-    model = Person
-    fields = '__all__'
-
-    def get_success_url(self):
-        return reverse_lazy('grades:user', args=(self.object.id,))
-
 
 class ModuleStudentView(generic.DetailView):
     template_name = 'Grades/modulestudent.html'

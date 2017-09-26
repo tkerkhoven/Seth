@@ -10,3 +10,9 @@ $(document).ready(function() {
       $('#parent').prop('checked',$('.child:checked').length == $('.child').length);
     });
 });
+
+jQuery(document).ready(function($) {
+    $(".clickable-row").click(function() {
+        window.location = $(this).data("href");
+    });
+});

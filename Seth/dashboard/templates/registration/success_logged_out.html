@@ -5,6 +5,12 @@ Logout
 {% endblock %}
 
 {% block content %}
-<h1>You are now logged out</h1>
-    <p>Return to login <a href="{% url 'login' %}">here</a></p>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <h1 class="display-3">You are now logged out</h1>
+                <p>Return to login <a href="{% url 'login' %}">here</a></p>
+            </div>
+        </div>
+    </div>
 {% endblock %}

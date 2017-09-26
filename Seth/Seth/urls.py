@@ -26,5 +26,6 @@ urlpatterns = [
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^importer/', include('importer.urls')),
     url(r'^grades/', include('Grades.urls')),
-    url(r'^module_management/', include('module_management.urls'))
+    url(r'^module_management/', include('module_management.urls')),
+    url(r'^human_resource/', include('human_resource.urls'))
 ]
