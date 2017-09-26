@@ -6,114 +6,62 @@
 
     {% include 'navbar.html' %}
     {% load grade_extras %}
-
-    <style>
-    table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
-    </style>
-
-    <table>
-        <tr>
-            {% for mod in coursedict.keys %}
-                <th colspan="{{ modwidth|key:mod }}">{{ mod.module.name }}</th>
-            {% endfor %}
-        </tr>
-        <tr>
-            {% for mod in coursedict.keys %}
-            {% for course in coursedict|key:mod %}
-                <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
-            {% endfor %}
-            {% endfor %}
-        </tr>
-        <tr>
-            {% for mod in coursedict.keys %}
-            {% for course in coursedict|key:mod %}
-            {% for test in testdict|key:course %}
-                <td> {{ test.name }} </td>
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-        </tr>
-        <tr>
-            {% for mod in coursedict.keys %}
-            {% for course in coursedict|key:mod %}
-            {% for test in testdict|key:course %}
-            {% with grade=gradedict|key:test %}
-                <td>{{ grade|grade_od}}</td>
-            {% endwith %}
-            {% endfor %}
-            {% endfor %}
-            {% endfor %}
-        </tr>
-    </table>
-
     {% if student %}
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="display-3">
+                        {{ student.user.first_name }} {{ student.user.last_name }}
+                    </h1>
+                    <hr>
 
-        <h1>{{ student.user.first_name }} {{ student.user.last_name }}</h1>
-
-        <table>
-            <tr>
-                {% for mod in coursedict.keys %}
-                    <th colspan="{{ modwidth|key:mod }}">{{ mod.module.name }}</th>
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for mod in coursedict.keys %}
-                {% for course in coursedict|key:mod %}
-                    <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
-                {% endfor %}
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for mod in coursedict.keys %}
-                {% for course in coursedict|key:mod %}
-                {% for test in testdict|key:course %}
-                    <td> {{ test.name }} </td>
-                {% endfor %}
-                {% endfor %}
-                {% endfor %}
-            </tr>
-            <tr>
-                {% for mod in coursedict.keys %}
-                {% for course in coursedict|key:mod %}
-                {% for test in testdict|key:course %}
-                {% with grade=gradedict|key:test|last %}
-                    <td>{{ grade|grade_od }}</td>
-                {% endwith %}
-                {% endfor %}
-                {% endfor %}
-                {% endfor %}
-            </tr>
-        </table>
-
-        <hr>
-
-        {% for mod in coursedict.keys %}
-            <h2> {{ mod.module.name }} </h2>
-            <table>
-                <tr>
-                    {% for course in coursedict|key:mod %}
-                        <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
+                    {% for mod in coursedict.keys %}
+                    <div class="card">
+                        <div class="card-header" role="tab" id="headingActive{{ mod.module.pk }}">
+                            <h4 class="md-0">
+                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.module.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.module.pk }}">
+                                    {{ mod.module.name}}
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="collapseActive{{ mod.module.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.module.pk }}" data-parent="#accordion">
+                            <div class="card-body">
+                                <div id="accordion" role="tablist">
+                                    {% for course in coursedict|key:mod %}
+                                    <div class="card">
+                                        <div class="card-header" role="tab" id="headingActive{{ course.pk }}">
+                                            <h5 class="md-0">
+                                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ course.pk }}" aria-expanded="true" aria-controls="collapseActive{{ course.pk }}">
+                                                    {{ course.name }}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                        <div id="collapseActive{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ course.pk }}" data-parent="#accordion">
+                                            <div class="card-body">
+                                                <table class="table table-striped table-bordered table-responsive">
+                                                    {% for test in testdict|key:course %}
+                                                    <tr>
+                                                        {% with grade=gradedict|key:test|last %}
+                                                            <td>{{ test.name }}</td>
+                                                            <td>{{ grade|grade_od }}</td>
+                                                        {% endwith %}
+                                                    </tr>
+                                                    {% endfor %}
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
                     {% endfor %}
-                </tr>
-
-                <tr>
-                    {% for course in coursedict|key:mod %}
-                    {% for test in testdict|key:course %}
-                        <td> {{ test.name }} </td>
-                    {% endfor %}
-                    {% endfor %}
-                </tr>
-                <tr>
-                    {% for course in coursedict|key:mod %}
-                    {% for test in testdict|key:course %}
-                        <td>{{ gradedict|key:test }}</td>
-                    {% endfor %}
-                    {% endfor %}
-                </tr>
-            </table>
-        {% endfor %}
-
+                </div>
+            </div>
+        </div>
     {% else %}
-    <p>No courses available</p>
+        <p>No courses available</p>
     {% endif %}
 {% endblock %}
