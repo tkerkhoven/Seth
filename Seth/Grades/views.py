@@ -100,14 +100,16 @@ class StudentView(generic.DetailView):
                         gradelist.append(grade)
 
                     gradelist.sort(key=lambda gr: grade.time)
-                    grade_dict[test] = gradelist
-                    test_dict[course] = test_list
+                    if gradelist == []:
+                        course_list.pop(-1)
+                    else:
+                        grade_dict[test] = gradelist
+                        test_dict[course] = test_list
             course_dict[mod_ed] = course_list
             mod_width[mod_ed] = width
 
         context['student'] = person
         context['gradedict'] = grade_dict
-        print(grade_dict)
         context['testdict'] = test_dict
         context['coursedict'] = course_dict
         context['modwidth'] = mod_width
