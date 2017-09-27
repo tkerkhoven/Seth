@@ -19,6 +19,12 @@ body {
   line-height: 1.1;
 }
 
+.table-overflow {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}
+
 @import '../../../../static/Seth/seth/css/_icons';
 
 @import '../../../../static/Seth/seth/css/_navbar-menus';
