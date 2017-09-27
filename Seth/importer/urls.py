@@ -7,5 +7,6 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.IndexView.as_view(), name='import_index'),
-    url(r'(?P<pk>[0-9]+)', views.import_module, name='import_module')
+    url(r'module/(?P<pk>[0-9]+)', views.import_module, name='import_module'),
+    url(r'test/(?P<pk>[0-9]+)', views.import_test, name='import_test'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

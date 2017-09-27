@@ -6,11 +6,13 @@ from django.http.response import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views import generic
 from django.utils import timezone
+from django.db.models import Q
+from xlsxwriter.utility import xl_rowcol_to_cell
 
-from Grades.models import Module_ed, Grade, Test, Person
+from Grades.models import Module_ed, Grade, Test, Person, Course
 
 # Create your views here.
-from importer.forms import GradeUploadForm
+from importer.forms import GradeUploadForm, TestGradeUploadForm
 
 
 class IndexView(LoginRequiredMixin, generic.ListView):
@@ -18,31 +20,77 @@ class IndexView(LoginRequiredMixin, generic.ListView):
     model = Module_ed
 
     def get_queryset(self):
-        return Module_ed.objects.filter(module_coordinator=Person.objects.get(user=self.request.user)).order_by('start')
+        return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
 
 @login_required
 def import_module(request, pk):
 
-    if not Module_ed.objects.filter(module_coordinator=Person.objects.get(user=request.user)).filter(pk=pk):
+    if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
         return HttpResponseForbidden()
 
     if request.method == "POST":
-        form = GradeUploadForm(pk, request.POST, request.FILES)
+        form = GradeUploadForm(request.POST, request.FILES)
+        print('valid form')
+        if form.is_valid():
 
-        def test_func(row):
-            student = Person.objects.filter(person_id=row[0])[0]
-            row[0] = student
+            sheet = request.FILES['file'].get_book_dict()
+            for table in sheet:
 
-            teacher = Person.objects.filter(user=request.user.pk)[0]
-            row[1] = teacher
+                test_rows = dict()
 
-            test = Test.objects.get(pk=form.cleaned_data['test'].pk)
-            row[2] = test
+                for title_index in range(0, len(sheet[table][0])):
+                    if sheet[table][0][title_index] == '':
+                        continue
+                    if str(sheet[table][0][title_index]).lower() == 'student_id':
+                        student_id_field = title_index
+                    else:
+                        if Test.objects.filter(
+                                pk=sheet[table][0][title_index]
+                        ).filter(course_id__module_ed=pk):
+                            test_rows[title_index] = sheet[table][0][title_index]
+                        else:
+                            return HttpResponseBadRequest('Attempt to register grade for, amongst possible other tests, test: {} (interpreted from sheet coordinates {}), which is not part of this module. (Are you sure this test ID is correct and therefore part of your module?)'.format(sheet[table][0][title_index], xl_rowcol_to_cell(0, title_index)))
+                if student_id_field is None:
+                    return HttpResponseBadRequest('excel file misses required header: \"student_id\"')
 
-            row[5] = timezone.now()
+                print('Saving grades')
+                grades = []
+                for row in sheet[table][1:]:
+                    for test_column in test_rows.keys():
+                        grades.append(Grade(
+                            student_id=Person.objects.filter(person_id=row[student_id_field])[0],
+                            teacher_id=Person.objects.filter(user=request.user.pk)[0], # TODO: Research proper query when roles are removed from model
+                            test_id=Test.objects.get(pk=test_rows[test_column]),
+                            grade=row[test_column],
+                            time=timezone.now()
+                        ))
+                Grade.objects.bulk_create(grades)
 
-            print(row)
-            return row
+            # request.FILES['file'].save_to_database(Grade,test_func,
+            #         ['student_id', 'teacher_id', 'test_id', 'grade', 'description', 'time']
+            # )
+            return redirect('import_index')
+        else:
+            return HttpResponseBadRequest()
+    else:
+        if Module_ed.objects.filter(pk=pk):
+            form = GradeUploadForm()
+            return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
+
+        else:
+            return HttpResponseBadRequest()
+
+
+@login_required
+def import_test(request, pk):
+
+    if not Test.objects.filter(
+                    Q(course_id__teachers__user=request.user) | Q(course_id__module_ed__module_coordinator__user=request.user)
+    ).filter(pk=pk):
+        return HttpResponseForbidden('Not allowed to alter test')
+
+    if request.method == "POST":
+        form = TestGradeUploadForm(request.POST, request.FILES)
 
         if form.is_valid():
 
@@ -60,24 +108,18 @@ def import_module(request, pk):
                     Grade(
                         student_id=Person.objects.filter(person_id=row[student_id_field])[0],
                         teacher_id=Person.objects.filter(user=request.user.pk)[0],
-                        test_id=Test.objects.get(pk=form.cleaned_data['test'].pk),
+                        test_id=Test.objects.get(pk=pk),
                         grade=row[grade_field],
                         time=timezone.now(),
                         description=row[description_field]
                     ).save()
-
-            # request.FILES['file'].save_to_database(Grade,test_func,
-            #         ['student_id', 'teacher_id', 'test_id', 'grade', 'description', 'time']
-            # )
             return redirect('import_index')
         else:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest('Bad POST')
     else:
-        if Module_ed.objects.filter(pk=pk):
-            form = GradeUploadForm(pk)
-            return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
+        if Test.objects.filter(pk=pk):
+            form = TestGradeUploadForm()
+            return render(request, 'importer/importtest.html', {'test': Test.objects.get(pk=pk), 'form': form, 'pk': pk})
 
         else:
-            return HttpResponseBadRequest()
-
-
+            return HttpResponseBadRequest('Test does not exist')

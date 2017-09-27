@@ -1,12 +1,10 @@
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Module, Studying, Module_ed, Course, Test, Grade, Person
-from django.urls import reverse_lazy, reverse
-from .forms import UserUpdateForm
-from .models import Module, Studying, Person, Module_ed, Test, Course
+from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
 from django.contrib.auth.models import User
 import csv
+import re
 from django.utils.encoding import smart_str
 
 
@@ -29,36 +27,41 @@ class GradeView(generic.DetailView):
         student_list = []
         course_dict = dict()
         test_dict = dict()
+        test_all_released = dict()
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
-            student_dict = dict()
+            if studying.student_id not in student_list:
+                student_list.append(studying.student_id)
 
-            student_dict['user'] = studying.student_id.user
-            for course in mod_ed.courses.prefetch_related('test_set').all():
-                test_list = []
+        for course in mod_ed.courses.prefetch_related('test_set'):
+            test_list = []
 
-                if course not in course_dict.keys():
-                    course_dict[course] = course.name
+            for test in course.test_set.prefetch_related('grade_set'):
 
-                for test in course.test_set.prefetch_related('grade_set').all():
-                    gradelist = []
+                grade_dict = dict()
+                all_released = 0
 
-                    if test not in test_list:
-                        test_list.append(test)
+                for grade in test.grade_set.prefetch_related('student_id').all():
+                    if grade.student_id not in grade_dict.keys():
+                        grade_dict[grade.student_id] = []
 
-                    for grade in test.grade_set.filter(student_id=studying.student_id):
-                        gradelist.append(grade)
+                    grade_dict[grade.student_id].append(grade)
 
-                    gradelist.sort(key=lambda gr: grade.time)
-                    student_dict[test] = gradelist
-                    test_dict[course] = test_list
+                for key in grade_dict.keys():
+                    grade_dict[key].sort(key=lambda gr: grade.time)
+                    if grade_dict[key][-1].released:
+                        all_released += 1
 
-            student_list.append(student_dict)
+                test_dict[test] = grade_dict
+                test_all_released[test] = (all_released == len(student_list))
+                test_list.append(test)
+            course_dict[course] = test_list
 
-        context['studentdict'] = student_list
+        context['studentlist'] = student_list
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
+        context['testallreleased'] = test_all_released
         return context
 
 
@@ -97,8 +100,11 @@ class StudentView(generic.DetailView):
                         gradelist.append(grade)
 
                     gradelist.sort(key=lambda gr: grade.time)
-                    grade_dict[test] = gradelist
-                    test_dict[course] = test_list
+                    if gradelist == []:
+                        course_list.pop(-1)
+                    else:
+                        grade_dict[test] = gradelist
+                        test_dict[course] = test_list
             course_dict[mod_ed] = course_list
             mod_width[mod_ed] = width
 
@@ -109,80 +115,6 @@ class StudentView(generic.DetailView):
         context['modwidth'] = mod_width
 
         return context
-
-
-class PersonsView(generic.ListView):
-    template_name = 'Grades/users.html'
-    model = Person
-
-    def get_context_data(self, **kwargs):
-        context = super(PersonsView, self).get_context_data(**kwargs)
-
-        persons = Person.objects.all()
-        person_dict = dict()
-        for person in persons.all():
-            data = dict()
-            data['name'] = person.name
-            data['role'] = person.role
-            data['full_id'] = person.full_id
-            person_dict[person.id] = data
-            print(person.name)
-        context['persons'] = person_dict
-        return context
-
-
-class PersonDetailView(generic.DetailView):
-    template_name = 'Grades/user.html'
-    model = Person
-
-    def get_context_data(self, **kwargs):
-        context = super(PersonDetailView, self).get_context_data(**kwargs)
-        person = Person.objects.get(id=self.kwargs['pk'])
-        data = dict()
-        data['name'] = person.name
-        data['id'] = person.id
-        data['start'] = person.start
-        data['stop'] = person.stop
-        data['role'] = person.role
-        data['studies'] = person.studies
-        print(person.studies)
-        data['full_id'] = person.full_id
-        context['person'] = data
-        return context
-
-
-class UpdateUser(generic.UpdateView):
-    model = Person
-    template_name_suffix = '/update-user'
-    form_class = UserUpdateForm
-
-    def get_success_url(self):
-        return reverse_lazy('grades:user', args=(self.object.id,))
-
-    def get_absolute_url(self):
-        return u'/grades/user/%d' % self.id
-
-    def get_initial(self):
-        initial = super(UpdateUser, self).get_initial()
-        return initial
-
-        # def get_object(self, queryset=None):
-        #     obj = Person.objects.get(id=self.kwargs['pk'])
-        #     return obj
-
-
-class DeleteUser(generic.DeleteView):
-    model = Person
-    success_url = reverse_lazy('grades:users')
-
-
-class CreatePerson(generic.CreateView):
-    model = Person
-    fields = '__all__'
-
-    def get_success_url(self):
-        return reverse_lazy('grades:user', args=(self.object.id,))
-
 
 class ModuleStudentView(generic.DetailView):
     template_name = 'Grades/modulestudent.html'
@@ -233,6 +165,7 @@ class CourseView(generic.DetailView):
         context = super(CourseView, self).get_context_data(**kwargs)
 
         test_dict = dict()
+        test_all_released = dict()
         student_list = []
 
         course = Course.objects.get(id=self.kwargs['pk'])
@@ -245,17 +178,23 @@ class CourseView(generic.DetailView):
         for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
 
             grade_dict = dict()
+            all_released = True
             for grade in test.grade_set.prefetch_related('student_id').all():
                 if grade.student_id not in grade_dict.keys():
                     grade_dict[grade.student_id] = []
                 grade_dict[grade.student_id].append(grade)
                 grade_dict[grade.student_id].sort(key=lambda gr: grade.time)
 
+                if not grade.released:
+                    all_released = False
+
             test_dict[test] = grade_dict
+            test_all_released[test] = all_released
 
         context['course'] = course
         context['studentlist'] = student_list
         context['testdict'] = test_dict
+        context['testallreleased'] = test_all_released
         return context
 
 
@@ -265,6 +204,14 @@ class TestView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(TestView, self).get_context_data(**kwargs)
+
+        if 'change' not in self.request.session.keys():
+            context['change'] = False
+        elif self.request.session['change'] == 1:
+            context['change'] = 'The chosen grade(s) have successfully been released.'
+        elif self.request.session['change'] == 2:
+            context['change'] = 'The chosen grade(s) have successfully been retracted.'
+        self.request.session['change'] = 0
 
         grade_dict = dict()
         student_list = []
@@ -327,27 +274,25 @@ def export(request, *args, **kwargs):
     return response
 
 
-def release(request, *args, **kwargs):
-    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
+def release(request):
+    regex = re.compile("check[0-9]+")
+    action = request.POST['action']
 
-    for grade in test.grade_set.all():
-        grade.released = True
-        grade.save()
+    for key in request.POST:
+        key_search = re.search('check([0-9]+)', key)
+        if key_search:
+            grade_id = int(key_search.group(1))
+            grade = Grade.objects.get(id=grade_id)
 
-    # TODO: Send mail
-
-    return response
-
-
-def retract(request, *args, **kwargs):
-    response = HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    test = Test.objects.prefetch_related('grade_set').get(id=kwargs['pk'])
-
-    for grade in test.grade_set.all():
-        grade.released = False
-        grade.save()
+            if action == 'release':
+                grade.released = True
+                grade.save()
+                request.session['change'] = 1
+            elif action == 'retract':
+                grade.released = False
+                grade.save()
+                request.session['change'] = 2
 
     # TODO: Send mail
 
-    return response
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

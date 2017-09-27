@@ -26,5 +26,11 @@ urlpatterns = [
     url(r'^', include('django.contrib.auth.urls')),
     url(r'^importer/', include('importer.urls')),
     url(r'^grades/', include('Grades.urls')),
-    url(r'^module_management/', include('module_management.urls'))
+    url(r'^module_management/', include('module_management.urls')),
+    url(r'^human_resource/', include('human_resource.urls'))
 ]
+
+handler404 = 'dashboard.views.not_found'
+handler500 = 'dashboard.views.server_error'
+handler403 = 'dashboard.views.permission_denied'
+handler400 = 'dashboard.views.bad_request'
