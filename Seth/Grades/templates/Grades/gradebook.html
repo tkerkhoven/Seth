@@ -17,18 +17,6 @@
     .table tbody tr > td.warning {
       background-color: rgba(255, 204, 102, .5) !important;
     }
-
-    #colorslider .slider-track-high {
-        background: rgba(102, 255, 163, .5);
-    }
-
-    #colorslider .slider-track-low {
-        background: rgba(255, 153, 153, .5);
-    }
-
-    #colorslider .slider-selection {
-        background: rgba(255, 204, 102, .5);
-    }
     </style>
 
     <div class="container">
@@ -49,29 +37,29 @@
                     <input type="text" id="colorslider" name="colorslider" value="" />
                     <br><br>
 
-                    <table class="table table-bordered table-responsive">
-                    <tr>
-                        <th>Student</th>
-                        {% for course,tests in coursedict.items %}
-                            <th colspan="{{ tests|length }}"><a href="{% url 'grades:course' pk=course.id %}"> {{ course }} </a></th>
-                        {% endfor %}
-                    </tr>
+                    <div class="table-overflow">
+                        <table class="table table-striped table-bordered table-responsive">
+                        <tr>
+                            <th>Student</th>
+                            {% for course,tests in coursedict.items %}
+                                <th colspan="{{ tests|length }}"><a href="{% url 'grades:course' pk=course.id %}"> {{ course }} </a></th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td></td>
+                            {% for course, tests in coursedict.items %}
+                            {% for test in tests %}
+                                <td>
+                                    <a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                                    {% if testallreleased|key:test %}
+                                    <i class="material-icons float-right"  data-toggle="tooltip" title="All grades in this test have been released">done</i>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            {% endfor %}
+                        </tr>
 
-                    <tr>
-                        <td></td>
-                        {% for course, tests in coursedict.items %}
-                        {% for test in tests %}
-                            <td>
-                                <a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
-                                {% if testallreleased|key:test %}
-                                <i class="material-icons float-right"  data-toggle="tooltip" title="All grades in this test have been released">done</i>
-                                {% endif %}
-                            </td>
-                        {% endfor %}
-                        {% endfor %}
-                    </tr>
-
-                    {% for student in studentlist %}
+                        {% for student in studentlist %}
                         <tr>
                             <td><a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.user.id %}">{{ student.user.first_name|key:0 }}. {{ student.user.last_name }} ({{ student.id_prefix }}{{student.person_id }})</a></td>
                             {% for course,tests in coursedict.items %}
@@ -89,9 +77,9 @@
                             {% endfor %}
                             {% endfor %}
                         </tr>
-                    {% endfor %}
-                    </table>
-
+                        {% endfor %}
+                        </table>
+                    </div>
                 {% else %}
                     <p>No students are available.</p>
                 {% endif %}
