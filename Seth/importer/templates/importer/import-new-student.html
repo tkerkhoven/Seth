@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Import grades into module {{ module_ed.module.name }}
+    Import grades into test: {{ test.name }}
 {% endblock %}
 
 {% block content %}
@@ -9,9 +9,9 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <h3 class="display-3">Import module master sheet</h3>
+                <h4 class="display-4">Upload New Students to System</span></h4>
                 <hr>
-                <form action="{% url 'import_module' pk %}" method="post" enctype="multipart/form-data">
+                <form action="{% url 'import_new_student' %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <input type="submit" value="Upload" /></p>
