@@ -19,7 +19,7 @@
                             {% for course in mod.courses.all %}
                                 <li>{{ course.name }}</li>
                                 <ul>
-                                {% for test in course.coursebacktable.all %}
+                                {% for test in course.test_set.all %}
                                     <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a href="{% url 'export_test' test.pk %}"><i class="material-icons">view_list</i></a></li>
                                 {% endfor %}
                                 </ul>
