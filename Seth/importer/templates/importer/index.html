@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Importer
+Importer
 {% endblock %}
 
 {% block content %}
@@ -15,22 +15,34 @@
                     <ul>
                     {% for mod in module_ed_list %}
                         <li><a href="{% url 'import_module' mod.pk %}">{{ mod }}</a> - <a href="{% url 'export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
+                        <ul>
+                        {% for course in mod.courses.all %}
+                            <li>{{ course.name }}</li>
                             <ul>
-                            {% for course in mod.courses.all %}
-                                <li>{{ course.name }}</li>
-                                <ul>
-                                {% for test in course.test_set.all %}
-                                    <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a href="{% url 'export_test' test.pk %}"><i class="material-icons">view_list</i></a></li>
-                                {% endfor %}
-                                </ul>
+                            {% for test in course.test_set.all %}
+                                <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a href="{% url 'export_test' test.pk %}"><i class="material-icons">view_list</i></a></li>
                             {% endfor %}
                             </ul>
+                        {% endfor %}
+                        </ul>
                     {% endfor %}
                     </ul>
-                {% else %}
-                    <h3 class="display-2">No module_eds available</h3>
-                {% endif %}
-            </div>
+            {% else %}
+            <h3 class="display-2">No module_eds available</h3>
+            {% endif %}
         </div>
     </div>
+
+    <h3 class="display-3">New Students</h3>
+    <hr>
+    <ul>
+        <div class="row">
+            <form action="{% url 'import_new_student' %}">
+                <input type="submit" value="Upload Students into System"/>
+            </form>
+        </div>
+    </ul>
+
+</div>
+</div>
 {% endblock %}
