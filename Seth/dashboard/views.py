@@ -23,6 +23,10 @@ def home(request):
     return render(request, 'dashboard/index.html', context)
 
 
+def modules(request):
+    return render(request, 'dashboard/modules.html')
+
+
 def logged_out(request):
     return render(request, 'registration/success_logged_out.html')
 
@@ -32,7 +36,7 @@ def settings(request):
 
 
 def get_modules():
-    return Module_ed.objects.order_by('module__name')
+    return Module_ed.objects.order_by('-start')
 
 
 def get_current_date():

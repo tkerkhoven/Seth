@@ -5,18 +5,25 @@
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
-    <ul>
-        <li>Course: <a
-                href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
-            - {{ test.course_id.name }}</a></li>
-        <li>Test Name: {{ test.name }}</li>
-        <li>Test Type: {{ test.get_type }}</li>
-        <li>Test Time: {{ test.time }}</li>
-        <li>Minimum Grade: {{ test.minimum_grade }}</li>
-        <li>Maximum Grade: {{ test.maximum_grade }}</li>
-        <li><a href="{% url 'grades:test' test.pk %}">Test Grades</a></li>
-    </ul>
+    {% include 'navbar.html' with active_page="module_management" %}
 
-    <a href="{% url 'module_management:test_update' test.pk %}">Edit</a>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <ul>
+                    <li>Course: <a
+                            href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
+                        - {{ test.course_id.name }}</a></li>
+                    <li>Test Name: {{ test.name }}</li>
+                    <li>Test Type: {{ test.get_type }}</li>
+                    <li>Test Time: {{ test.time }}</li>
+                    <li>Minimum Grade: {{ test.minimum_grade }}</li>
+                    <li>Maximum Grade: {{ test.maximum_grade }}</li>
+                    <li><a href="{% url 'grades:test' test.pk %}">Test Grades</a></li>
+                </ul>
+
+                <a href="{% url 'module_management:test_update' test.pk %}">Edit</a>
+            </div>
+        </div>
+    </div>
 {% endblock %}

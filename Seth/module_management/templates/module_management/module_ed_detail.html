@@ -5,23 +5,30 @@
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
-    <ul>
-        <li>Module Code: {{ module_ed.module_code }}</li>
-        <li>Year: {{ module_ed.year.year }}</li>
-        <li>Start: {{ module_ed.start }}</li>
-        <li>Stop: {{ module_ed.stop }}</li>
-        <li>
-            Courses:
-            <ul>
-                {% for course in module_ed.courses.all %}
-                    <li><a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
-                        - {{ course.name }}</a></li>
-                {% endfor %}
-            </ul>
-        </li>
-        <li><a href="{% url 'grades:gradebook' module_ed.pk %}">Module Edition Grades</a></li>
-    </ul>
+    {% include 'navbar.html' with active_page="module_management" %}
 
-    <a href="{% url 'module_management:module_ed_update' module_ed.pk %}">Edit</a>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <ul>
+                    <li>Module Code: {{ module_ed.module_code }}</li>
+                    <li>Year: {{ module_ed.year.year }}</li>
+                    <li>Start: {{ module_ed.start }}</li>
+                    <li>Stop: {{ module_ed.stop }}</li>
+                    <li>
+                        Courses:
+                        <ul>
+                            {% for course in module_ed.courses.all %}
+                                <li><a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
+                                    - {{ course.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li><a href="{% url 'grades:gradebook' module_ed.pk %}">Module Edition Grades</a></li>
+                </ul>
+
+                <a href="{% url 'module_management:module_ed_update' module_ed.pk %}">Edit</a>
+            </div>
+        </div>
+    </div>
 {% endblock %}

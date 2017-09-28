@@ -6,7 +6,7 @@
 
 {% block content %}
 
-    {% include 'navbar.html' %}
+    {% include 'navbar.html' with active_page="dashboard"%}
 
     <div class="container-fluid">
         <div class="row">
@@ -24,28 +24,28 @@
                 {% for mod in modules %}
                     {% if mod.start < time and mod.stop > time %}
                     <div class="card">
-                        <div class="card-header" role="tab" id="headingActive{{ mod.module.pk }}">
-                            <h4 class="md-0">
-                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.module.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.module.pk }}">
+                        <div class="card-header" role="tab" id="headingActive{{ mod.pk }}">
+                            <h4 class="md-0 skin-text remove-margin">
+                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.pk }}">
                                     {{ mod.module.name}}
                                 </a>
                                 <a href="#"><i class="material-icons float-right">settings</i></a>
                             </h4>
                         </div>
-                        <div id="collapseActive{{ mod.module.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.module.pk }}" data-parent="#accordion">
+                        <div id="collapseActive{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.pk }}" data-parent="#accordion">
                             <div class="card-body">
                                 <div id="accordion" role="tablist">
                                     {% for course in mod.courses.all %}
                                     <div class="card">
-                                        <div class="card-header" role="tab" id="headingActive{{ course.pk }}">
-                                            <h5 class="md-0">
-                                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ course.pk }}" aria-expanded="true" aria-controls="collapseActive{{ course.pk }}">
+                                        <div class="card-header" role="tab" id="headingActiveCourse{{ course.pk }}">
+                                            <h5 class="md-0 skin-text remove-margin">
+                                                <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ course.pk }}">
                                                     {{ course.name }}
                                                 </a>
                                                 <a href="#"><i class="material-icons float-right md-20">settings</i></a>
                                             </h5>
                                         </div>
-                                        <div id="collapseActive{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ course.pk }}" data-parent="#accordion">
+                                        <div id="collapseActiveCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ course.pk }}" data-parent="#accordion">
                                             <div class="card-body">
                                                 <ul class="list-group">
                                                     {% for test in course.test_set.all %}
@@ -70,28 +70,28 @@
                 <hr>
                 {% for mod in modules %}
                     <div class="card">
-                        <div class="card-header" role="tab" id="heading{{ mod.module.pk }}">
-                            <h4 class="md-0">
-                                <a class="text-dark" data-toggle="collapse" href="#collapse{{ mod.module.pk }}" aria-expanded="true" aria-controls="collapse{{ mod.module.pk }}">
-                                    {{ mod.module.name}}
+                        <div class="card-header" role="tab" id="heading{{ mod.pk }}">
+                            <h4 class="md-0 skin-text remove-margin">
+                                <a class="text-dark" data-toggle="collapse" href="#collapse{{ mod.pk }}" aria-expanded="true" aria-controls="collapse{{ mod.pk }}">
+                                    {{ mod.module.name}}{{ mod.module_code_extension }}
                                 </a>
                                 <a href="#"><i class="material-icons float-right">settings</i></a></h4>
                         </div>
 
-                        <div id="collapse{{ mod.module.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.module.pk }}" data-parent="#accordion">
+                        <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">
                             <div class="card-body">
                                 <div id="accordion" role="tablist">
                                     {% for course in mod.courses.all %}
                                     <div class="card">
-                                        <div class="card-header" role="tab" id="heading{{ course.pk }}">
-                                            <h5 class="md-0">
-                                                <a class="text-dark" data-toggle="collapse" href="#collapse{{ course.pk }}" aria-expanded="true" aria-controls="collapse{{ course.pk }}">
+                                        <div class="card-header" role="tab" id="headingCourse{{ course.pk }}">
+                                            <h5 class="md-0 skin-text remove-margin">
+                                                <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ course.pk }}">
                                                     {{ course.name }}
                                                 </a>
                                                 <a href="#"><i class="material-icons float-right md-20">settings</i></a>
                                             </h5>
                                         </div>
-                                        <div id="collapse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ course.pk }}" data-parent="#accordion">
+                                        <div id="collapseCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ course.pk }}" data-parent="#accordion">
                                             <div class="card-body">
                                                 <ul class="list-group">
                                                     {% for test in course.test_set.all %}
