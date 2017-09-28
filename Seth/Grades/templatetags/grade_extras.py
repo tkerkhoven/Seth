@@ -7,7 +7,6 @@ def key(d, key_name):
     try:
         value = d[key_name]
     except:
-        from django.conf import settings
         value = 'N/A'
 
     return value
@@ -15,9 +14,28 @@ def key(d, key_name):
 @register.filter(name='grade_od')
 def gradeordash(d):
     try:
-        value = d.grade
+        value = round(d.grade,1)
+
     except:
-        from django.conf import settings
         value = '-'
 
     return value
+
+@register.filter(name='grade_od_no_round')
+def gradeordash_nr(d):
+    try:
+        value = d.grade
+
+    except:
+        value = '-'
+
+    return value
+
+@register.filter(name='iseven')
+def iseven(d):
+    try:
+        value = d % 2
+    except:
+        value = 'N/A'
+    print(d)
+    return (value == 0)
