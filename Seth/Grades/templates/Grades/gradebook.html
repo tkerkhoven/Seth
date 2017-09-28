@@ -17,6 +17,15 @@
     .table tbody tr > td.warning {
       background-color: rgba(255, 204, 102, .5) !important;
     }
+
+    .table td {
+      min-width: 150px;
+    }
+
+    button.color {
+      background:none;
+      border:none;
+    }
     </style>
 
     <div class="container">
@@ -34,11 +43,30 @@
                         <input class="btn btn-secondary" type="submit" value="Export to .csv" />
                     </form>
 
-                    <input type="text" id="colorslider" name="colorslider" value="" />
-                    <br><br>
+                    <div id="accordion" role="tablist">
+                      <div class="card">
+                        <div class="card-header" role="tab" id="headingOne">
+                          <h5 class="mb-0">
+                            <a data-toggle="collapse" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                              Color Range
+                            </a>
+                          </h5>
+                        </div>
 
+                        <div id="collapseOne" class="collapse show" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion">
+                          <div class="card-body">
+                            <button class="color coloroff" id="colortoggle" name="colortoggle">Toggle Color<i id="coloricon" class="material-icons float-right">invert_colors</i></button>
+                            <input type="text" id="colorslider" name="colorslider" value="" />
+                          </div>
+                        </div>
+                      </div>
+                    <br>
+
+                    <input type="text" id="searchTable" onkeyup="searchTable('gradebook',2)" placeholder="Search..">
+
+                    <br><br>
                     <div class="table-overflow">
-                        <table class="table table-striped table-bordered table-responsive">
+                        <table id="gradebook" class="table table-striped table-bordered table-responsive">
                         <tr>
                             <th>Student</th>
                             {% for course,tests in coursedict.items %}
@@ -52,7 +80,7 @@
                                 <td>
                                     <a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
                                     {% if testallreleased|key:test %}
-                                    <i class="material-icons float-right"  data-toggle="tooltip" title="All grades in this test have been released">done</i>
+                                    <i class="material-icons float-right" data-toggle="tooltip" title="All grades in this test have been released">done</i>
                                     {% endif %}
                                 </td>
                             {% endfor %}
@@ -61,11 +89,11 @@
 
                         {% for student in studentlist %}
                         <tr>
-                            <td><a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.user.id %}">{{ student.user.first_name|key:0 }}. {{ student.user.last_name }} ({{ student.id_prefix }}{{student.person_id }})</a></td>
+                            <td><a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.person_id %}">{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</a></td>
                             {% for course,tests in coursedict.items %}
                             {% for test in tests %}
                             {% with grade=testdict|key:test|key:student|last %}
-                                <td id="gradeid_{{ grade.id }}" data-grade="{{ grade|grade_od }}">
+                                <td id="gradeid_{{ grade.id }}" data-grade="{{ grade|grade_od }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
                                     <font data-toggle="tooltip" title="{{ grade|grade_od_no_round }}">{{ grade|grade_od }}</font>
                                     {% if grade.released %}
                                     <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
