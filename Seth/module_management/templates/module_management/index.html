@@ -17,6 +17,10 @@
                             </li>
                         {% endif %}
                     {% endfor %}
+                    <li>
+                        <a href="{% url 'module_management:module_ed_create' mod.pk %}">Create new module
+                            edition</a>
+                    </li>
                 </ul>
             </li>
         {% endfor %}
