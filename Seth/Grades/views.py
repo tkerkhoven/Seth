@@ -28,11 +28,15 @@ class GradeView(generic.DetailView):
         course_dict = dict()
         test_dict = dict()
         test_all_released = dict()
+        study_dict = dict()
+        role_dict = dict()
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
         for studying in mod_ed.studying_set.prefetch_related('student_id'):
             if studying.student_id not in student_list:
                 student_list.append(studying.student_id)
+                study_dict[studying.student_id] = studying.study
+                role_dict[studying.student_id] = studying.role
 
         for course in mod_ed.courses.prefetch_related('test_set'):
             test_list = []
@@ -62,12 +66,14 @@ class GradeView(generic.DetailView):
         context['coursedict'] = course_dict
         context['testdict'] = test_dict
         context['testallreleased'] = test_all_released
+        context['studydict'] = study_dict
+        context['roledict'] = role_dict
         return context
 
 
 class StudentView(generic.DetailView):
     template_name = 'Grades/student.html'
-    model = User
+    model = Person
 
     def get_context_data(self, **kwargs):
         context = super(StudentView, self).get_context_data(**kwargs)
@@ -76,7 +82,7 @@ class StudentView(generic.DetailView):
         course_dict = dict()
         mod_width = dict()
 
-        person = Person.objects.get(person_id=self.kwargs['pk'])
+        person = Person.objects.get(id=self.kwargs['pk'])
 
         for studying in Studying.objects.filter(student_id=person).prefetch_related('module_id'):
             course_list = []
@@ -124,7 +130,7 @@ class ModuleStudentView(generic.DetailView):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
-        student = Person.objects.get(person_id=self.kwargs['sid'])
+        student = Person.objects.get(id=self.kwargs['sid'])
 
         course_list = []
         test_dict = dict()

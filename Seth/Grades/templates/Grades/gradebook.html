@@ -21,11 +21,6 @@
     .table td {
       min-width: 150px;
     }
-
-    button.color {
-      background:none;
-      border:none;
-    }
     </style>
 
     <div class="container">
@@ -48,23 +43,27 @@
                         <div class="card-header" role="tab" id="headingOne">
                           <h5 class="mb-0">
                             <a data-toggle="collapse" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                              Color Range
+                              Filters
                             </a>
                           </h5>
                         </div>
 
-                        <div id="collapseOne" class="collapse show" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion">
+                        <div id="collapseOne" class="collapse" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion">
                           <div class="card-body">
-                            <button class="color coloroff" id="colortoggle" name="colortoggle">Toggle Color<i id="coloricon" class="material-icons float-right">invert_colors</i></button>
-                            <input type="text" id="colorslider" name="colorslider" value="" />
+                            <button class="btn btn-secondary coloroff" id="colortoggle" name="colortoggle">Toggle Color</button>
+                            <br>
+                            <input id="lowerNum" type="number" value="5" min="1" max="10" step="0.25">
+                            <input id="upperNum" type="number" value="5.5" min="1" max="10" step="0.25">
+                            <hr>
+                            <input type="text" id="searchTable"  placeholder="Search..">
+                            <br>
+                            <div id="badges" style="margin: 5px;">
+                              <a id="badge1" class="badge badge-secondary" style="display:none">. X</a>
+                            </div>
                           </div>
                         </div>
                       </div>
                     <br>
-
-                    <input type="text" id="searchTable" onkeyup="searchTable('gradebook',2)" placeholder="Search..">
-
-                    <br><br>
                     <div class="table-overflow">
                         <table id="gradebook" class="table table-striped table-bordered table-responsive">
                         <tr>
@@ -89,7 +88,10 @@
 
                         {% for student in studentlist %}
                         <tr>
-                            <td><a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.person_id %}">{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</a></td>
+                            <td>
+                                <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</a>
+                                <p style="display: none">{{ studydict|key:student|study_od }} {{ roledict|key:student }}</p>
+                            </td>
                             {% for course,tests in coursedict.items %}
                             {% for test in tests %}
                             {% with grade=testdict|key:test|key:student|last %}

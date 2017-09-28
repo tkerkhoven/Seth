@@ -31,6 +31,16 @@ def gradeordash_nr(d):
 
     return value
 
+@register.filter(name='study_od')
+def studyordash(d):
+    try:
+        value = d.full_name + " " + d.short_name
+
+    except:
+        value = '-'
+
+    return value
+
 @register.filter(name='iseven')
 def iseven(d):
     try:
