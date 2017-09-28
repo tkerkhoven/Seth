@@ -53,7 +53,7 @@
                             <tr>
                                 {% with grade=gradedict|key:student|last %}
                                 <td> <input type="checkbox" class="child" name="check{{ grade.id }}" /> </td>
-                                <td>{{ student.user.first_name|key:0 }}. {{ student.user.last_name }} ({{ student.id_prefix }}{{student.person_id }})</td>
+                                <td>{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</td>
                                 <td>
                                     {{ grade|grade_od }}
                                     {% if grade.released %}

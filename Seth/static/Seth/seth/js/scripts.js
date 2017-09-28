@@ -17,48 +17,96 @@ jQuery(document).ready(function($) {
     });
 });
 
-jQuery(document).ready(function($) {
-    $('[data-toggle="tooltip"]').tooltip();
+var oldfrom = 5
+var oldto = 5.5
 
-    var changeSlider = function(data) {
+jQuery(document).ready(function($) {
+  $('[data-toggle="tooltip"]').tooltip();
+
+  var changeSlider = function(data) {
+  oldto = data.to
+  oldfrom = data.from
+
+  if($('#colortoggle').hasClass("coloron")) {
       $('[id^="gradeid_"]').each(function(index) {
         var grade = $(this).attr("data-grade")
-        if(+grade > +data.to) {
+        var mult = $(this).attr("data-grade-max")/10
+
+        if(+grade > ((+data.to)*mult)) {
           $(this).removeClass("success warning error")
           $(this).addClass("success")
         }
-        else if(+grade >= +data.from) {
+        else if(+grade >= ((+data.from)*mult)){
           $(this).removeClass("success warning error")
           $(this).addClass("warning")
         }
-        else if(+grade < +data.from) {
+        else if(+grade < ((+data.from)*mult)) {
           $(this).removeClass("success warning error")
           $(this).addClass("error")
         }
       });
-    };
+  }
+};
 
-    $("#colorslider").ionRangeSlider({
-                                    min: 1,
-                                    max: 10,
-                                    from: 5,
-                                    to: 5.5,
-                                    step: 0.1,
-                                    type: 'double',
-                                    grid: true,
-                                    grid_num: 9,
-                                    onChange: changeSlider
-                                });
-
-    $('[id^="gradeid_"]').each(function(index) {
-        if($(this).attr("data-grade") > 5.5) {
-            $(this).addClass("success")
-        }
-        else if($(this).attr("data-grade") >= 5) {
-            $(this).addClass("warning")
-        }
-        else if($(this).attr("data-grade") < 5) {
-            $(this).addClass("error")
-        }
+$("#colorslider").ionRangeSlider({
+        min: 1,
+        max: 10,
+        from: 5,
+        to: 5.5,
+        step: 0.1,
+        type: 'double',
+        grid: true,
+        grid_num: 9,
+        onChange: changeSlider
     });
 });
+
+$('#colortoggle').click(function() {
+  if($(this).hasClass("coloron")) {
+    $(this).removeClass("coloron")
+    $(this).addClass("coloroff")
+    $('#coloricon').html("invert_colors")
+
+    $('[id^="gradeid_"]').each(function(index) {
+      $(this).removeClass("success warning error")
+    });
+  }
+  else {
+    $(this).removeClass("coloroff")
+    $(this).addClass("coloron")
+    $('#coloricon').html("invert_colors_off")
+
+    $('[id^="gradeid_"]').each(function(index) {
+      var grade = $(this).attr("data-grade")
+      var mult = $(this).attr("data-grade-max")/10
+      if(+grade > ((+oldto)*mult)) {
+        $(this).addClass("success")
+      }
+      else if(+grade >= ((+oldfrom)*mult)){
+        $(this).addClass("warning")
+      }
+      else if(+grade < ((+oldfrom)*mult)) {
+        $(this).addClass("error")
+      }
+    });
+  }
+});
+
+function searchTable(t, start=0) {
+  var input, filter, table, tr, td, i;
+  input = document.getElementById("searchTable");
+  filter = input.value.toUpperCase();
+  table = document.getElementById(t);
+  tr = table.getElementsByTagName("tr");
+
+  for (i = start; i < tr.length; i++) {
+    td = tr[i].getElementsByTagName("td")[0];
+    if (td) {
+      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+        tr[i].style.display = "";
+      } else {
+        tr[i].style.display = "none";
+      }
+    }
+  }
+}
