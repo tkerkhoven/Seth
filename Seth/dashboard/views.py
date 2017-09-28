@@ -24,7 +24,10 @@ def home(request):
 
 
 def modules(request):
-    return render(request, 'dashboard/modules.html')
+    context = {
+        'modules': get_modules()
+    }
+    return render(request, 'dashboard/modules.html', context)
 
 
 def logged_out(request):

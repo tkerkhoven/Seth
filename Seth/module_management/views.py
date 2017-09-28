@@ -6,7 +6,7 @@ from Grades.models import Module, Module_ed, Course, Test
 
 
 class IndexView(generic.ListView):
-    template_name = 'module_management/index.html'
+    template_name = 'module_management/index2.html'
     context_object_name = 'module_list'
 
     def get_queryset(self):
