@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Delete Course
+{% endblock %}
+
+{% block content %}
+    {% include 'navbar.html' %}
+    <form action="" method="post">{% csrf_token %}
+        <p>Are you sure you want to delete "{{ course.name }} - {{ course.course_code }}"?</p>
+        <input type="submit" value="Confirm"/>
+    </form>
+{% endblock %}

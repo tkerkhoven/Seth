@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Delete Test
+{% endblock %}
+
+{% block content %}
+    {% include 'navbar.html' %}
+    <form action="" method="post">{% csrf_token %}
+        <p>Are you sure you want to delete "{{ test }}"?</p>
+        <input type="submit" value="Confirm"/>
+    </form>
+{% endblock %}
