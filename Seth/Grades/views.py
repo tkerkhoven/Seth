@@ -40,7 +40,7 @@ class GradeView(generic.DetailView):
             for test in course.test_set.prefetch_related('grade_set'):
 
                 grade_dict = dict()
-                all_released = 0
+                all_released = True
 
                 for grade in test.grade_set.prefetch_related('student_id').all():
                     if grade.student_id not in grade_dict.keys():
@@ -50,11 +50,11 @@ class GradeView(generic.DetailView):
 
                 for key in grade_dict.keys():
                     grade_dict[key].sort(key=lambda gr: grade.time)
-                    if grade_dict[key][-1].released:
-                        all_released += 1
+                    if not grade_dict[key][-1].released:
+                        all_released = False
 
                 test_dict[test] = grade_dict
-                test_all_released[test] = (all_released == len(student_list))
+                test_all_released[test] = all_released
                 test_list.append(test)
             course_dict[course] = test_list
 
@@ -76,7 +76,7 @@ class StudentView(generic.DetailView):
         course_dict = dict()
         mod_width = dict()
 
-        person = Person.objects.get(user=self.kwargs['pk'])
+        person = Person.objects.get(person_id=self.kwargs['pk'])
 
         for studying in Studying.objects.filter(student_id=person).prefetch_related('module_id'):
             course_list = []
@@ -124,7 +124,7 @@ class ModuleStudentView(generic.DetailView):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
-        student = Person.objects.prefetch_related('user').get(user=self.kwargs['sid'])
+        student = Person.objects.get(person_id=self.kwargs['sid'])
 
         course_list = []
         test_dict = dict()
@@ -178,7 +178,8 @@ class CourseView(generic.DetailView):
         for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
 
             grade_dict = dict()
-            all_released = 0
+            all_released = True
+
             for grade in test.grade_set.prefetch_related('student_id').all():
                 if grade.student_id not in grade_dict.keys():
                     grade_dict[grade.student_id] = []
@@ -186,11 +187,11 @@ class CourseView(generic.DetailView):
 
             for key in grade_dict.keys():
                 grade_dict[key].sort(key=lambda gr: grade.time)
-                if grade_dict[key][-1].released:
-                    all_released += 1
+                if not grade_dict[key][-1].released:
+                    all_released = False
 
             test_dict[test] = grade_dict
-            test_all_released[test] = (all_released == len(student_list))
+            test_all_released[test] = all_released
 
         context['course'] = course
         context['studentlist'] = student_list
