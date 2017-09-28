@@ -19,6 +19,7 @@
 
                 {% if student %}
                     <h1 class="display-4">{{ student.user.first_name }} {{ student.user.last_name }}</h1>
+                    <h2 clsss="display-5">{{ student.id_prefix }}{{student.person_id }}</h2>
                     <hr>
                     <table class="table table-striped table-bordered table-responsive">
                     <tr>
@@ -41,9 +42,9 @@
                             <td>
                                 {{ grade|grade_od }}
                                 {% if grade.released %}
-                                <i class="material-icons float-right">done</i>
+                                <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
                                 {% else %}
-                                <i class="material-icons float-right">clear</i>
+                                <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
                                 {% endif%}
                             </td>
                         {% endwith %}
