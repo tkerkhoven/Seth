@@ -11,12 +11,14 @@
                 <h3 class="display-4">Edit user</h3>
                 <hr>
                 <form action="" method="post">{% csrf_token %}
-                    {% for field in form %}
-                        <div class="form-group">
-                            <p>{{ field.label_tag }} {{ field }}</p>
-                        </div>
-                    {% endfor %}
-                    <input class="btn btn-secondary" type="submit" value="Update" />
+{#                    {% for field in form %}#}
+{#                        <div class="form-group">#}
+{#                            <p>{{ field.label_tag }} {{ field }}</p>#}
+{#                        </div>#}
+{#                    {% endfor %}#}
+                    {{ form.as_p }}
+                    <input class="btn btn-primary pointer" type="submit" value="Update" />
+                    <input onclick="history.back()" class="btn btn-secondary pointer" type="button" value="Cancel" />
                 </form>
             </div>
         </div>

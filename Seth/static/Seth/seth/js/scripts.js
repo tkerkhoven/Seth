@@ -10,6 +10,10 @@ $(document).ready(function() {
       $('#parent').prop('checked',$('.child:checked').length == $('.child').length);
     });
 
+    $("#addUserLink").on('click', function() {
+        $("#addUser").submit();
+    });
+
     $("#updateUserLink").on('click', function() {
         $("#updateUser").submit();
     });

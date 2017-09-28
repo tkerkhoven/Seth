@@ -23,15 +23,6 @@
                     {#                  <input class="btn btn-secondary" type="submit" value="Remove">#}
                 </form>
                 <hr>
-                <ul class="list-group">
-                    <li class="list-group-item">Id: {{ person.id }}</li>
-                    <li class="list-group-item">Start: {{ person.start }}</li>
-                    <li class="list-group-item">Stop: {{ person.stop }}</li>
-                    {% for study in person.studying_set.all %}
-                        <li class="list-group-item">Studies: {{ study }}</li>
-                    {% endfor %}
-                    <li class="list-group-item">User id: {{ person.full_id }}</li>
-                </ul>
                 {#                Name: {{ person.name }} <br>#}
                 Id: {{ person.id }} <br>
                 Start: {{ person.start }} <br>
