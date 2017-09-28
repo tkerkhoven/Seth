@@ -178,18 +178,19 @@ class CourseView(generic.DetailView):
         for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
 
             grade_dict = dict()
-            all_released = True
+            all_released = 0
             for grade in test.grade_set.prefetch_related('student_id').all():
                 if grade.student_id not in grade_dict.keys():
                     grade_dict[grade.student_id] = []
                 grade_dict[grade.student_id].append(grade)
-                grade_dict[grade.student_id].sort(key=lambda gr: grade.time)
 
-                if not grade.released:
-                    all_released = False
+            for key in grade_dict.keys():
+                grade_dict[key].sort(key=lambda gr: grade.time)
+                if grade_dict[key][-1].released:
+                    all_released += 1
 
             test_dict[test] = grade_dict
-            test_all_released[test] = all_released
+            test_all_released[test] = (all_released == len(student_list))
 
         context['course'] = course
         context['studentlist'] = student_list
