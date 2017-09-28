@@ -169,7 +169,7 @@ class Teacher(models.Model):
 ####################################################################
 
 class Test(models.Model):
-    course_id = models.ForeignKey(Course, related_name='coursebacktable')
+    course_id = models.ForeignKey(Course)
 
     name = models.CharField(max_length=32, blank=True)
     # Update TEST_TYPES in @property:get_type()
