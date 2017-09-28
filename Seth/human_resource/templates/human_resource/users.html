@@ -24,7 +24,7 @@
                     </thead>
                     <tbody>
                         {% for key, value in persons.items %}
-                        <tr class="clickable-row" data-href="{% url 'human_resource:user' pk=key%}">
+                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:user' pk=key%}">
                             <td> <a href="{% url 'human_resource:user' pk=key %}"> {{ key }}</a></td>
                             <td> {{ value.full_id }} </td>
                             <td> {{ value.name }} </td>

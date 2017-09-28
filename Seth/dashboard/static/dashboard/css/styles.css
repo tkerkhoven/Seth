@@ -20,7 +20,7 @@ body {
   .skin-text.remove-margin {
     margin-bottom: 0; }
 
-.clickable-row {
+.pointer {
   cursor: pointer; }
 
 .user-toolbar {
