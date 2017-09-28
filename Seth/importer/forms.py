@@ -19,3 +19,9 @@ class ImportStudentForm(forms.Form):
     file = forms.FileField(
         label='Select Student excel file'
     )
+
+
+class ImportStudentModule(forms.Form):
+    file = forms.FileField(
+        label='Select Student excel file'
+    )
