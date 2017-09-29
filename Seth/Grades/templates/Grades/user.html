@@ -1,9 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
+{% extends 'base.html' %}
+
+{% block title %}
+    Import grades into test: {{ test.name }}
+{% endblock %}
+
+{% block content %}
+    {% include 'navbar.html' %}
 <body>
 {% load grade_extras %}
 
@@ -35,3 +37,4 @@ Full ID: {{ person.full_id }}
 
 </body>
 </html>
+{% endblock %}

@@ -10,9 +10,10 @@ Import grades into test: {{ test.name }}
 <div class="container">
     <div class="row">
         <div class="col-lg-12">
-            {% if context.failed %}
             <h3 class="display-3">New Students</h3>
             <hr>
+            {% if context.failed %}
+            <h4 class="display-4">Failed</h4>
             The following students were already enrolled to this module under this student:<br>
             <table>
                 <tr>
@@ -33,6 +34,58 @@ Import grades into test: {{ test.name }}
                 {% endfor %}
             </table>
             {% endif %}
+
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            {% if context.created %}
+            <hr>
+            <h4 class="display-4">Added</h4>
+            The following students were not in the system, but are added now:<br>
+            <table>
+                <tr>
+                    <th> Name </th>
+                    <th> S-number </th>
+                </tr>
+                {% for creation in context.created %}
+                <tr>
+                    <td> {{ creation.0 }} </td>
+                    <td> {{ creation.1 }} </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            {% if context.studying %}
+            <hr>
+            <h4 class="display-4">Enrollments</h4>
+            The following students are now enrolled in the module:<br>
+            <table>
+                <tr>
+                    <th> Name </th>
+                    <th> S-number </th>
+                    <th> Module </th>
+                    <th> Module-code </th>
+                    <th> Study </th>
+                </tr>
+                {% for fail in context.studying %}
+                    <tr>
+                        <td> {{fail.0 }} </td>
+                        <td> {{fail.1 }} </td>
+                        <td> {{fail.2 }} </td>
+                        <td> {{fail.3 }} </td>
+                        <td> {{fail.4 }} </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+
 
         </div>
     </div>

@@ -216,12 +216,16 @@ def import_student_to_module(request, pk):
                         }
                     )
                     if created:
+                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
+                        module = Module.objects.get(module_code=module_ed.module_id)
                         context['studying'].append(
-                            [student.name, student.full_id, studying.module_id, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
                     else:
                         module_ed = Module_ed.objects.get(id=studying.module_id.pk)
                         module = Module.objects.get(module_code=module_ed.module_id)
                         context['failed'].append(
+                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                        context['studying'].append(
                             [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
                 print(context)
                 return render(request, 'importer/students-module-imported.html', context={'context': context})

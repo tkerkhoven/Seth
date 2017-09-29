@@ -1,16 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+{% extends 'base.html' %}
 
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-{% load grade_extras %}
+{% block title %}
+    Import grades into test: {{ test.name }}
+{% endblock %}
 
-<style>
-table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;}
-</style>
+{% block content %}
+{% include 'navbar.html' %}
 
     <form action="create-user/" method="get">{% csrf_token %}
     <!--{{ form.as_p }-->
@@ -42,4 +37,5 @@ table, th, td {border: 1px solid black; border-collapse: collapse; padding: 1px;
 
 </body>
 </html>
+{% endblock %}
 
