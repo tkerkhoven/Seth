@@ -11,10 +11,16 @@
             <li><a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod.module_code }} - {{ mod.name }}</a>
                 <ul>
                     {% for mod_ed in mod.module_ed_set.all %}
-                        <li>
-                            <a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
-                        </li>
+                        {% if mod_ed in mod_eds %}
+                            <li>
+                                <a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                            </li>
+                        {% endif %}
                     {% endfor %}
+                    <li>
+                        <a href="{% url 'module_management:module_ed_create' mod.pk %}">Create new module
+                            edition</a>
+                    </li>
                 </ul>
             </li>
         {% endfor %}
