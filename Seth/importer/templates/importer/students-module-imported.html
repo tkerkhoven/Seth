@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Import grades into test: {{ test.name }}
+{% endblock %}
+
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            {% if context.failed %}
+            <h3 class="display-3">New Students</h3>
+            <hr>
+            The following students were already enrolled to this module under this student:<br>
+            <table>
+                <tr>
+                    <th> Name </th>
+                    <th> S-number </th>
+                    <th> Module </th>
+                    <th> Module-code </th>
+                    <th> Study </th>
+                </tr>
+                {% for fail in context.failed %}
+                    <tr>
+                        <td> {{fail.0 }} </td>
+                        <td> {{fail.1 }} </td>
+                        <td> {{fail.2 }} </td>
+                        <td> {{fail.3 }} </td>
+                        <td> {{fail.4 }} </td>
+                    </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+
+</div>
+
+{% endblock %}

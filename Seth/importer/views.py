@@ -1,14 +1,15 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, render_to_response
 from django.views import generic
 from django.utils import timezone
 from django.db.models import Q
 from xlsxwriter.utility import xl_rowcol_to_cell
 import re
+from django.http import HttpResponse
 
-from Grades.models import Module_ed, Grade, Test, Person, Studying
+from Grades.models import Module_ed, Grade, Test, Person, Studying, Module, Study
 
 # Create your views here.
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule
@@ -186,15 +187,15 @@ def import_student_to_module(request, pk):
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
             startpattern = re.compile('start*')
-            print('s-number' == students_to_module[0][0].lower())
-            print('name' == students_to_module[0][1].lower())
-            print(r'start*' == students_to_module[0][2].lower())
-            print('study' == students_to_module[0][3].lower())
-            print('role' == students_to_module[0][4].lower())
             if students_to_module[0][0].lower() == 's-number' and students_to_module[0][1].lower() == 'name' and \
                     startpattern.match(students_to_module[0][
                                            2].lower()) and students_to_module[0][3].lower() == 'study' and \
                             students_to_module[0][4].lower() == 'role':
+                context = {}
+                context['created'] = []
+                context['studying'] = []
+                context['failed'] = []
+
                 for i in range(1, len(students_to_module)):
                     student, created = Person.objects.get_or_create(
                         id_prefix='s',
@@ -205,9 +206,7 @@ def import_student_to_module(request, pk):
                         }
                     )
                     if created:
-                        string += "Added new student: %s (%s)<br>" % (student.name, student.full_id)
-                    else:
-                        string += "Student %s (%s) existed already<br>" % (student.name, student.full_id)
+                        context['created'].append([student.name, student.full_id])
                     studying, created = Studying.objects.get_or_create(
                         student_id=student,
                         module_id_id=pk,
@@ -217,21 +216,24 @@ def import_student_to_module(request, pk):
                         }
                     )
                     if created:
-                        string += "Student %s (%s) is now studying %s<br>" % (
-                            student.name, student.full_id, studying.module_id)
+                        context['studying'].append(
+                            [student.name, student.full_id, studying.module_id, studying.study])
                     else:
-                        string += "Student %s (%s) was already studying %s<br>" % (
-                            student.name, student.full_id, studying.module_id)
-                return HttpResponse(string)
+                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
+                        module = Module.objects.get(module_code=module_ed.module_id)
+                        context['failed'].append(
+                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                print(context)
+                return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
                 return HttpResponseBadRequest("Incorrect xls-format")
         else:
             return HttpResponseBadRequest('Bad POST')
-    else:
-        # if Module_ed.objects.filter(pk=pk):
+
+    else:  # if Module_ed.objects.filter(pk=pk):
         student_form = ImportStudentModule()
         return render(request, 'importer/import-module-student.html',
                       {'form': student_form, 'pk': pk})
 
-        # else:
-        # return HttpResponseBadRequest('You are not an Admin')
+# else:
+# return HttpResponseBadRequest('You are not an Admin')
