@@ -15,9 +15,14 @@
             Courses:
             <ul>
                 {% for course in module_ed.courses.all %}
-                    <li><a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
-                        - {{ course.name }}</a></li>
+                    <li>
+                        <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
+                            - {{ course.name }}</a>
+                    </li>
                 {% endfor %}
+                <li>
+                    <a href="{% url 'module_management:course_create' module_ed.pk %}">Create new course</a>
+                </li>
             </ul>
         </li>
         <li><a href="{% url 'grades:gradebook' module_ed.pk %}">Module Edition Grades</a></li>

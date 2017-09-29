@@ -12,8 +12,8 @@
         <li>
             Teachers:
             <ul>
-                {% for teacher in course.teacher.all %}
-                    <li>{{ teacher.name }}</li>
+                {% for teacher in course.teacher_set.all %}
+                    <li>{{ teacher.person.name }} - {{ teacher.get_role }}</li>
                 {% endfor %}
             </ul>
         </li>
@@ -23,10 +23,15 @@
                 {% for test in course.test_set.all %}
                     <li><a href="{% url 'module_management:test_detail' test.pk %}">{{ test.name }}</a></li>
                 {% endfor %}
+                <li>
+                    <a href="{% url 'module_management:test_create' course.pk %}">Create new test</a>
+                </li>
             </ul>
         </li>
         <li><a href="{% url 'grades:course' course.pk %}">Course Grades</a></li>
     </ul>
 
     <a href="{% url 'module_management:course_update' course.pk %}">Edit</a>
+     -
+    <a href="{% url 'module_management:course_delete' course.pk %}">Delete</a>
 {% endblock %}
