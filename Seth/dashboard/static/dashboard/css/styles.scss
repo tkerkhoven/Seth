@@ -13,6 +13,18 @@ body {
   background-color: red;
 }
 
+.display-5 {
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+.table-overflow {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+}
+
 @import '../../../../static/Seth/seth/css/_icons';
 
 @import '../../../../static/Seth/seth/css/_navbar-menus';

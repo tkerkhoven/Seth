@@ -25,15 +25,27 @@
                         <tr>
                             <th>Student</th>
                             {% for test in testdict.keys %}
-                                <th><a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></th>
+                                <th>
+                                    <a href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                                    {% if testallreleased|key:test %}
+                                    <i class="material-icons float-right" data-toggle="tooltip" title="All grade in this test have been released">done</i>
+                                    {% endif %}
+                                </th>
                             {% endfor %}
                         </tr>
                         {% for student in studentlist %}
                             <tr>
-                                <td>{{ student.user.last_name }}</td>
+                                <td>{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</td>
                                 {% for test in testdict.keys %}
                                 {% with grade=testdict|key:test|key:student|last %}
-                                    <td>{{ grade|grade_od }}</td>
+                                    <td>
+                                        {{ grade|grade_od }}
+                                        {% if grade.released %}
+                                        <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
+                                        {% else %}
+                                        <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
+                                        {% endif %}
+                                    </td>
                                 {% endwith %}
                                 {% endfor %}
                             </tr>
