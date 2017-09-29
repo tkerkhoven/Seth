@@ -1,8 +1,9 @@
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
 from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
-from django.contrib.auth.models import User
 import csv
 import re
 from django.utils.encoding import smart_str
@@ -11,6 +12,21 @@ from django.utils.encoding import smart_str
 class ModuleView(generic.ListView):
     template_name = 'Grades/modules.html'
     context_object_name = 'module_list'
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user)):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
 
     def get_queryset(self):
         module_set = Module.objects.prefetch_related('module_ed_set')
@@ -21,7 +37,24 @@ class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook.html'
     model = Module_ed
 
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
+                                        id=self.kwargs['pk']):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
+        user = self.request.user
         context = super(GradeView, self).get_context_data(**kwargs)
 
         student_list = []
@@ -38,7 +71,8 @@ class GradeView(generic.DetailView):
                 study_dict[studying.student_id] = studying.study
                 role_dict[studying.student_id] = studying.role
 
-        for course in mod_ed.courses.prefetch_related('test_set'):
+        for course in mod_ed.courses.prefetch_related('test_set').filter(
+                        Q(teachers__user=user) | Q(module_ed__module_coordinator__user=user)):
             test_list = []
 
             for test in course.test_set.prefetch_related('grade_set'):
@@ -74,6 +108,21 @@ class GradeView(generic.DetailView):
 class StudentView(generic.DetailView):
     template_name = 'Grades/student.html'
     model = Person
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Module_ed.objects.filter(user=user, id=self.kwargs['pk']):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(StudentView, self).get_context_data(**kwargs)
@@ -122,11 +171,29 @@ class StudentView(generic.DetailView):
 
         return context
 
+
 class ModuleStudentView(generic.DetailView):
     template_name = 'Grades/modulestudent.html'
     model = Module_ed
 
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
+                                        id=self.kwargs['pk']):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
+        user = self.request.user
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
@@ -136,7 +203,8 @@ class ModuleStudentView(generic.DetailView):
         test_dict = dict()
         grade_dict = dict()
 
-        for course in mod_ed.courses.prefetch_related('test_set').all():
+        for course in mod_ed.courses.prefetch_related('test_set').filter(
+                        Q(teachers__user=user) | Q(module_ed__module_coordinator__user=user)):
             test_list = []
 
             if course not in course_list:
@@ -167,12 +235,30 @@ class CourseView(generic.DetailView):
     template_name = 'Grades/course.html'
     model = Course
 
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Course.objects.filter(Q(module_ed__module_coordinator__user=user) | Q(teachers__user=user),
+                                     id=self.kwargs['pk']):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(CourseView, self).get_context_data(**kwargs)
 
         test_dict = dict()
         test_all_released = dict()
         student_list = []
+        study_dict = dict()
+        role_dict = dict()
 
         course = Course.objects.get(id=self.kwargs['pk'])
 
@@ -180,6 +266,8 @@ class CourseView(generic.DetailView):
             for studying in mod_ed.studying_set.prefetch_related('student_id').all():
                 if studying.student_id not in student_list:
                     student_list.append(studying.student_id)
+                    study_dict[studying.student_id] = studying.study
+                    role_dict[studying.student_id] = studying.role
 
         for test in Test.objects.filter(course_id=course).prefetch_related('grade_set'):
 
@@ -203,12 +291,32 @@ class CourseView(generic.DetailView):
         context['studentlist'] = student_list
         context['testdict'] = test_dict
         context['testallreleased'] = test_all_released
+        context['studydict'] = study_dict
+        context['roledict'] = role_dict
+        context['module_ed'] = Module_ed.objects.filter(courses=course)[0]
         return context
 
 
 class TestView(generic.DetailView):
     template_name = 'Grades/test.html'
     model = Test
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Test.objects.filter(
+                        Q(course_id__module_ed__module_coordinator__user=user) | Q(course_id__teachers__user=user),
+                        id=self.kwargs['pk']):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(TestView, self).get_context_data(**kwargs)
@@ -223,6 +331,8 @@ class TestView(generic.DetailView):
 
         grade_dict = dict()
         student_list = []
+        study_dict = dict()
+        role_dict = dict()
 
         test = Test.objects.get(id=self.kwargs['pk'])
 
@@ -230,6 +340,8 @@ class TestView(generic.DetailView):
             for studying in mod_ed.studying_set.prefetch_related('student_id').all():
                 if studying.student_id not in student_list:
                     student_list.append(studying.student_id)
+                    study_dict[studying.student_id] = studying.study
+                    role_dict[studying.student_id] = studying.role
 
         for grade in test.grade_set.prefetch_related('student_id').all():
             if grade.student_id not in grade_dict.keys():
@@ -241,10 +353,18 @@ class TestView(generic.DetailView):
         context['test'] = test
         context['studentlist'] = student_list
         context['gradedict'] = grade_dict
+        context['studydict'] = study_dict
+        context['roledict'] = role_dict
+        context['module_ed'] = Module_ed.objects.filter(courses=test.course_id)[0]
         return context
 
 
 def export(request, *args, **kwargs):
+    user = request.user
+
+    if not Module_ed.objects.filter(module_coordinator__user=user, id=kwargs['pk']):
+        raise PermissionDenied()
+
     mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(id=kwargs['pk'])
 
     response = HttpResponse(content_type='text/csv')
@@ -282,7 +402,12 @@ def export(request, *args, **kwargs):
     return response
 
 
-def release(request):
+def release(request, *args, **kwargs):
+    user = request.user
+
+    if not Module_ed.objects.filter(module_coordinator__user=user, id=kwargs['pk']):
+        raise PermissionDenied()
+
     regex = re.compile("check[0-9]+")
     action = request.POST['action']
 

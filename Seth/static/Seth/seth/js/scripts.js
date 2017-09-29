@@ -67,6 +67,7 @@ $('#colortoggle').click(function() {
 function updateColoring() {
   if($("#colortoggle").hasClass("coloron")) {
     $('[id^="gradeid_"]').each(function(index) {
+      console.log("D");
       $(this).removeClass("success warning error")
       var grade = $(this).attr("data-grade")
       var mult = $(this).attr("data-grade-max")/10
@@ -80,27 +81,14 @@ function updateColoring() {
       else if(+grade < ((+oldfrom)*mult)) {
         $(this).addClass("error")
       }
+      console.log("F");
     });
   }
 };
 
-function updateSearchResults() {
-  $("#gradebook tbody tr").not(":containsi('" + searchString + "')").each(function(e){
-    if($(this).index() > 1) {
-      $(this).hide();
-    }
-  });
-
-  $("#gradebook tbody tr:containsi('" + searchString + "')").each(function(e){
-    if($(this).index() > 1) {
-      $(this).show();
-    }
-  });
-}
-
 $(document).ready(function() {
   $("#lowerNum").bind('keyup mouseup', function () {
-    if($(this).val() <= $("#upperNum").val()) {
+    if(+$(this).val() <= +$("#upperNum").val()) {
       oldfrom = $(this).val();
       oldto = $("#upperNum").val();
     }
@@ -112,7 +100,7 @@ $(document).ready(function() {
   });
 
   $("#upperNum").bind('keyup mouseup', function () {
-    if($(this).val() > $("#lowerNum").val()) {
+    if(+$(this).val() > +$("#lowerNum").val()) {
       oldfrom = $(this).val();
       oldto = $("#upperNum").val();
     }
@@ -123,37 +111,28 @@ $(document).ready(function() {
     updateColoring()
   });
 
-  $("#searchTable").keypress(function (e) {
-    if(e.which == 13) {
-      var searchTerm = $("#searchTable").val();
-      var listItem = $('#gradebook tbody').children('tr');
-      var searchSplit = searchTerm.replace(/ /g, "'):containsi('")
+  $("#searchTable").keyup(function () {
+    var searchTerm = $("#searchTable").val();
+    var listItem = $('#gradebook tbody').children('tr');
+    var skipToRow = $('#gradebook').attr("data-skip-to-row");
+    var searchSplit = searchTerm.replace(/ /g, "'):containsi('")
 
-      $.extend($.expr[':'], {
-        'containsi': function(elem, i, match, array){
-          return (elem.textContent || elem.innerText || '').toLowerCase().indexOf((match[3] || "").toLowerCase()) >= 0;
-        }
-      });
+    $.extend($.expr[':'], {
+      'containsi': function(elem, i, match, array){
+        return (elem.textContent || elem.innerText || '').toLowerCase().indexOf((match[3] || "").toLowerCase()) >= 0;
+      }
+    });
 
-      searchString = searchString + " " + searchSplit;
+    $("#gradebook tbody tr").not(":containsi('" + searchSplit + "')").each(function(e){
+      if($(this).index() > skipToRow) {
+        $(this).hide();
+      }
+    });
 
-      var $badge = $('div[id^="badge"]:last');
-      var num = parseInt( $badge.prop("id").match(/\d+/g), 10 ) +1;
-      var $clone = $badge.clone().prop('id', 'badge'+num );
-      $badge.after( $clone.text('klon'+num) );
-
-      $clone.html(searchSplit + " X");
-      $clone.click(function() {
-        var s = $clone.html().replace(/\sX(?!.*\sX)/, "");
-        searchString = searchString.replace(new RegExp(s + "(?!.*" + s + ")"), "");
-        updateSearchResults();
-        $clone.remove();
-      });
-      $clone.show();
-
-      $("#searchTable").val("");
-
-      updateSearchResults();
-    }
+    $("#gradebook tbody tr:containsi('" + searchSplit + "')").each(function(e){
+      if($(this).index() > skipToRow) {
+        $(this).show();
+      }
+    });
   });
 });

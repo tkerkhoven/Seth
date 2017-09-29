@@ -31,6 +31,16 @@ def gradeordash_nr(d):
 
     return value
 
+@register.filter(name='round')
+def g_round(d):
+    try:
+        value = round(d,1)
+
+    except:
+        value = '-'
+
+    return value
+
 @register.filter(name='study_od')
 def studyordash(d):
     try:
