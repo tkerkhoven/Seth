@@ -123,6 +123,7 @@ class Module_ed(models.Model):
     start = models.DateField(default=datetime.date(1, 1, 1))
     stop = models.DateField(default=datetime.date(9999, 12, 31))
 
+    # TODO: Check the module_code(self) output
     @property
     def module_code(self):
         return str(self.year.year) + self.module.module_code + self.module_code_extension
@@ -146,11 +147,20 @@ class Coordinator(models.Model):
 class Teacher(models.Model):
     person = models.ForeignKey(Person)
     course = models.ForeignKey(Course)
+    # Update ROLES in @property:get_role()
     ROLES = (
         ('T', 'Teacher'),
         ('A', 'Teaching Assistant'),
     )
     role = models.CharField(max_length=1, choices=ROLES)
+
+    # Should be the same as ROLES
+    @property
+    def get_role(self):
+        return {
+            'T': 'Teacher',
+            'A': 'Teaching Assistant'
+        }[self.role]
 
 
 # class Advisor(models.Model):
