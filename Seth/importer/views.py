@@ -34,6 +34,9 @@ def import_module(request, pk):
     if request.method == "POST":
         form = GradeUploadForm(request.POST, request.FILES)
 
+        print(form.data)
+        print(request.FILES)
+
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -57,23 +60,30 @@ def import_module(request, pk):
                 if student_id_field is None:
                     return HttpResponseBadRequest('excel file misses required header: \"student_id\"')
 
+                teacher = Person.objects.get(user=request.user)
+
                 grades = []
+
+                tests = dict()
+                for test_column in test_rows.keys():
+                    tests[test_column] = Test.objects.get(pk=sheet[table][0][test_column])
+
+                # check for invalid students
                 for row in sheet[table][1:]:
+                    if not Person.objects.filter(person_id=row[student_id_field]):
+                        return HttpResponseBadRequest(
+                            'Student {} does not exist. Add this user first before retrying.'.format(
+                                row[student_id_field]))
+
+
+                for row in sheet[table][1:]:
+                    student = Person.objects.filter(person_id=row[student_id_field])[0]
                     for test_column in test_rows.keys():
                         try:
-                            if not Person.objects.filter(person_id=row[student_id_field]):
-                                return HttpResponseBadRequest(
-                                    'Student {} does not exist. Add this user first before retrying.'.format(
-                                        row[student_id_field]))
-                            if not Test.objects.filter(pk=sheet[table][0][test_column]):
-                                return HttpResponseBadRequest(
-                                    'Test with id {} does not exist in the database. Did you change the header field '
-                                    'of the spreadsheet?'.format(sheet[table][0][test_column])
-                                )
                             grades.append(make_grade(
-                                student=Person.objects.filter(person_id=row[student_id_field])[0],
-                                corrector=Person.objects.get(user=request.user),
-                                test=Test.objects.get(pk=sheet[table][0][test_column]),
+                                student=student,
+                                corrector=teacher,
+                                test=tests[test_column],
                                 grade=row[test_column]
                             ))
                         except GradeException as e:
@@ -81,14 +91,14 @@ def import_module(request, pk):
                 save_grades(grades)
             return redirect('grades:gradebook', pk)
         else:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest('Invalid file')
     else:
         if Module_ed.objects.filter(pk=pk):
             form = GradeUploadForm()
             return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
 
         else:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest('This module does not exist.')
 
 
 @login_required
@@ -116,6 +126,8 @@ def import_test(request, pk):
                 except ValueError:
                     return HttpResponseBadRequest()
 
+                teacher = Person.objects.get(user=request.user)
+
                 grades = []
                 for row in sheet[table][1:]:
                     if not Person.objects.filter(person_id=row[student_id_field]):
@@ -123,7 +135,7 @@ def import_test(request, pk):
                     try:
                         grades.append(make_grade(
                             student=Person.objects.filter(person_id=row[student_id_field])[0],
-                            corrector=Person.objects.get(user=request.user),
+                            corrector=teacher,
                             test=Test.objects.get(pk=pk),
                             grade=row[grade_field],
                             description=row[description_field]
@@ -207,7 +219,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade: float, des
     return grade_obj
 
 
-def save_grades(grades: [Grade]):
+def save_grades(grades):
     try:
         Grade.objects.bulk_create([grade for grade in grades if grade is not None])
     except:
