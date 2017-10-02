@@ -8,6 +8,7 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import generic
+from django.views.generic.edit import ModelFormMixin
 
 from Grades.models import Module, Module_ed, Course, Test, Person, Coordinator, Teacher, Grade
 
@@ -116,7 +117,7 @@ class ModuleEdUpdateView(generic.UpdateView):
 class ModuleEdCreateForm(ModelForm):
     class Meta:
         model = Module_ed
-        fields = ['module', 'module_code_extension', 'start', 'stop', 'year', 'module_coordinator', 'courses']
+        fields = ['module', 'module_code_extension', 'start', 'stop', 'year', 'module_coordinator']
 
     def __init__(self, *args, **kwargs):
         super(ModuleEdCreateForm, self).__init__(*args, **kwargs)
@@ -227,7 +228,7 @@ class CourseUpdateView(generic.UpdateView):
         pk = request.path_info.split('/')[2]
         user = request.user
 
-        if not Course.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user) | Q(teachers__user=user))):
+        if not Course.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -238,6 +239,20 @@ class CourseUpdateView(generic.UpdateView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        Teacher.objects.filter(course=self.object).delete()
+        for t in form.cleaned_data['teachers']:
+            teacher = Teacher()
+            teacher.course = self.object
+            teacher.person = t
+            if t.id_prefix == 'm':
+                teacher.role = 'T'
+            else:
+                teacher.role = 'A'
+            teacher.save()
+        return super(ModelFormMixin, self).form_valid(form)
 
 
 class CourseCreateForm(ModelForm):

@@ -6,23 +6,28 @@
 
 {% block content %}
     {% include 'navbar.html' %}
-    <ul>
-        {% for mod in module_list %}
-            <li><a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod.module_code }} - {{ mod.name }}</a>
-                <ul>
-                    {% for mod_ed in mod.module_ed_set.all %}
-                        {% if mod_ed in mod_eds %}
-                            <li>
-                                <a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    <li>
-                        <a href="{% url 'module_management:module_ed_create' mod.pk %}">Create new module
-                            edition</a>
-                    </li>
-                </ul>
-            </li>
-        {% endfor %}
-    </ul>
+    {% if module_list %}
+        <ul>
+            {% for mod in module_list %}
+                <li><a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod.module_code }}
+                    - {{ mod.name }}</a>
+                    <ul>
+                        {% for mod_ed in mod.module_ed_set.all %}
+                            {% if mod_ed in mod_eds %}
+                                <li>
+                                    <a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        <li>
+                            <a href="{% url 'module_management:module_ed_create' mod.pk %}">Create new module
+                                edition</a>
+                        </li>
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        No modules are available.
+    {% endif %}
 {% endblock %}
