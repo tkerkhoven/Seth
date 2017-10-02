@@ -93,7 +93,7 @@ class ModuleEdView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ModuleEdView, self).get_context_data(**kwargs)
-        studying = Studying.objects.filter(module_id=self.kwargs['pk'])
+        studying = Studying.objects.filter(module_id=self.kwargs['pk']).prefetch_related('student_id').prefetch_related('study')
 
         context['studying'] = studying
         print(context)
