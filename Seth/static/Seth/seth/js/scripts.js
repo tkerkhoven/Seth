@@ -1,3 +1,7 @@
+var oldto = 5.5;
+var oldfrom = 5;
+var searchString = "";
+
 $(".btn").mouseup(function(){
     $(this).blur();
 });
@@ -47,48 +51,28 @@ $(document).ready(function() {
     });
 });
 
-var oldfrom = 5
-var oldto = 5.5
-
 jQuery(document).ready(function($) {
   $('[data-toggle="tooltip"]').tooltip();
 
-  var changeSlider = function(data) {
-  oldto = data.to
-  oldfrom = data.from
-
   if($('#colortoggle').hasClass("coloron")) {
-      $('[id^="gradeid_"]').each(function(index) {
-        var grade = $(this).attr("data-grade")
-        var mult = $(this).attr("data-grade-max")/10
+    $('[id^="gradeid_"]').each(function(index) {
+      var grade = $(this).attr("data-grade")
+      var mult = $(this).attr("data-grade-max")/10
 
-        if(+grade > ((+data.to)*mult)) {
-          $(this).removeClass("success warning error")
-          $(this).addClass("success")
-        }
-        else if(+grade >= ((+data.from)*mult)){
-          $(this).removeClass("success warning error")
-          $(this).addClass("warning")
-        }
-        else if(+grade < ((+data.from)*mult)) {
-          $(this).removeClass("success warning error")
-          $(this).addClass("error")
-        }
-      });
-  }
-};
-
-$("#colorslider").ionRangeSlider({
-        min: 1,
-        max: 10,
-        from: 5,
-        to: 5.5,
-        step: 0.1,
-        type: 'double',
-        grid: true,
-        grid_num: 9,
-        onChange: changeSlider
+      if(+grade > ((+data.to)*mult)) {
+        $(this).removeClass("success warning error")
+        $(this).addClass("success")
+      }
+      else if(+grade >= ((+data.from)*mult)){
+        $(this).removeClass("success warning error")
+        $(this).addClass("warning")
+      }
+      else if(+grade < ((+data.from)*mult)) {
+        $(this).removeClass("success warning error")
+        $(this).addClass("error")
+      }
     });
+  }
 });
 
 $('#colortoggle').click(function() {
@@ -106,9 +90,18 @@ $('#colortoggle').click(function() {
     $(this).addClass("coloron")
     $('#coloricon').html("invert_colors_off")
 
+    updateColoring()
+  }
+});
+
+function updateColoring() {
+  if($("#colortoggle").hasClass("coloron")) {
     $('[id^="gradeid_"]').each(function(index) {
+      console.log("D");
+      $(this).removeClass("success warning error")
       var grade = $(this).attr("data-grade")
       var mult = $(this).attr("data-grade-max")/10
+
       if(+grade > ((+oldto)*mult)) {
         $(this).addClass("success")
       }
@@ -118,25 +111,58 @@ $('#colortoggle').click(function() {
       else if(+grade < ((+oldfrom)*mult)) {
         $(this).addClass("error")
       }
+      console.log("F");
     });
   }
-});
+};
 
-function searchTable(t, start=0) {
-  var input, filter, table, tr, td, i;
-  input = document.getElementById("searchTable");
-  filter = input.value.toUpperCase();
-  table = document.getElementById(t);
-  tr = table.getElementsByTagName("tr");
-
-  for (i = start; i < tr.length; i++) {
-    td = tr[i].getElementsByTagName("td")[0];
-    if (td) {
-      if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
-        tr[i].style.display = "";
-      } else {
-        tr[i].style.display = "none";
-      }
+$(document).ready(function() {
+  $("#lowerNum").bind('keyup mouseup', function () {
+    if(+$(this).val() <= +$("#upperNum").val()) {
+      oldfrom = $(this).val();
+      oldto = $("#upperNum").val();
     }
-  }
-}
+    else {
+      oldfrom = $("#upperNum").val();
+      oldto = $(this).val();
+    }
+    updateColoring()
+  });
+
+  $("#upperNum").bind('keyup mouseup', function () {
+    if(+$(this).val() > +$("#lowerNum").val()) {
+      oldfrom = $(this).val();
+      oldto = $("#upperNum").val();
+    }
+    else {
+      oldfrom = $("#upperNum").val();
+      oldto = $(this).val();
+    }
+    updateColoring()
+  });
+
+  $("#searchTable").keyup(function () {
+    var searchTerm = $("#searchTable").val();
+    var listItem = $('#gradebook tbody').children('tr');
+    var skipToRow = $('#gradebook').attr("data-skip-to-row");
+    var searchSplit = searchTerm.replace(/ /g, "'):containsi('")
+
+    $.extend($.expr[':'], {
+      'containsi': function(elem, i, match, array){
+        return (elem.textContent || elem.innerText || '').toLowerCase().indexOf((match[3] || "").toLowerCase()) >= 0;
+      }
+    });
+
+    $("#gradebook tbody tr").not(":containsi('" + searchSplit + "')").each(function(e){
+      if($(this).index() > skipToRow) {
+        $(this).hide();
+      }
+    });
+
+    $("#gradebook tbody tr:containsi('" + searchSplit + "')").each(function(e){
+      if($(this).index() > skipToRow) {
+        $(this).show();
+      }
+    });
+  });
+});
