@@ -85,7 +85,7 @@ def import_module(request, pk):
 
 
                 for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
-                    student = Person.objects.filter(person_id=row[student_id_field])[COLUMN_TITLE_ROW]
+                    student = Person.objects.filter(person_id=row[student_id_field])[0]
                     if student:
                         for test_column in test_rows.keys():
                             try:
@@ -143,7 +143,7 @@ def import_test(request, pk):
                         return HttpResponseBadRequest('Student {} does not exist. Add this user first before retrying.'.format(row[student_id_field]))
                     try:
                         grades.append(make_grade(
-                            student=Person.objects.filter(person_id=row[student_id_field])[COLUMN_TITLE_ROW],
+                            student=Person.objects.filter(person_id=row[student_id_field])[0],
                             corrector=teacher,
                             test=Test.objects.get(pk=pk),
                             grade=row[grade_field],
@@ -175,7 +175,7 @@ def export_module(request, pk):
     students = Person.objects.filter(studying__module_id=module)
     tests = Test.objects.filter(course_id__module_ed=module)
 
-    table = [['' for _ in range(len(tests)+1)] for _ in range(0, COLUMN_TITLE_ROW - 1)]
+    table = [['' for _ in range(len(tests)+1)] for _ in range(COLUMN_TITLE_ROW - 1)]
 
     if COLUMN_TITLE_ROW > 1:
         table.append(['Module part >'] + [test.course_id.name for test in tests])
@@ -201,7 +201,7 @@ def export_test(request, pk):
     test = Test.objects.get(pk=pk)
     students = Person.objects.filter(studying__module_id__courses=test.course_id)
 
-    table = [['', '', ''] for _ in range(0, COLUMN_TITLE_ROW)]
+    table = [['', '', ''] for _ in range(COLUMN_TITLE_ROW)]
 
     table.append(['student_id', 'grade', 'description'])
 
