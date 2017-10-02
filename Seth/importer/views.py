@@ -26,6 +26,8 @@ class IndexView(LoginRequiredMixin, generic.ListView):
         return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
 
 
+COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
+
 @login_required
 def import_module(request, pk):
     if not Module_ed.objects.filter(pk=pk):
@@ -42,20 +44,27 @@ def import_module(request, pk):
 
                 test_rows = dict()
 
-                for title_index in range(0, len(sheet[table][0])):
-                    if sheet[table][0][title_index] == '':
+                for title_index in range(0, len(sheet[table][COLUMN_TITLE_ROW])):
+                    if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
                         continue
-                    if str(sheet[table][0][title_index]).lower() == 'student_id':
+                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'student_id':
                         student_id_field = title_index
                     else:
-                        if Test.objects.filter(
-                                pk=sheet[table][0][title_index]
+                        if Test.objects.filter(     # search by ID
+                                pk=sheet[table][COLUMN_TITLE_ROW][title_index]
                         ).filter(course_id__module_ed=pk):
-                            test_rows[title_index] = sheet[table][0][title_index]
+                            test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]
+                        elif Test.objects.filter(   # search by name
+                                name=sheet[table][COLUMN_TITLE_ROW][title_index]
+                        ).filter(course_id__module_ed=pk):
+                            test_rows[title_index] = Test.objects.filter(
+                                name=sheet[table][COLUMN_TITLE_ROW][title_index]
+                            ).filter(course_id__module_ed=pk)[0].pk
                         else:
-                            return HttpResponseBadRequest(
-                                'Attempt to register grade for, amongst possible other tests, test: {} (interpreted from sheet coordinates {}), which is not part of this module. (Are you sure this test ID is correct and therefore part of your module?)'.format(
-                                    sheet[table][0][title_index], xl_rowcol_to_cell(0, title_index)))
+                            pass  # Attempt to ignore test altogether.
+                            # return HttpResponseBadRequest(
+                            #     'Attempt to register grade for, amongst possible other tests, test: {} (interpreted from sheet coordinates {}), which is not part of this module. (Are you sure this test ID is correct and therefore part of your module?)'.format(
+                            #         sheet[table][COLUMN_TITLE_ROW][title_index], xl_rowcol_to_cell(COLUMN_TITLE_ROW, title_index)))
                 if student_id_field is None:
                     return HttpResponseBadRequest('excel file misses required header: \"student_id\"')
 
@@ -65,28 +74,29 @@ def import_module(request, pk):
 
                 tests = dict()
                 for test_column in test_rows.keys():
-                    tests[test_column] = Test.objects.get(pk=sheet[table][0][test_column])
+                    tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
 
                 # check for invalid students
-                for row in sheet[table][1:]:
+                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
                     if not Person.objects.filter(person_id=row[student_id_field]):
                         return HttpResponseBadRequest(
                             'Student {} does not exist. Add this user first before retrying.'.format(
                                 row[student_id_field]))
 
 
-                for row in sheet[table][1:]:
-                    student = Person.objects.filter(person_id=row[student_id_field])[0]
-                    for test_column in test_rows.keys():
-                        try:
-                            grades.append(make_grade(
-                                student=student,
-                                corrector=teacher,
-                                test=tests[test_column],
-                                grade=row[test_column]
-                            ))
-                        except GradeException as e:
-                            return HttpResponseBadRequest(e)
+                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
+                    student = Person.objects.filter(person_id=row[student_id_field])[COLUMN_TITLE_ROW]
+                    if student:
+                        for test_column in test_rows.keys():
+                            try:
+                                grades.append(make_grade(
+                                    student=student,
+                                    corrector=teacher,
+                                    test=tests[test_column],
+                                    grade=row[test_column]
+                                ))
+                            except GradeException as e:
+                                return HttpResponseBadRequest(e)
                 save_grades(grades)
             return redirect('grades:gradebook', pk)
         else:
@@ -119,21 +129,21 @@ def import_test(request, pk):
             for table in sheet:
 
                 try:
-                    student_id_field = sheet[table][0].index('student_id')
-                    grade_field = sheet[table][0].index('grade')
-                    description_field = sheet[table][0].index('description')
+                    student_id_field = sheet[table][COLUMN_TITLE_ROW].index('student_id')
+                    grade_field = sheet[table][COLUMN_TITLE_ROW].index('grade')
+                    description_field = sheet[table][COLUMN_TITLE_ROW].index('description')
                 except ValueError:
                     return HttpResponseBadRequest()
 
                 teacher = Person.objects.get(user=request.user)
 
                 grades = []
-                for row in sheet[table][1:]:
+                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
                     if not Person.objects.filter(person_id=row[student_id_field]):
                         return HttpResponseBadRequest('Student {} does not exist. Add this user first before retrying.'.format(row[student_id_field]))
                     try:
                         grades.append(make_grade(
-                            student=Person.objects.filter(person_id=row[student_id_field])[0],
+                            student=Person.objects.filter(person_id=row[student_id_field])[COLUMN_TITLE_ROW],
                             corrector=teacher,
                             test=Test.objects.get(pk=pk),
                             grade=row[grade_field],
@@ -165,7 +175,15 @@ def export_module(request, pk):
     students = Person.objects.filter(studying__module_id=module)
     tests = Test.objects.filter(course_id__module_ed=module)
 
-    table = [['student_id']+[test.pk for test in tests]]
+    table = [['' for _ in range(len(tests)+1)] for _ in range(0, COLUMN_TITLE_ROW - 1)]
+
+    if COLUMN_TITLE_ROW > 1:
+        table.append(['Module part >'] + [test.course_id.name for test in tests])
+
+    if COLUMN_TITLE_ROW > 0:
+        table.append(['Test name >'] + [test.name for test in tests])
+
+    table.append(['student_id']+[test.pk for test in tests])
 
     for student in students:
         table.append([student.person_id] + [None for _ in range(len(tests))])
@@ -183,7 +201,9 @@ def export_test(request, pk):
     test = Test.objects.get(pk=pk)
     students = Person.objects.filter(studying__module_id__courses=test.course_id)
 
-    table = [['student_id', 'grade', 'description']]
+    table = [['', '', ''] for _ in range(0, COLUMN_TITLE_ROW)]
+
+    table.append(['student_id', 'grade', 'description'])
 
     for student in students:
         table.append([student.person_id, '', ''])
