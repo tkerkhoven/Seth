@@ -8,8 +8,10 @@ from django.db.models import Q
 import django_excel as excel
 from xlsxwriter.utility import xl_rowcol_to_cell
 
+import re
+
 from Grades.exceptions import GradeException
-from Grades.models import Module_ed, Grade, Test, Person, Course
+from Grades.models import Module_ed, Grade, Test, Person, Course, Studying, Module
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule
 
 
