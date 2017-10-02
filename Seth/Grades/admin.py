@@ -18,7 +18,6 @@ class GradeAdmin(admin.ModelAdmin):
 
 admin.site.register(Grade, GradeAdmin)
 
-
 class TeacherAdmin(admin.ModelAdmin):
     list_display = ('person', 'course', 'role')
     list_filter = ['person', 'course', 'role']
