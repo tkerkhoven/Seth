@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import Http404
 from django.utils import timezone
-from Grades.models import Module_ed
+from Grades.models import Module_ed, Studying
 
 
 # @permission_required('grades.add_grade')
@@ -20,6 +20,7 @@ def home(request):
         #     }
         # ],
     }
+
     return render(request, 'dashboard/index.html', context)
 
 

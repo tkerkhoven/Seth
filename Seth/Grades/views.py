@@ -3,11 +3,10 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
+from .models import Studying, Person, Module_ed, Test, Course, Grade
 import csv
 import re
 from django.utils.encoding import smart_str
-
 
 class ModuleView(generic.ListView):
     template_name = 'Grades/modules.html'
@@ -29,8 +28,9 @@ class ModuleView(generic.ListView):
         return handler(request, *args, **kwargs)
 
     def get_queryset(self):
-        module_set = Module.objects.prefetch_related('module_ed_set')
-        return module_set
+        user = self.request.user
+        module_set = Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user))
+        return set(module_set)
 
 
 class GradeView(generic.DetailView):
@@ -40,8 +40,7 @@ class GradeView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
-                                        id=self.kwargs['pk']):
+        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user), id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -71,8 +70,7 @@ class GradeView(generic.DetailView):
                 study_dict[studying.student_id] = studying.study
                 role_dict[studying.student_id] = studying.role
 
-        for course in mod_ed.courses.prefetch_related('test_set').filter(
-                        Q(teachers__user=user) | Q(module_ed__module_coordinator__user=user)):
+        for course in mod_ed.courses.prefetch_related('test_set').filter(Q(teachers__user=user) | Q(module_ed__module_coordinator__user=user)):
             test_list = []
 
             for test in course.test_set.prefetch_related('grade_set'):
@@ -112,7 +110,7 @@ class StudentView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(user=user, id=self.kwargs['pk']):
+        if not Studying.objects.filter(student_id__user=user, student_id__id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -156,10 +154,13 @@ class StudentView(generic.DetailView):
 
                     gradelist.sort(key=lambda gr: grade.time)
                     if gradelist == []:
-                        course_list.pop(-1)
+                        test_list.pop(-1)
                     else:
                         grade_dict[test] = gradelist
                         test_dict[course] = test_list
+
+                if test_list == []:
+                    course_list.pop(-1)
             course_dict[mod_ed] = course_list
             mod_width[mod_ed] = width
 
