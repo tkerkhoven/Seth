@@ -33,6 +33,52 @@ class ModuleView(generic.ListView):
         return set(module_set)
 
 
+class GradeView2(generic.DetailView):
+    template_name = 'Grades/gradebook2.html'
+    model = Module_ed
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+
+        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user), id=self.kwargs['pk']):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        user = self.request.user
+        context = super(GradeView2, self).get_context_data(**kwargs)
+
+        table = {}
+
+        mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
+        studying_list = mod_ed.studying_set.prefetch_related('student_id')
+
+        for idx1,test in enumerate(Test.objects.filter(Q(course_id__module_ed=mod_ed)).prefetch_related('grade_set').prefetch_related('course_id')):
+            table[0,idx1+1] = test
+
+            for idx2,stud in enumerate(studying_list):
+                table[idx2+1,0] = stud
+
+                grade_list = []
+                for grade in test.grade_set.filter(student_id=stud.student_id):
+                    grade_list.append(grade)
+
+                table[idx2+1,idx1+1] = grade_list
+
+        context['table'] = table
+
+        print("DONE")
+        return context
+
+
 class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook.html'
     model = Module_ed
@@ -64,7 +110,7 @@ class GradeView(generic.DetailView):
         role_dict = dict()
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
-        for studying in mod_ed.studying_set.prefetch_related('student_id'):
+        for studying in mod_ed.studying_set.select_related('student_id'):
             if studying.student_id not in student_list:
                 student_list.append(studying.student_id)
                 study_dict[studying.student_id] = studying.study
@@ -78,7 +124,7 @@ class GradeView(generic.DetailView):
                 grade_dict = dict()
                 all_released = True
 
-                for grade in test.grade_set.prefetch_related('student_id').all():
+                for grade in test.grade_set.select_related('student_id').all():
                     if grade.student_id not in grade_dict.keys():
                         grade_dict[grade.student_id] = []
 
@@ -100,6 +146,8 @@ class GradeView(generic.DetailView):
         context['testallreleased'] = test_all_released
         context['studydict'] = study_dict
         context['roledict'] = role_dict
+
+        print("DONE")
         return context
 
 
