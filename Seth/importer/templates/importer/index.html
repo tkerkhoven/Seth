@@ -30,13 +30,14 @@ Importer
                             </ul>
                             {% endfor %}
                         </ul>
-
                     </div>
                     <div class="col-sm-4">
                         <form action="{% url 'import_module' mod.pk %}">
                             <input type="submit" value="Upload Grades"/>
                         </form>
-
+                        <form action="{% url 'import_student_to_module' mod.pk %}">
+                            <input type="submit" value="Upload Students"/>
+                        </form>
                     </div>
                 </div>
                 {% endfor %}
