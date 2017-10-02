@@ -18,6 +18,7 @@ class GradeAdmin(admin.ModelAdmin):
 
 admin.site.register(Grade, GradeAdmin)
 
+
 class TeacherAdmin(admin.ModelAdmin):
     list_display = ('person', 'course', 'role')
     list_filter = ['person', 'course', 'role']
@@ -26,5 +27,13 @@ class TeacherAdmin(admin.ModelAdmin):
 admin.site.register(Teacher, TeacherAdmin)
 
 
-for object in [Person, Study, Studying, Module, Module_ed, Criterion, Course, Test]:
+class PersonAdmin(admin.ModelAdmin):
+    list_display = ('name', 'full_id', 'start', 'stop', 'user')
+    list_filter = ['id_prefix']
+
+
+admin.site.register(Person, PersonAdmin)
+
+
+for object in [Study, Studying, Module, Module_ed, Criterion, Course, Test]:
     admin.site.register(object)
