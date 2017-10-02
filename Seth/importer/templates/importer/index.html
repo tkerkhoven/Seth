@@ -5,27 +5,33 @@ Importer
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
-    <div class="container">
-        <div class="row">
-            <ul class="col-lg-12">
-                {% if module_ed_list %}
-                    <h3 class="display-3">Choose module</h3>
-                    <hr>
-                    <ul>
-                    {% for mod in module_ed_list %}
-                        <li><a href="{% url 'import_module' mod.pk %}">{{ mod }}</a> - <a href="{% url 'export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
+{% include 'navbar.html' %}
+<div class="container">
+    <div class="row">
+        <ul class="col-lg-12">
+            {% if module_ed_list %}
+            <h3 class="display-3">Choose module</h3>
+            <hr>
+            <ul>
+                {% for mod in module_ed_list %}
+                <div class="row">
+                    <div class="col-sm-8">
+                        <li><a href="{% url 'import_module' mod.pk %}">{{ mod }}</a> - <a
+                                href="{% url 'export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
                         <ul>
-                        {% for course in mod.courses.all %}
+                            {% for course in mod.courses.all %}
                             <li>{{ course.name }}</li>
                             <ul>
-                            {% for test in course.test_set.all %}
-                                <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a href="{% url 'export_test' test.pk %}"><i class="material-icons">view_list</i></a></li>
-                            {% endfor %}
+                                {% for test in course.test_set.all %}
+                                <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a
+                                        href="{% url 'export_test' test.pk %}"><i
+                                        class="material-icons">view_list</i></a>
+                                </li>
+                                {% endfor %}
                             </ul>
-                        {% endfor %}
+                            {% endfor %}
                         </ul>
-
+                    </div>
                     <div class="col-sm-4">
                         <form action="{% url 'import_module' mod.pk %}">
                             <input type="submit" value="Upload Grades"/>
@@ -34,14 +40,15 @@ Importer
                             <input type="submit" value="Upload Students"/>
                         </form>
                     </div>
+                </div>
                 {% endfor %}
-                </ul>
+            </ul>
+
             {% else %}
             <h3 class="display-2">No module_eds available</h3>
             {% endif %}
-        </div>
+        </ul>
     </div>
-
     <h3 class="display-3">New Students</h3>
     <hr>
     <ul>
@@ -53,5 +60,5 @@ Importer
     </ul>
 
 </div>
-</div>
 {% endblock %}
+
