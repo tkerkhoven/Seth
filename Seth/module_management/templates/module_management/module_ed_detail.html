@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.year.year }}
+Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.year.year }}
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
+{% include 'navbar.html' %}
+<div class="container">
     <ul>
         <li>Module Code: {{ module_ed.module_code }}</li>
         <li>Year: {{ module_ed.year.year }}</li>
@@ -15,10 +16,10 @@
             Courses:
             <ul>
                 {% for course in module_ed.courses.all %}
-                    <li>
-                        <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
-                            - {{ course.name }}</a>
-                    </li>
+                <li>
+                    <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
+                        - {{ course.name }}</a>
+                </li>
                 {% endfor %}
                 <li>
                     <a href="{% url 'module_management:course_create' module_ed.pk %}">Create new course</a>
@@ -29,4 +30,29 @@
     </ul>
 
     <a href="{% url 'module_management:module_ed_update' module_ed.pk %}">Edit</a>
+
+    <h3 class="display-3">Students in Module</h3>
+    {% if studying %}
+    <table class="table">
+        <tr>
+            <th> Name</th>
+            <th> S-number</th>
+            <th> Study</th>
+            <th> Role</th>
+        </tr>
+        {% for s in studying %}
+        <tr>
+            <td> {{ s.student_id.name }}</td>
+            <td> {{ s.student_id }}</td>
+            <td> {{ s.study.short_name }}</td>
+            <td> {{ s.role }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    There are no students enrolled in this module yet.
+
+    {% endif %}
+</div>
+
 {% endblock %}
