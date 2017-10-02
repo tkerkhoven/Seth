@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Import grades into test: {{ test.name }}
+{% endblock %}
+
+{% block content %}
+{% include 'navbar.html' %}
+
+    <form action="create-user/" method="get">{% csrf_token %}
+    <!--{{ form.as_p }-->
+    <input type="submit" value="Create new User">
+    </form>
+
+
+    <h1>Persons</h1>
+    {% if persons %}
+    <table>
+
+        {% for key, value in persons.items %}
+        <tr>
+            <td> <a href="{% url 'grades:user' pk=key %}"> {{ key }}</a></td>
+            <td> {{ value.full_id }} </td>
+            <td> {{ value.name }} </td>
+            <td> {{ value.role }} </td>
+        </tr>
+        {% endfor %}
+
+    </table>
+
+
+
+    {% else %}
+        No persons found!
+    {% endif %}
+
+
+</body>
+</html>
+{% endblock %}
+

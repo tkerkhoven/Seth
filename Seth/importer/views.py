@@ -10,7 +10,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 
 from Grades.exceptions import GradeException
 from Grades.models import Module_ed, Grade, Test, Person, Course
-from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm
+from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule
 
 
 # Create your views here.
@@ -33,10 +33,7 @@ def import_module(request, pk):
 
     if request.method == "POST":
         form = GradeUploadForm(request.POST, request.FILES)
-
-        print(form.data)
-        print(request.FILES)
-
+        print('valid form')
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -246,10 +243,10 @@ def import_student(request):
                     new_student = Person(name=new_students[i][0], id_prefix='s', person_id=new_students[i][1],
                                          start=new_students[i][2])
                     new_student.save()
-                    string += ("Student added:<br>")
-                    string += ("Name: %s<br>Number: %d<br>Start:%s<br>" % (
-                    new_students[i][0], new_students[i][1], new_students[i][2]))
-                    string += ("-----------------------------------------<br>")
+                    string += "Student added:<br>"
+                    string += "Name: %s<br>Number: %d<br>Start:%s<br>" % (
+                        new_students[i][0], new_students[i][1], new_students[i][2])
+                    string += "-----------------------------------------<br>"
                 return HttpResponse(string)
             else:
                 return HttpResponseBadRequest("Incorrect xls-format")
@@ -263,5 +260,77 @@ def import_student(request):
         return render(request, 'importer/import-new-student.html',
                       {'form': student_form})
 
-    # else:
-    # return HttpResponseBadRequest('You are not an Admin')
+        # else:
+        # return HttpResponseBadRequest('You are not an Admin')
+
+
+@login_required
+def import_student_to_module(request, pk):
+    # if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
+    #         Q(module_coordinator__user=request.user)
+    # ).filter(pk=pk):
+    #     return HttpResponseForbidden('Not allowed to alter test')
+
+    if request.method == "POST":
+        student_form = ImportStudentForm(request.POST, request.FILES)
+        print('hello')
+        if student_form.is_valid():
+            file = request.FILES['file']
+            dict = file.get_book_dict()
+            students_to_module = dict[list(dict.keys())[0]]
+            string = ""
+            startpattern = re.compile('start*')
+            if students_to_module[0][0].lower() == 's-number' and students_to_module[0][1].lower() == 'name' and \
+                    startpattern.match(students_to_module[0][
+                                           2].lower()) and students_to_module[0][3].lower() == 'study' and \
+                            students_to_module[0][4].lower() == 'role':
+                context = {}
+                context['created'] = []
+                context['studying'] = []
+                context['failed'] = []
+
+                for i in range(1, len(students_to_module)):
+                    student, created = Person.objects.get_or_create(
+                        id_prefix='s',
+                        person_id=str(students_to_module[i][0]),
+                        defaults={
+                            'name': students_to_module[i][1],
+                            'start': students_to_module[i][2],
+                        }
+                    )
+                    if created:
+                        context['created'].append([student.name, student.full_id])
+                    studying, created = Studying.objects.get_or_create(
+                        student_id=student,
+                        module_id_id=pk,
+                        study_id=students_to_module[i][3],
+                        defaults={
+                            'role': students_to_module[i][4],
+                        }
+                    )
+                    if created:
+                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
+                        module = Module.objects.get(module_code=module_ed.module_id)
+                        context['studying'].append(
+                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                    else:
+                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
+                        module = Module.objects.get(module_code=module_ed.module_id)
+                        context['failed'].append(
+                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                        context['studying'].append(
+                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                print(context)
+                return render(request, 'importer/students-module-imported.html', context={'context': context})
+            else:
+                return HttpResponseBadRequest("Incorrect xls-format")
+        else:
+            return HttpResponseBadRequest('Bad POST')
+
+    else:  # if Module_ed.objects.filter(pk=pk):
+        student_form = ImportStudentModule()
+        return render(request, 'importer/import-module-student.html',
+                      {'form': student_form, 'pk': pk})
+
+# else:
+# return HttpResponseBadRequest('You are not an Admin')
