@@ -1,24 +1,22 @@
-from django.shortcuts import render
-from django.http import Http404
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.http import Http404, HttpResponseForbidden
 from django.utils import timezone
-from Grades.models import Module_ed
+from Grades.models import Module_ed, Person, Coordinator
 
 
 # @permission_required('grades.add_grade')
+@login_required
 def home(request):
+    if not Person.objects.filter(user=request.user):
+        return redirect('dashboard_student')
+
+    if not Coordinator.objects.filter(person__user=request.user):
+        return redirect('grades:student', Person.objects.filter(user=request.user).filter(id_prefix='s')[0].pk)
+
     context = {
         'modules': get_modules(),
         'time': get_current_date()
-        # [
-        #     {
-        #         'name': 'Pearls of Computer Science',
-        #         'courses': [
-        #             {
-        #                 'name': 'Pearl 1',
-        #             }
-        #         ]
-        #     }
-        # ],
     }
     return render(request, 'dashboard/index.html', context)
 
@@ -28,6 +26,9 @@ def modules(request):
         'modules': get_modules()
     }
     return render(request, 'dashboard/modules.html', context)
+
+def student(request):
+    return render(request, 'dashboard/student_index.html')
 
 
 def logged_out(request):
