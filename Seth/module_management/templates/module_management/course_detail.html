@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Details: {{ course }}
+Details: {{ course }}
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
+{% include 'navbar.html' %}
+<div class="container">
     <ul>
         <li>Course Code: {{ course.course_code }}</li>
         <li>Course Name: {{ course.name }}</li>
@@ -13,7 +14,7 @@
             Teachers:
             <ul>
                 {% for teacher in course.teacher_set.all %}
-                    <li>{{ teacher.person.name }} - {{ teacher.get_role }}</li>
+                <li>{{ teacher.person.name }} - {{ teacher.get_role }}</li>
                 {% endfor %}
             </ul>
         </li>
@@ -21,7 +22,7 @@
             Tests:
             <ul>
                 {% for test in course.test_set.all %}
-                    <li><a href="{% url 'module_management:test_detail' test.pk %}">{{ test.name }}</a></li>
+                <li><a href="{% url 'module_management:test_detail' test.pk %}">{{ test.name }}</a></li>
                 {% endfor %}
                 <li>
                     <a href="{% url 'module_management:test_create' course.pk %}">Create new test</a>
@@ -32,6 +33,30 @@
     </ul>
 
     <a href="{% url 'module_management:course_update' course.pk %}">Edit</a>
-     -
+    -
     <a href="{% url 'module_management:course_delete' course.pk %}">Delete</a>
+
+    <h3 class="display-3">Students in Course</h3>
+    {% if studying %}
+    <table class="table">
+        <tr>
+            <th> Name</th>
+            <th> S-number</th>
+            <th> Study</th>
+            <th> Role</th>
+        </tr>
+        {% for s in studying %}
+        <tr>
+            <td> {{ s.student_id.name }}</td>
+            <td> {{ s.student_id }}</td>
+            <td> {{ s.study.short_name }}</td>
+            <td> {{ s.role }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    There are no students enrolled in this course yet.
+
+    {% endif %}
+</div>
 {% endblock %}
