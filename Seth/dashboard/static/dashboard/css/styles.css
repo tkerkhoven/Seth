@@ -32,6 +32,9 @@ body {
   padding-left: 0;
   padding-right: 0; }
 
+hr.remove-top-margin {
+  margin-top: 0; }
+
 .material-icons.md-18 {
   font-size: 18px; }
 .material-icons.md-20 {

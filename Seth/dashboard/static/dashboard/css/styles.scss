@@ -45,6 +45,12 @@ body {
   }
 }
 
+hr {
+  &.remove-top-margin {
+    margin-top: 0;
+  }
+}
+
   @import '../../../../static/Seth/seth/css/_icons';
 
   @import '../../../../static/Seth/seth/css/_navbar-menus';
