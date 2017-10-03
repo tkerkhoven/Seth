@@ -65,7 +65,7 @@ $('#colortoggle').click(function() {
 });
 
 function updateColoring() {
-  if($("#colortoggle").hasClass("coloron")) {
+  if($("#colortoggle").hasClass("coloron")) {\
     $('[id^="gradeid_"]').each(function(index) {
       $(this).removeClass("success warning error")
       var grade = $(this).attr("data-grade")

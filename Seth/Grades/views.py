@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
@@ -56,26 +58,46 @@ class GradeView2(generic.DetailView):
         user = self.request.user
         context = super(GradeView2, self).get_context_data(**kwargs)
 
-        table = {}
-
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
-        studying_list = mod_ed.studying_set.prefetch_related('student_id')
 
-        for idx1,test in enumerate(Test.objects.filter(Q(course_id__module_ed=mod_ed)).prefetch_related('grade_set').prefetch_related('course_id')):
-            table[0,idx1+1] = test
+        dicts = Studying.objects\
+            .prefetch_related('student_id', 'study', 'student_id__Submitter')\
+            .values('study__full_name', 'study__short_name', 'student_id', 'student_id__name', 'student_id__person_id',
+                    'student_id__Submitter','student_id__Submitter__grade', 'student_id__Submitter__test_id', 'student_id__Submitter__released')\
+            .filter(module_id=mod_ed)\
+            .order_by('student_id__Submitter__test_id', 'student_id__Submitter__time')
+        courses = Course.objects\
+            .prefetch_related('test_set')\
+            .filter(module_ed=mod_ed)
+        tests = Test.objects\
+            .filter(course_id__module_ed=mod_ed)
 
-            for idx2,stud in enumerate(studying_list):
-                table[idx2+1,0] = stud
+        students = dict()
+        temp_dict = dict()
+        context_dict = OrderedDict()
 
-                grade_list = []
-                for grade in test.grade_set.filter(student_id=stud.student_id):
-                    grade_list.append(grade)
+        for d in dicts:
+            student = d['student_id']
+            if student not in students.keys():
+                students[student] = dict()
+            if student not in temp_dict.keys():
+                temp_dict[student] = dict()
 
-                table[idx2+1,idx1+1] = grade_list
+            students[student]['name'] = d['student_id__name']
+            students[student]['pid'] = d['student_id__person_id']
+            students[student]['study'] = d['study__full_name']
+            students[student]['sstudy'] = d['study__short_name']
 
-        context['table'] = table
+            temp_dict[student][d['student_id__Submitter__test_id']] = (d['student_id__Submitter__grade'], d['student_id__Submitter__released'])
 
-        print("DONE")
+        for key in sorted(temp_dict):
+            context_dict[key] = temp_dict[key]
+
+        context['gradedict'] = context_dict
+        context['studentdict'] = students
+        context['courses'] = courses
+        context['tests'] = tests
+
         return context
 
 

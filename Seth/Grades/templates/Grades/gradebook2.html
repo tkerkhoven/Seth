@@ -32,7 +32,7 @@
                     <p><strong>{{ error_message }}</strong></p>
                 {% endif %}
 
-                {% if table %}
+                {% if gradedict %}
 
                     <form action="{% url 'grades:export' module_ed.id %}">
                         <input class="btn btn-secondary" type="submit" value="Export to .csv" />
@@ -66,31 +66,36 @@
                         <table id="gradebook" data-skip-to-row="1" class="table table-striped table-bordered table-responsive">
                         <tr>
                             <th>Student</th>
-                            {% for course,tests in coursedict.items %}
-                                <th colspan="{{ tests|length }}"><a href="{% url 'grades:course' pk=course.id %}"> {{ course }} </a></th>
+                            {% for course in courses %}
+                                <th colspan="{{ course.test_set.count }}"><a href="{% url 'grades:course' pk=course.id %}"> {{ course }} </a></th>
                             {% endfor %}
                         </tr>
-                        {% for row,cell in table.keys %}
-                        {{ row }}
-                        {% if row is 0 %}
+                        <tr>
+                            <td></td>
+                            {% for test in tests %}
+                            <td>
+                                <a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% for student,grades in gradedict.items %}
                         <tr>
                             <td>
-                                Test
+                                <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student %}">{{ studentdict|key:student|key:'name' }} (s{{ studentdict|key:student|key:'pid' }})</a>
+                                <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                             </td>
+                            {% for test in tests %}
+                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grades|key:test.id|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                <font data-toggle="tooltip" title="{{ grades|key:test.id|key:0 }}">{{ grades|key:test.id|key:0|round }}</font>
+
+                                {% if grades|key:test.id|key:1 %}
+                                <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
+                                {% else %}
+                                <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
+                                {% endif%}
+                            </td>
+                            {% endfor %}
                         </tr>
-                        {% else %}
-                        <tr>
-                            {% if cell is 0 %}
-                            <td>
-                                Name
-                            </td>
-                            {% else %}
-                            <td>
-                                Grade
-                            </td>
-                            {% endif %}
-                        </tr>
-                        {% endif %}
                         {% endfor %}
                         </table>
                     </div>
