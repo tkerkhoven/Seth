@@ -85,8 +85,8 @@
                                 <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                             </td>
                             {% for test in tests %}
-                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grades|key:test.id|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                <font data-toggle="tooltip" title="{{ grades|key:test.id|key:0 }}">{{ grades|key:test.id|key:0|round }}</font>
+                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grades|key:test.id|key:0|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                <a data-toggle="tooltip" title="{{ grades|key:test.id|key:0 }}">{{ grades|key:test.id|key:0|round }}</a>
 
                                 {% if grades|key:test.id|key:1 %}
                                 <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>

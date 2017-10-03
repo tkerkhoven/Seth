@@ -65,7 +65,8 @@ $('#colortoggle').click(function() {
 });
 
 function updateColoring() {
-  if($("#colortoggle").hasClass("coloron")) {\
+  if($("#colortoggle").hasClass("coloron")) {
+    console.log("AA")
     $('[id^="gradeid_"]').each(function(index) {
       $(this).removeClass("success warning error")
       var grade = $(this).attr("data-grade")
@@ -99,12 +100,12 @@ $(document).ready(function() {
 
   $("#upperNum").bind('keyup mouseup', function () {
     if(+$(this).val() > +$("#lowerNum").val()) {
-      oldfrom = $(this).val();
-      oldto = $("#upperNum").val();
+      oldto = $(this).val();
+      oldfrom = $("#lowerNum").val();
     }
     else {
-      oldfrom = $("#upperNum").val();
-      oldto = $(this).val();
+      oldto = $("#lowerNum").val();
+      oldfrom = $(this).val();
     }
     updateColoring()
   });
