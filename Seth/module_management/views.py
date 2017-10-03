@@ -18,7 +18,6 @@ class IndexView(generic.ListView):
     context_object_name = 'module_list'
 
     def get_queryset(self):
-        """Return all modules"""
         user = self.request.user
         module_list = Module.objects.prefetch_related('module_ed_set').filter(
             module_ed__module_coordinator__user=user).distinct()
