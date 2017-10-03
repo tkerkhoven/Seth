@@ -10,11 +10,11 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
 
-from Grades.models import Module, Module_ed, Course, Test, Person, Coordinator, Teacher, Grade
+from Grades.models import Module, Module_ed, Course, Test, Person, Coordinator, Teacher, Grade, Studying
 
 
 class IndexView(generic.ListView):
-    template_name = 'module_management/index.html'
+    template_name = 'module_management/index2.html'
     context_object_name = 'module_list'
 
     def get_queryset(self):
@@ -89,6 +89,14 @@ class ModuleEdView(generic.DetailView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(ModuleEdView, self).get_context_data(**kwargs)
+        studying = Studying.objects.filter(module_id=self.kwargs['pk']).prefetch_related('student_id').prefetch_related('study')
+
+        context['studying'] = studying
+        print(context)
+        return context
 
 
 class ModuleEdUpdateView(generic.UpdateView):
@@ -201,6 +209,15 @@ class CourseView(generic.DetailView):
     template_name = 'module_management/course_detail.html'
     model = Course
 
+    def get_context_data(self, **kwargs):
+        context = super(CourseView, self).get_context_data(**kwargs)
+        module_eds = Module_ed.objects.filter(courses__id=self.kwargs['pk'])
+        print(module_eds)
+        studying = Studying.objects.filter(module_id__in=module_eds).prefetch_related('student_id').prefetch_related('study')
+        print(studying)
+        context['studying'] = studying
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
         user = request.user
@@ -216,6 +233,7 @@ class CourseView(generic.DetailView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
 
 
 class CourseUpdateView(generic.UpdateView):

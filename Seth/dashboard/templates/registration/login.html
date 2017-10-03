@@ -6,15 +6,6 @@ Login
 
 {% block content %}
 
-{% if next %}
-    {% if user.is_authenticated %}
-    <p>Your account doesn't have access to this page. To proceed,
-    please login with an account that has access.</p>
-    {% else %}
-    <p>Please login to see this page.</p>
-    {% endif %}
-{% endif %}
-
 {#<form method="post" action="{% url 'login' %}">#}
 {#{% csrf_token %}#}
 {#<table>#}
@@ -40,6 +31,14 @@ Login
             <div class="card">
                 <div class="card-header">Login</div>
                 <div class="card-body">
+                    {% if next %}
+                        {% if user.is_authenticated %}
+                        <p class="text-danger">Your account doesn't have access to this page. To proceed,
+                        please login with an account that has access.</p>
+                        {% else %}
+                        <p class="text-danger">Please login to see this page.</p>
+                        {% endif %}
+                    {% endif %}
                     <form method="post" action="{% url 'login' %}">
                         {% csrf_token %}
                         <div class="input-group">

@@ -4,18 +4,16 @@
 
 {% block content %}
 
-    {% include 'navbar.html' %}
+    {% include 'navbar.html' with active_page="gradebook" %}
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <h1 class="display-3">Modules</h1>
+                <h1 class="display-4">Modules</h1>
                 <hr>
                 {% if module_list %}
                     <ul class="list-group">
-                    {% for module in module_list %}
-                    {% for mod_ed in module.module_ed_set.all %}
-                        <li class="list-group-item"><a href="{% url 'grades:gradebook' mod_ed.id %}">{{mod_ed.module_code}} - {{ module.name }}</a></li>
-                    {% endfor %}
+                    {% for mod_ed in module_list %}
+                        <li class="list-group-item"><a href="{% url 'grades:gradebook' mod_ed.id %}">{{mod_ed.module_code}} - {{ mod_ed.module.name }}</a></li>
                     {% endfor %}
                     </ul>
                 {% else %}

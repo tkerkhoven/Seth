@@ -4,9 +4,6 @@ body {
 .text-primary {
   color: red; }
 
-.bg-dark {
-  background-color: red; }
-
 .display-5 {
   font-size: 2rem;
   font-weight: 300;
@@ -16,6 +13,27 @@ body {
   display: block;
   width: 100%;
   overflow-x: auto; }
+
+.skin-text {
+  font-weight: 400;
+  line-height: 1.1; }
+  .skin-text.remove-margin {
+    margin-bottom: 0; }
+
+.pointer {
+  cursor: pointer; }
+
+.user-toolbar {
+  float: right;
+  line-height: 6.5;
+  height: inherit; }
+
+.navbar.title-bar {
+  padding-left: 0;
+  padding-right: 0; }
+
+hr.remove-top-margin {
+  margin-top: 0; }
 
 .material-icons.md-18 {
   font-size: 18px; }
