@@ -5,9 +5,16 @@
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
-    <form action="" method="post">{% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Apply"/>
-    </form>
+    {% include 'navbar.html' with active_page="module_management" %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <form action="" method="post">{% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="submit" value="Apply"/>
+                </form>
+            </div>
+        </div>
+    </div>
 {% endblock %}
