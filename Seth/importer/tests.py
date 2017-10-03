@@ -9,7 +9,7 @@ from pyexcel import Sheet
 
 from Grades.models import *
 from importer.forms import GradeUploadForm
-from importer.views import make_grade
+from importer.views import make_grade, COLUMN_TITLE_ROW
 from django.contrib.auth.models import User
 
 import django_excel as excel
@@ -48,7 +48,7 @@ class GradeImportStressTest(TestCase):
 
         tests = Test.objects.filter(course_id__module_ed=module)
 
-        table = [['student_id'] + [test.pk for test in tests]]
+        table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW)] + [['student_id'] + [test.pk for test in tests]]
 
         for student in students:
             table.append([student.person_id] + [divmod(i, 9)[1]+1 for i in range(len(tests))])
@@ -57,6 +57,8 @@ class GradeImportStressTest(TestCase):
 
         content = sheet.save_as(filename='test.xlsx')
 
+        print('Testing upload')
+
         self.client.force_login(User.objects.get(username='mverkleij'))
         form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
         print(form.is_bound)
@@ -64,5 +66,4 @@ class GradeImportStressTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/1', {'title': 'test.xlsx', 'file': file})
-        print(response.content)
         self.assertRedirects(response, '/grades/modules/1/')

@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse
 from django.shortcuts import render, redirect
+from django.utils.decorators import method_decorator
 from django.views import generic
 from django.utils import timezone
 from django.db.models import Q
@@ -21,6 +22,12 @@ from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentFo
 class IndexView(LoginRequiredMixin, generic.ListView):
     template_name = 'importer/index.html'
     model = Module_ed
+
+    @method_decorator(login_required)
+    def dispatch(self, *args, **kwargs):
+        if not Module_ed.objects.filter(module_coordinator__user=self.request.user):
+            return HttpResponseForbidden('Only module coordinators can view this page.')
+        return super(IndexView, self).dispatch(*args, **kwargs)
 
     def get_queryset(self):
         return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
@@ -43,6 +50,8 @@ def import_module(request, pk):
             for table in sheet:
 
                 test_rows = dict()
+
+                student_id_field = None
 
                 for title_index in range(0, len(sheet[table][COLUMN_TITLE_ROW])):
                     if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
@@ -246,10 +255,8 @@ def save_grades(grades):
 
 @login_required
 def import_student(request):
-    # if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
-    #         Q(module_coordinator__user=request.user)
-    # ).filter(pk=pk):
-    #     return HttpResponseForbidden('Not allowed to alter test')
+    if not Module_ed.objects.filter(Q(module_coordinator__user=request.user)):
+         return HttpResponseForbidden('Not allowed to add students if not a module coordinator')
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
@@ -288,10 +295,10 @@ def import_student(request):
 
 @login_required
 def import_student_to_module(request, pk):
-    # if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
-    #         Q(module_coordinator__user=request.user)
-    # ).filter(pk=pk):
-    #     return HttpResponseForbidden('Not allowed to alter test')
+    if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
+            Q(module_coordinator__user=request.user)
+    ).filter(pk=pk):
+        return HttpResponseForbidden('Not allowed to upload students to module.')
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
