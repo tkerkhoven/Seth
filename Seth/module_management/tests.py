@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from Grades.models import Module, Person, Study, Module_ed, Course, Studying, Test, Grade, Teacher, Coordinator
+from Grades.models import Module, Person, Study, ModuleEdition, ModulePart, Studying, Test, Grade, Teacher, Coordinator
 from Seth.settings import LOGIN_URL
 from module_management.views import IndexView, ModuleView, ModuleEdView
 
@@ -45,22 +45,22 @@ class ModuleManagementIndexTests(TestCase):
         # Define Study
         study = Study(short_name='STU', full_name='Study')
         study.save()
-        study.advisors.add(study_adviser_person)
+        study.advisers.add(study_adviser_person)
         study.modules.add(module0)
 
         # Define Courses
-        course0 = Course(code='0', code_extension='0', name='course0')
+        course0 = ModulePart(code='0', code_extension='0', name='course0')
         course0.save()
 
         # Define Module Editions
-        module_ed0 = Module_ed(module=module0, module_code_extension='0')
+        module_ed0 = ModuleEdition(module=module0, module_code_extension='0')
         module_ed0.save()
         module_ed0.courses.add(course0)
 
-        module_ed1 = Module_ed(module=module0, module_code_extension='1')
+        module_ed1 = ModuleEdition(module=module0, module_code_extension='1')
         module_ed1.save()
 
-        module_ed2 = Module_ed(module=module1, module_code_extension='0')
+        module_ed2 = ModuleEdition(module=module1, module_code_extension='0')
         module_ed2.save()
 
         # Define Studying
@@ -174,22 +174,22 @@ class ModuleManagementModuleDetailTests(TestCase):
         # Define Study
         study = Study(short_name='STU', full_name='Study')
         study.save()
-        study.advisors.add(study_adviser_person)
+        study.advisers.add(study_adviser_person)
         study.modules.add(module0)
 
         # Define Courses
-        course0 = Course(code='0', code_extension='0', name='course0')
+        course0 = ModulePart(code='0', code_extension='0', name='course0')
         course0.save()
 
         # Define Module Editions
-        module_ed0 = Module_ed(module=module0, module_code_extension='0')
+        module_ed0 = ModuleEdition(module=module0, module_code_extension='0')
         module_ed0.save()
         module_ed0.courses.add(course0)
 
-        module_ed1 = Module_ed(module=module0, module_code_extension='1')
+        module_ed1 = ModuleEdition(module=module0, module_code_extension='1')
         module_ed1.save()
 
-        module_ed2 = Module_ed(module=module1, module_code_extension='0')
+        module_ed2 = ModuleEdition(module=module1, module_code_extension='0')
         module_ed2.save()
 
         # Define Studying
@@ -315,22 +315,22 @@ class ModuleManagementModuleEdDetailTests(TestCase):
         # Define Study
         study = Study(short_name='STU', full_name='Study')
         study.save()
-        study.advisors.add(study_adviser_person)
+        study.advisers.add(study_adviser_person)
         study.modules.add(module0)
 
         # Define Courses
-        course0 = Course(code='0', code_extension='0', name='course0')
+        course0 = ModulePart(code='0', code_extension='0', name='course0')
         course0.save()
 
         # Define Module Editions
-        module_ed0 = Module_ed(module=module0, module_code_extension='0')
+        module_ed0 = ModuleEdition(module=module0, module_code_extension='0')
         module_ed0.save()
         module_ed0.courses.add(course0)
 
-        module_ed1 = Module_ed(module=module0, module_code_extension='1')
+        module_ed1 = ModuleEdition(module=module0, module_code_extension='1')
         module_ed1.save()
 
-        module_ed2 = Module_ed(module=module1, module_code_extension='0')
+        module_ed2 = ModuleEdition(module=module1, module_code_extension='0')
         module_ed2.save()
 
         # Define Studying
@@ -357,7 +357,7 @@ class ModuleManagementModuleEdDetailTests(TestCase):
         coordinator0.save()
 
     def test_no_login(self):
-        pk = Module_ed.objects.get(module='001', module_code_extension='0').pk
+        pk = ModuleEdition.objects.get(module='001', module_code_extension='0').pk
 
         self.client.logout()
         url = reverse('module_management:module_ed_detail', kwargs={'pk': pk})
@@ -365,9 +365,9 @@ class ModuleManagementModuleEdDetailTests(TestCase):
         self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
     def test_insufficient_permissions(self):
-        pk_1 = Module_ed.objects.get(module='001', module_code_extension='0').pk
-        pk_2 = Module_ed.objects.get(module='001', module_code_extension='1').pk
-        pk_3 = Module_ed.objects.get(module='002', module_code_extension='0').pk
+        pk_1 = ModuleEdition.objects.get(module='001', module_code_extension='0').pk
+        pk_2 = ModuleEdition.objects.get(module='001', module_code_extension='1').pk
+        pk_3 = ModuleEdition.objects.get(module='002', module_code_extension='0').pk
         url_1 = reverse('module_management:module_ed_detail', kwargs={'pk': pk_1})
         url_2 = reverse('module_management:module_ed_detail', kwargs={'pk': pk_2})
         url_3 = reverse('module_management:module_ed_detail', kwargs={'pk': pk_3})
@@ -407,7 +407,7 @@ class ModuleManagementModuleEdDetailTests(TestCase):
 
     def test_contents(self):
         user = User.objects.get(username='coordinator0')
-        mod_ed = Module_ed.objects.get(module='001', module_code_extension='0').pk
+        mod_ed = ModuleEdition.objects.get(module='001', module_code_extension='0').pk
         url = reverse('module_management:module_ed_detail', kwargs={'pk': mod_ed})
 
         # Log in as coordinator
@@ -419,5 +419,5 @@ class ModuleManagementModuleEdDetailTests(TestCase):
         self.assertEqual(response.resolver_match.func.__name__, ModuleEdView.as_view().__name__)
         self.assertTemplateUsed(response, 'module_management/module_ed_detail.html')
 
-        self.assertEqual(response.context['module_ed'], Module_ed.objects.get(pk=mod_ed))
+        self.assertEqual(response.context['module_ed'], ModuleEdition.objects.get(pk=mod_ed))
 

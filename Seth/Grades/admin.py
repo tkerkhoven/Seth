@@ -35,5 +35,5 @@ class PersonAdmin(admin.ModelAdmin):
 admin.site.register(Person, PersonAdmin)
 
 
-for object in [Study, Studying, Module, Module_ed, Criterion, Course, Test]:
+for object in [Study, Studying, Module, ModuleEdition, Criterion, ModulePart, Test]:
     admin.site.register(object)

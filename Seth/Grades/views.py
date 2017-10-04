@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
+from .models import Module, Studying, Person, ModuleEdition, Test, ModulePart, Grade
 import csv
 import re
 from django.utils.encoding import smart_str
@@ -18,7 +18,7 @@ class ModuleView(generic.ListView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user)):
+        if not ModuleEdition.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -32,19 +32,19 @@ class ModuleView(generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        module_set = Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user))
+        module_set = ModuleEdition.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user))
         return set(module_set)
 
 
 class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook2.html'
-    model = Module_ed
+    model = ModuleEdition
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
-                                        id=self.kwargs['pk']):
+        if not ModuleEdition.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
+                                            id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -60,16 +60,16 @@ class GradeView(generic.DetailView):
         user = self.request.user
         context = super(GradeView, self).get_context_data(**kwargs)
 
-        mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
+        mod_ed = ModuleEdition.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
 
         dicts = Studying.objects \
-            .prefetch_related('student_id', 'study', 'student_id__Submitter') \
-            .values('study__full_name', 'study__short_name', 'student_id', 'student_id__name', 'student_id__person_id',
-                    'student_id__Submitter', 'student_id__Submitter__grade', 'student_id__Submitter__test_id',
-                    'student_id__Submitter__released') \
+            .prefetch_related('person', 'study', 'person__Submitter') \
+            .values('study__name', 'study__abbreviation', 'person', 'person__name', 'person__person_id',
+                    'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test_id',
+                    'person__Submitter__released') \
             .filter(module_id=mod_ed) \
-            .order_by('student_id__Submitter__test_id', 'student_id__Submitter__time')
-        courses = Course.objects \
+            .order_by('person__Submitter__test_id', 'person__Submitter__time')
+        courses = ModulePart.objects \
             .prefetch_related('test_set') \
             .filter(module_ed=mod_ed)
         tests = Test.objects \
@@ -86,13 +86,13 @@ class GradeView(generic.DetailView):
             if student not in temp_dict.keys():
                 temp_dict[student] = dict()
 
-            students[student]['name'] = d['student_id__name']
-            students[student]['pid'] = d['student_id__person_id']
-            students[student]['study'] = d['study__full_name']
-            students[student]['sstudy'] = d['study__short_name']
+            students[student]['name'] = d['person__name']
+            students[student]['pid'] = d['person__person_id']
+            students[student]['study'] = d['study__name']
+            students[student]['sstudy'] = d['study__abbreviation']
 
-            temp_dict[student][d['student_id__Submitter__test_id']] = (
-            d['student_id__Submitter__grade'], d['student_id__Submitter__released'])
+            temp_dict[student][d['person__Submitter__test_id']] = (
+            d['person__Submitter__grade'], d['person__Submitter__released'])
 
         for key in sorted(temp_dict):
             context_dict[key] = temp_dict[key]
@@ -111,7 +111,7 @@ class StudentView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(user=user, id=self.kwargs['pk']):
+        if not ModuleEdition.objects.filter(user=user, id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -173,13 +173,13 @@ class StudentView(generic.DetailView):
 
 class ModuleStudentView(generic.DetailView):
     template_name = 'Grades/modulestudent.html'
-    model = Module_ed
+    model = ModuleEdition
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
-                                        id=self.kwargs['pk']):
+        if not ModuleEdition.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user),
+                                            id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -195,7 +195,7 @@ class ModuleStudentView(generic.DetailView):
         user = self.request.user
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
-        mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
+        mod_ed = ModuleEdition.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
         student = Person.objects.get(id=self.kwargs['sid'])
 
         dicts = Grade.objects \
@@ -203,7 +203,7 @@ class ModuleStudentView(generic.DetailView):
             .values('grade', 'released', 'test_id') \
             .filter(test_id__course_id__module_ed=mod_ed, student_id=student) \
             .order_by('test_id', 'time')
-        courses = Course.objects \
+        courses = ModulePart.objects \
             .prefetch_related('test_set') \
             .filter(module_ed=mod_ed)
         tests = Test.objects \
@@ -230,13 +230,13 @@ class ModuleStudentView(generic.DetailView):
 
 class CourseView(generic.DetailView):
     template_name = 'Grades/course.html'
-    model = Course
+    model = ModulePart
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Course.objects.filter(Q(module_ed__module_coordinator__user=user) | Q(teachers__user=user),
-                                     id=self.kwargs['pk']):
+        if not ModulePart.objects.filter(Q(module_ed__module_coordinator__user=user) | Q(teachers__user=user),
+                                         id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -257,10 +257,10 @@ class CourseView(generic.DetailView):
         study_dict = dict()
         role_dict = dict()
 
-        course = Course.objects.get(id=self.kwargs['pk'])
+        course = ModulePart.objects.get(id=self.kwargs['pk'])
 
-        for mod_ed in Module_ed.objects.filter(courses=course).prefetch_related('studying_set'):
-            for studying in mod_ed.studying_set.prefetch_related('student_id').all():
+        for mod_ed in ModuleEdition.objects.filter(courses=course).prefetch_related('studying_set'):
+            for studying in mod_ed.studying_set.prefetch_related('person').all():
                 if studying.student_id not in student_list:
                     student_list.append(studying.student_id)
                     study_dict[studying.student_id] = studying.study
@@ -271,7 +271,7 @@ class CourseView(generic.DetailView):
             grade_dict = dict()
             all_released = True
 
-            for grade in test.grade_set.prefetch_related('student_id').all():
+            for grade in test.grade_set.prefetch_related('person').all():
                 if grade.student_id not in grade_dict.keys():
                     grade_dict[grade.student_id] = []
                 grade_dict[grade.student_id].append(grade)
@@ -290,7 +290,7 @@ class CourseView(generic.DetailView):
         context['testallreleased'] = test_all_released
         context['studydict'] = study_dict
         context['roledict'] = role_dict
-        context['module_ed'] = Module_ed.objects.filter(courses=course)[0]
+        context['module_ed'] = ModuleEdition.objects.filter(courses=course)[0]
         return context
 
 
@@ -333,8 +333,8 @@ class TestView(generic.DetailView):
 
         test = Test.objects.get(id=self.kwargs['pk'])
 
-        for mod_ed in Module_ed.objects.filter(courses=test.course_id).prefetch_related('studying_set'):
-            for studying in mod_ed.studying_set.prefetch_related('student_id').all():
+        for mod_ed in ModuleEdition.objects.filter(courses=test.course_id).prefetch_related('studying_set'):
+            for studying in mod_ed.studying_set.prefetch_related('person').all():
                 if studying.student_id not in student_list:
                     student_list.append(studying.student_id)
                     study_dict[studying.student_id] = studying.study
@@ -352,17 +352,17 @@ class TestView(generic.DetailView):
         context['gradedict'] = grade_dict
         context['studydict'] = study_dict
         context['roledict'] = role_dict
-        context['module_ed'] = Module_ed.objects.filter(courses=test.course_id)[0]
+        context['module_ed'] = ModuleEdition.objects.filter(courses=test.course_id)[0]
         return context
 
 
 def export(request, *args, **kwargs):
     user = request.user
 
-    if not Module_ed.objects.filter(module_coordinator__user=user, id=kwargs['pk']):
+    if not ModuleEdition.objects.filter(module_coordinator__user=user, id=kwargs['pk']):
         raise PermissionDenied()
 
-    mod_ed = Module_ed.objects.prefetch_related('studying_set').prefetch_related('courses').get(id=kwargs['pk'])
+    mod_ed = ModuleEdition.objects.prefetch_related('studying_set').prefetch_related('courses').get(id=kwargs['pk'])
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=' + mod_ed.module.name + '.csv'
@@ -402,7 +402,7 @@ def export(request, *args, **kwargs):
 def release(request, *args, **kwargs):
     user = request.user
 
-    if not Module_ed.objects.filter(module_coordinator__user=user, id=kwargs['pk']):
+    if not ModuleEdition.objects.filter(module_coordinator__user=user, id=kwargs['pk']):
         raise PermissionDenied()
 
     regex = re.compile("check[0-9]+")

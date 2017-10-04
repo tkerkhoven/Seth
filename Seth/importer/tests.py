@@ -26,9 +26,9 @@ class GradeImportStressTest(TestCase):
 
         teacher = Person.objects.create(name='Pietje Puk', id_prefix='m', person_id='13377331', user=user)
 
-        courses = [Course.objects.create(code='201300070', code_extension='_{}'.format(i), name='Parel {}'.format(i), teacher=[teacher]) for i in range(100)]
+        courses = [ModulePart.objects.create(code='201300070', code_extension='_{}'.format(i), name='Parel {}'.format(i), teacher=[teacher]) for i in range(100)]
 
-        module_ed = Module_ed.objects.create(module=module_tcs, year=datetime.date(2017, 1, 1), module_code_extension='_2017')
+        module_ed = ModuleEdition.objects.create(module=module_tcs, year=datetime.date(2017, 1, 1), module_code_extension='_2017')
 
         module_ed.courses = courses
 
@@ -43,7 +43,7 @@ class GradeImportStressTest(TestCase):
         [Studying.objects.create(module_id=module_ed, study=tcs, student_id=student, role='s') for student in students]
 
     def test_module_import(self):
-        module = Module_ed.objects.get(pk=1)
+        module = ModuleEdition.objects.get(pk=1)
         students = Person.objects.filter(studying__module_id=module)
 
         tests = Test.objects.filter(course_id__module_ed=module)

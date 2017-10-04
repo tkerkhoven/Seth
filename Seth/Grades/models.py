@@ -12,22 +12,13 @@ from django.utils import timezone
 
 
 class Module(models.Model):
-    module_code = models.CharField(max_length=16, primary_key=True)
-    name = models.CharField(max_length=32)
-    start = models.DateField(default=datetime.date(1, 1, 1))
-    stop = models.DateField(default=datetime.date(9999, 12, 31))
+    code = models.CharField(max_length=32, primary_key=True)
+    name = models.CharField(max_length=256)
+    start = models.DateField(default=timezone.now)
+    end = models.DateField(default=datetime.date(9999, 12, 31))
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.module_code)
-
-
-# class Student(models.Model):
-#     student_id = models.CharField(primary_key=True, max_length=16)
-
-#     user = models.ForeignKey(User, blank=True, null=True)
-
-#     def __str__(self):
-#         return '{} ({})'.format(self.user.username, self.student_id)
+        return '{} ({})'.format(self.name, self.code)
 
 
 ####################################################################
@@ -36,117 +27,105 @@ class Module(models.Model):
 
 
 class Person(models.Model):
-    name = models.CharField(max_length=32)
-    id_prefix = models.CharField(max_length=8)
-    person_id = models.CharField(max_length=16)
-    user = models.ForeignKey(User, blank=True,
-                             null=True)  # ToDo: vm is dit de Django-user, is dit nodig voor elke Person? --> Ja
-    start = models.DateField(default=datetime.date(1, 1, 1))
-    stop = models.DateField(default=datetime.date(9999, 12, 31))
+    name = models.CharField(max_length=256)
+    university_number = models.CharField(max_length=16, unique=True)
+    user = models.ForeignKey(User)
+    start = models.DateField(default=timezone.now)
+    end = models.DateField(blank=True)
 
     @property
     def full_id(self):
-        return self.id_prefix + self.person_id
+        """Deprecated"""
+        return self.university_number
 
     def __str__(self):
-        return '{} ({})\t\t'.format(self.name, self.full_id)
-
-    class Meta:
-        unique_together = (("id_prefix", "person_id"),)
+        return '{} ({})\t\t'.format(self.name, self.university_number)
 
 
 class Study(models.Model):
-    short_name = models.CharField(primary_key=True, max_length=10)
+    abbreviation = models.CharField(primary_key=True, max_length=10)
+    name = models.CharField(max_length=256, unique=True)
     modules = models.ManyToManyField(Module, blank=True)
-
-    full_name = models.CharField(max_length=32, blank=True)
-
-    advisors = models.ManyToManyField(Person, blank=True)
+    advisers = models.ManyToManyField(Person, blank=True)
 
     def __str__(self):
-        return self.full_name
+        return self.name
 
-
-# class Teacher(models.Model):
-#     employee_id = models.CharField(blank=True, null=True, max_length=16)
-#     student_id = models.ForeignKey(Student, blank=True, null=True)
-
-
-#     user = models.ForeignKey(User, blank=True, null=True)
-
-#     TEACHER_OPTIONS = (             # Defaults to Teaching Assistant
-#             ('T', 'Teacher'),
-#             ('A', 'Teaching Assistant'),
-#         )
-
-#     job = models.CharField(max_length=1, choices=TEACHER_OPTIONS)
-
-#     def __str__(self):
-#         if self.user:
-#             return '{} ({})'.format(self.user.username, self.job)
-#         else:
-#             return '{} ({})'.format(self.student_id.user.username, self.job)
 
 ####################################################################
 ###############          Dependent Models 2          ###############
 ####################################################################
 
-class Course(models.Model):
-    code = models.CharField(max_length=16, default='')
-    code_extension = models.CharField(max_length=16, default='', blank=True)
+class ModulePart(models.Model):
+    name = models.CharField(max_length=256)
+    module_edition = models.ForeignKey(ModuleEdition)
     teachers = models.ManyToManyField(Person, through='Teacher')
 
-    name = models.CharField(max_length=32)
-
     @property
-    def course_code(self):
-        return self.code + self.code_extension
+    def module_edition_code(self):
+        return self.module_edition.code
 
     def get_absolute_url(self):
         return reverse('module_management:course_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.course_code)
-
-    class Meta:
-        unique_together = (('code', 'code_extension'),)
+        return '{} ({})'.format(self.name, self.module_edition_code)
 
 
-class Module_ed(models.Model):
-    year = models.DateField(default=timezone.now)
+class ModuleEdition(models.Model):
+    year = models.IntegerField(default=timezone.now.year)
     module = models.ForeignKey(Module)
-    module_code_extension = models.CharField(max_length=16, default='', blank=True)
+    # Update BLOCKS in @property:get_blocks()
+    BLOCKS = (
+        ('1A', 'Block 1A'),
+        ('1B', 'Block 2A'),
+        ('2A', 'Block 1B'),
+        ('2B', 'Block 2B'),
+        ('3A', 'Block 3A'),
+        ('3B', 'Block 3B'),
+        ('JAAR', 'Block JAAR')
+    )
+    block = models.CharField(choices=BLOCKS)
+    coordinators = models.ManyToManyField(Person, through='Coordinator', blank=True)
+    start = models.DateField(default=timezone.now)
+    end = models.DateField(default=datetime.date(9999, 12, 31))
 
-    courses = models.ManyToManyField(Course, blank=True)
-    module_coordinator = models.ManyToManyField(Person, through='Coordinator', blank=True)
-
-    start = models.DateField(default=datetime.date(1, 1, 1))
-    stop = models.DateField(default=datetime.date(9999, 12, 31))
-
-    # TODO: Check the module_code(self) output
     @property
-    def module_code(self):
-        return str(self.year.year) + self.module.module_code + self.module_code_extension
+    def code(self):
+        return '{}-{}-{}'.format(self.year, self.module.code, self.block)
+
+    # Should be the same as BLOCKS
+    @property
+    def get_block(self):
+        return {
+            '1A': 'Block 1A',
+            '1B': 'Block 2A',
+            '2A': 'Block 1B',
+            '2B': 'Block 2B',
+            '3A': 'Block 3A',
+            '3B': 'Block 3B',
+            'JAAR': 'Block JAAR'
+        }[self.block]
 
     def get_absolute_url(self):
         return reverse('module_management:module_ed_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
-        return '{} ({}) ({} - {})'.format(self.module, self.module_code, self.start, self.stop)
+        return '{} ({}) ({} - {})'.format(self.module, self.code, self.start, self.end)
 
     class Meta:
-        unique_together = (('year', 'module', 'module_code_extension'),)
+        unique_together = (('year', 'module', 'block'),)
 
 
 class Coordinator(models.Model):
     person = models.ForeignKey(Person)
-    module = models.ForeignKey(Module_ed)
-    mc_assistant = models.BooleanField(default=False)
+    module = models.ForeignKey(ModuleEdition)
+    is_assistant = models.BooleanField(default=False)
 
 
 class Teacher(models.Model):
     person = models.ForeignKey(Person)
-    course = models.ForeignKey(Course)
+    module_part = models.ForeignKey(ModulePart)
     # Update ROLES in @property:get_role()
     ROLES = (
         ('T', 'Teacher'),
@@ -163,41 +142,27 @@ class Teacher(models.Model):
         }[self.role]
 
 
-# class Advisor(models.Model):
-#     studies = models.ManyToManyField(Study)
-#     employee_id = models.CharField(primary_key=True, max_length=16)
-#     user = models.ForeignKey(User, blank=True, null=True)
-
-#     start = models.DateField(default=datetime.date(1,1,1))
-#     stop = models.DateField(default=datetime.date(1,1,1))
-
-#     def __str__(self):
-#         return self.name
-
 ####################################################################
 ###############          Dependent Models 3          ###############
 ####################################################################
 
 class Test(models.Model):
-    course_id = models.ForeignKey(Course)
-
-    name = models.CharField(max_length=32, blank=True)
+    module_part = models.ForeignKey(ModulePart)
+    name = models.CharField(max_length=256, blank=True)
     # Update TEST_TYPES in @property:get_type()
     TEST_TYPES = (  # Defaults to Exam
         ('E', 'Exam'),
         ('A', 'Assignment'),
         ('P', 'Project')
     )
-    _type = models.CharField(max_length=1, choices=TEST_TYPES)
-    time = models.DateTimeField(default=timezone.make_aware(datetime.datetime(1, 1, 1, 0, 0, 0, 0)))
-
-    maximum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=10.0)
-    minimum_grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
-
+    type = models.CharField(max_length=1, choices=TEST_TYPES)
+    time = models.DateTimeField(default=timezone.now)
+    maximum_grade = models.DecimalField(max_digits=4, decimal_places=1, default=10.0)
+    minimum_grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
     released = models.BooleanField(default=False)
 
     def __str__(self):
-        return '{} ({}) {}'.format(self.name, self._type, self.time)
+        return '{} ({}) {}'.format(self.name, self.type, self.time)
 
     # Should be the same as TEST_TYPES
     @property
@@ -206,28 +171,28 @@ class Test(models.Model):
             'E': 'Exam',
             'A': 'Assignment',
             'P': 'Project'
-        }[self._type]
+        }[self.type]
 
     def get_absolute_url(self):
         return reverse('module_management:test_detail', kwargs={'pk': self.pk})
 
 
 class Studying(models.Model):
-    student_id = models.ForeignKey(Person)
+    person = models.ForeignKey(Person)
     study = models.ForeignKey(Study)
-    module_id = models.ForeignKey(Module_ed)
+    module_edition = models.ForeignKey(ModuleEdition)
     role = models.CharField(max_length=32)
 
     class Meta:
-        unique_together = (('student_id', 'study', 'module_id'),)
+        unique_together = (('person', 'study', 'module_edition'),)
 
     def __str__(self):
-        return '{} - {} ({})'.format(self.student_id, self.module_id, self.study)
+        return '{} - {} ({})'.format(self.person, self.module_edition, self.study)
 
 
 class Criterion(models.Model):
     study = models.ForeignKey(Study)
-    module_id = models.ForeignKey(Module_ed)
+    module_edition = models.ForeignKey(ModuleEdition)
     condition = models.CharField(max_length=32)
     role = models.CharField(max_length=32)
 
@@ -240,12 +205,12 @@ class Criterion(models.Model):
 ####################################################################
 
 class Grade(models.Model):
-    test_id = models.ForeignKey(Test)
-    teacher_id = models.ForeignKey(Person, related_name='Correcter')
-    student_id = models.ForeignKey(Person, related_name='Submitter')
-    time = models.DateTimeField(default=timezone.make_aware(datetime.datetime(1, 1, 1, 0, 0, 0, 0)))
+    test = models.ForeignKey(Test)
+    teacher = models.ForeignKey(Person, related_name='Correcter')
+    student = models.ForeignKey(Person, related_name='Submitter')
+    time = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=256, blank=True)
-    grade = models.DecimalField(max_digits=6, decimal_places=3, default=1.0)
+    grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
     released = models.BooleanField(default=False)
 
     def __str__(self):

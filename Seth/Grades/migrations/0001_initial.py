@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                 ('module_code_extension', models.CharField(blank=True, default='', max_length=16)),
                 ('start', models.DateField(default=datetime.date(1, 1, 1))),
                 ('stop', models.DateField(default=datetime.date(9999, 12, 31))),
-                ('courses', models.ManyToManyField(blank=True, to='Grades.Course')),
+                ('courses', models.ManyToManyField(blank=True, to='Grades.models.ModulePart')),
                 ('module', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Module')),
             ],
         ),
@@ -99,7 +99,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('role', models.CharField(max_length=32)),
-                ('module_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Module_ed')),
+                ('module_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.models.ModuleEdition')),
                 ('student_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Person')),
                 ('study', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Study')),
             ],
@@ -109,7 +109,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('role', models.CharField(choices=[('T', 'Teacher'), ('A', 'Teaching Assistant')], max_length=1)),
-                ('course', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Course')),
+                ('course', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.models.ModulePart')),
                 ('person', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Person')),
             ],
         ),
@@ -123,7 +123,7 @@ class Migration(migrations.Migration):
                 ('maximum_grade', models.DecimalField(decimal_places=3, default=10.0, max_digits=6)),
                 ('minimum_grade', models.DecimalField(decimal_places=3, default=1.0, max_digits=6)),
                 ('released', models.BooleanField(default=False)),
-                ('course_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Course')),
+                ('course_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.models.ModulePart')),
             ],
         ),
         migrations.AddField(
@@ -149,7 +149,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='criterion',
             name='module_id',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Module_ed'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.models.ModuleEdition'),
         ),
         migrations.AddField(
             model_name='criterion',
@@ -164,7 +164,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='coordinator',
             name='module',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.Module_ed'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Grades.models.ModuleEdition'),
         ),
         migrations.AddField(
             model_name='coordinator',
