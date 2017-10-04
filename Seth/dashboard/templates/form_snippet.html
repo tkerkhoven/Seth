@@ -1,9 +1,8 @@
+{% load widget_tweaks %}
 {% for field in form %}
     <div class="form-group">
         {{ field.errors }}
         {{ field.label_tag }}
-{#        <input class="form-control">#}
-        {{ field.name }}
-{#        {{ field }}#}
+        {{ field|add_class:"form-control" }}
     </div>
 {% endfor %}
