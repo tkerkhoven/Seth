@@ -222,7 +222,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade: float, des
                              .format(grade, student, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
         raise GradeException('Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
-                             '({}-{}).'.format(student.name, student.id_prefix + student.person_id, test.name, grade, test.minimum_grade, test.maximum_grade))
+                             '({}-{}).'.format(student.name, student.univserity_number, test.name, grade, test.minimum_grade, test.maximum_grade))
 
     try:
         grade_obj = Grade(
@@ -262,7 +262,7 @@ def import_student(request):
             if new_students[0][0].lower() == 'name' and new_students[0][1].lower() == 's-number' and new_students[0][
                 2].lower() == 'starting date (dd/mm/yy)':
                 for i in range(1, len(new_students)):
-                    new_student = Person(name=new_students[i][0], id_prefix='s', person_id=new_students[i][1],
+                    new_student = Person(name=new_students[i][0], univserity_number='s' + new_students[i][1],
                                          start=new_students[i][2])
                     new_student.save()
                     string += "Student added:<br>"
@@ -313,8 +313,7 @@ def import_student_to_module(request, pk):
 
                 for i in range(1, len(students_to_module)):
                     student, created = Person.objects.get_or_create(
-                        id_prefix='s',
-                        person_id=str(students_to_module[i][0]),
+                        univserity_number='s' + str(students_to_module[i][0]),
                         defaults={
                             'name': students_to_module[i][1],
                             'start': students_to_module[i][2],

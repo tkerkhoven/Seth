@@ -87,7 +87,7 @@
                         {% for student in studentlist %}
                         <tr>
                             <td>
-                                <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</a>
+                                <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.univserity_number }})</a>
                                 <p style="display: none">{{ studydict|key:student|study_od }} {{ roledict|key:student }}</p>
                             </td>
                             {% for course,tests in coursedict.items %}

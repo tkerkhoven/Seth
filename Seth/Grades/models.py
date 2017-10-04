@@ -13,7 +13,7 @@ from django.utils import timezone
 
 class Module(models.Model):
     code = models.CharField(max_length=32, primary_key=True)
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=255)
     start = models.DateField(default=timezone.now)
     end = models.DateField(default=datetime.date(9999, 12, 31))
 
@@ -27,7 +27,7 @@ class Module(models.Model):
 
 
 class Person(models.Model):
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
     user = models.ForeignKey(User)
     start = models.DateField(default=timezone.now)
@@ -44,7 +44,7 @@ class Person(models.Model):
 
 class Study(models.Model):
     abbreviation = models.CharField(primary_key=True, max_length=10)
-    name = models.CharField(max_length=256, unique=True)
+    name = models.CharField(max_length=255, unique=True)
     modules = models.ManyToManyField(Module, blank=True)
     advisers = models.ManyToManyField(Person, blank=True)
 
@@ -56,24 +56,13 @@ class Study(models.Model):
 ###############          Dependent Models 2          ###############
 ####################################################################
 
-class ModulePart(models.Model):
-    name = models.CharField(max_length=256)
-    module_edition = models.ForeignKey(ModuleEdition)
-    teachers = models.ManyToManyField(Person, through='Teacher')
-
-    @property
-    def module_edition_code(self):
-        return self.module_edition.code
-
-    def get_absolute_url(self):
-        return reverse('module_management:course_detail', kwargs={'pk': self.pk})
-
-    def __str__(self):
-        return '{} ({})'.format(self.name, self.module_edition_code)
+def getyear():
+    now = timezone.now()
+    return now.year
 
 
 class ModuleEdition(models.Model):
-    year = models.IntegerField(default=timezone.now.year)
+    year = models.IntegerField(default=getyear)
     module = models.ForeignKey(Module)
     # Update BLOCKS in @property:get_blocks()
     BLOCKS = (
@@ -85,7 +74,7 @@ class ModuleEdition(models.Model):
         ('3B', 'Block 3B'),
         ('JAAR', 'Block JAAR')
     )
-    block = models.CharField(choices=BLOCKS)
+    block = models.CharField(choices=BLOCKS, max_length=16)
     coordinators = models.ManyToManyField(Person, through='Coordinator', blank=True)
     start = models.DateField(default=timezone.now)
     end = models.DateField(default=datetime.date(9999, 12, 31))
@@ -108,13 +97,29 @@ class ModuleEdition(models.Model):
         }[self.block]
 
     def get_absolute_url(self):
-        return reverse('module_management:module_ed_detail', kwargs={'pk': self.pk})
+        return reverse('modmanagement:module_ed_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
         return '{} ({}) ({} - {})'.format(self.module, self.code, self.start, self.end)
 
     class Meta:
         unique_together = (('year', 'module', 'block'),)
+
+
+class ModulePart(models.Model):
+    name = models.CharField(max_length=255)
+    module_edition = models.ForeignKey(ModuleEdition)
+    teachers = models.ManyToManyField(Person, through='Teacher')
+
+    @property
+    def module_edition_code(self):
+        return self.module_edition.code
+
+    def get_absolute_url(self):
+        return reverse('module_management:course_detail', kwargs={'pk': self.pk})
+
+    def __str__(self):
+        return '{} ({})'.format(self.name, self.module_edition_code)
 
 
 class Coordinator(models.Model):
@@ -148,7 +153,7 @@ class Teacher(models.Model):
 
 class Test(models.Model):
     module_part = models.ForeignKey(ModulePart)
-    name = models.CharField(max_length=256, blank=True)
+    name = models.CharField(max_length=255, blank=True)
     # Update TEST_TYPES in @property:get_type()
     TEST_TYPES = (  # Defaults to Exam
         ('E', 'Exam'),
@@ -209,7 +214,7 @@ class Grade(models.Model):
     teacher = models.ForeignKey(Person, related_name='Correcter')
     student = models.ForeignKey(Person, related_name='Submitter')
     time = models.DateTimeField(default=timezone.now)
-    description = models.CharField(max_length=256, blank=True)
+    description = models.CharField(max_length=255, blank=True)
     grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
     released = models.BooleanField(default=False)
 

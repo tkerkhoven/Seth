@@ -103,7 +103,7 @@ class ModuleEdView(generic.DetailView):
 class ModuleEdUpdateView(generic.UpdateView):
     template_name = 'module_management/module_ed_update.html'
     model = ModuleEdition
-    fields = ['year', 'module_code_extension', 'courses', 'start', 'stop']
+    fields = ['year', 'block', 'start', 'stop']
 
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
@@ -125,7 +125,7 @@ class ModuleEdUpdateView(generic.UpdateView):
 class ModuleEdCreateForm(ModelForm):
     class Meta:
         model = ModuleEdition
-        fields = ['module', 'module_code_extension', 'start', "end", 'year', "coordinators"]
+        fields = ['module', 'start', "end", 'year', "coordinators"]
 
     def __init__(self, *args, **kwargs):
         super(ModuleEdCreateForm, self).__init__(*args, **kwargs)
@@ -172,7 +172,6 @@ class ModuleEdCreateView(generic.CreateView):
 
         module_ed = ModuleEdition(
             module=initial['module'],
-            module_code_extension=data['module_code_extension'],
             start=data['start'],
             stop=data['stop'],
             year=data['year']
@@ -241,7 +240,7 @@ class CourseView(generic.DetailView):
 class CourseUpdateView(generic.UpdateView):
     template_name = 'module_management/course_update.html'
     model = ModulePart
-    fields = ['code', 'code_extension', 'teachers', 'name']
+    fields = ['teachers', 'name']
 
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
@@ -266,7 +265,7 @@ class CourseUpdateView(generic.UpdateView):
             teacher = Teacher()
             teacher.module_part = self.object
             teacher.person = t
-            if t.id_prefix == 'm':
+            if t.univserity_number[0] == 'm':
                 teacher.role = 'T'
             else:
                 teacher.role = 'A'
@@ -277,7 +276,7 @@ class CourseUpdateView(generic.UpdateView):
 class CourseCreateForm(ModelForm):
     class Meta:
         model = ModulePart
-        fields = ['code', 'code_extension', 'name', 'teachers']
+        fields = ['name', 'teachers']
 
 
 class CourseCreateView(generic.CreateView):
@@ -307,8 +306,6 @@ class CourseCreateView(generic.CreateView):
         set_autocommit(False)
 
         course = ModulePart(
-            code=data['code'],
-            code_extension=data['code_extension'],
             name=data['name']
         )
         try:
@@ -333,7 +330,7 @@ class CourseCreateView(generic.CreateView):
 
         for t in data.getlist('teachers'):
             t = Person.objects.get(pk=t)
-            if t.id_prefix == 'm':
+            if t.univserity_number[0] == 'm':
                 role = 'T'
             else:
                 role = 'A'

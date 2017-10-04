@@ -380,12 +380,12 @@ def export(request, *args, **kwargs):
 
     for studying in mod_ed.studying_set.prefetch_related('student_id'):
 
-        output = u'' + studying.student_id.user.last_name + ' (' + studying.student_id.id_prefix + studying.student_id.person_id + ')'
+        output = u'' + studying.student.user.last_name + ' (' + studying.student.univserity_number + ')'
         for course in mod_ed.courses.prefetch_related('test_set').all():
             for test in course.test_set.prefetch_related('grade_set').all():
 
                 gradelist = []
-                for grade in test.grade_set.filter(student_id=studying.student_id):
+                for grade in test.grade_set.filter(student_id=studying.student):
                     gradelist.append(grade)
 
                 gradelist.sort(key=lambda gr: grade.time)
