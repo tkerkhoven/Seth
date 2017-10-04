@@ -11,7 +11,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell
 import re
 
 from Grades.exceptions import GradeException
-from Grades.models import Module_ed, Grade, Test, Person, Course, Studying, Module
+from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule
 
 
@@ -20,19 +20,19 @@ from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentFo
 
 class IndexView(LoginRequiredMixin, generic.ListView):
     template_name = 'importer/index.html'
-    model = Module_ed
+    model = ModuleEdition
 
     def get_queryset(self):
-        return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
+        return ModuleEdition.objects.filter(module_coordinator__user=self.request.user).order_by('start')
 
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
 @login_required
 def import_module(request, pk):
-    if not Module_ed.objects.filter(pk=pk):
+    if not ModuleEdition.objects.filter(pk=pk):
         return HttpResponseNotFound('Module does not exist.')
-    if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
+    if not ModuleEdition.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
         return HttpResponseForbidden('You are not the module coordinator for this course')
 
     if request.method == "POST":
@@ -102,7 +102,7 @@ def import_module(request, pk):
         else:
             return HttpResponseBadRequest('Invalid file')
     else:
-        if Module_ed.objects.filter(pk=pk):
+        if ModuleEdition.objects.filter(pk=pk):
             form = GradeUploadForm()
             return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
 
@@ -168,10 +168,10 @@ def import_test(request, pk):
 @login_required()
 def export_module(request, pk):
 
-    if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
+    if not ModuleEdition.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
         return HttpResponseForbidden('You are not the module coordinator for this course.')
 
-    module = Module_ed.objects.get(pk=pk)
+    module = ModuleEdition.objects.get(pk=pk)
     students = Person.objects.filter(studying__module_id=module)
     tests = Test.objects.filter(course_id__module_ed=module)
 
@@ -222,7 +222,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade: float, des
                              .format(grade, student, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
         raise GradeException('Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
-                             '({}-{}).'.format(student.name, student.id_prefix + student.person_id, test.name, grade, test.minimum_grade, test.maximum_grade))
+                             '({}-{}).'.format(student.name, student.univserity_number, test.name, grade, test.minimum_grade, test.maximum_grade))
 
     try:
         grade_obj = Grade(
@@ -262,7 +262,7 @@ def import_student(request):
             if new_students[0][0].lower() == 'name' and new_students[0][1].lower() == 's-number' and new_students[0][
                 2].lower() == 'starting date (dd/mm/yy)':
                 for i in range(1, len(new_students)):
-                    new_student = Person(name=new_students[i][0], id_prefix='s', person_id=new_students[i][1],
+                    new_student = Person(name=new_students[i][0], univserity_number='s' + new_students[i][1],
                                          start=new_students[i][2])
                     new_student.save()
                     string += "Student added:<br>"
@@ -313,8 +313,7 @@ def import_student_to_module(request, pk):
 
                 for i in range(1, len(students_to_module)):
                     student, created = Person.objects.get_or_create(
-                        id_prefix='s',
-                        person_id=str(students_to_module[i][0]),
+                        univserity_number='s' + str(students_to_module[i][0]),
                         defaults={
                             'name': students_to_module[i][1],
                             'start': students_to_module[i][2],
@@ -331,17 +330,17 @@ def import_student_to_module(request, pk):
                         }
                     )
                     if created:
-                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
+                        module_ed = ModuleEdition.objects.get(id=studying.module_id.pk)
                         module = Module.objects.get(module_code=module_ed.module_id)
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
                     else:
-                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
+                        module_ed = ModuleEdition.objects.get(id=studying.module_id.pk)
                         module = Module.objects.get(module_code=module_ed.module_id)
                         context['failed'].append(
-                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
                 print(context)
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:

@@ -1,6 +1,6 @@
 from django import forms
 
-from Grades.models import Test, Course
+from Grades.models import Test, ModulePart
 
 
 class GradeUploadForm(forms.Form):
