@@ -58,7 +58,7 @@
                     <table id="gradebook" data-skip-to-row="0" class="table table-striped table-bordered table-responsive">
                         <tr>
                             <th>Student</th>
-                            {% for test in testdict.keys %}
+                            {% for test in tests %}
                                 <th>
                                     <a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
                                     {% if testallreleased|key:test %}
@@ -67,17 +67,17 @@
                                 </th>
                             {% endfor %}
                         </tr>
-                        {% for student in studentlist %}
+                        {% for student,grades in gradedict.items %}
                             <tr>
                                 <td>
-                                    <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.id_prefix }}{{student.person_id }})</a>
-                                    <p style="display: none">{{ studydict|key:student|study_od }} {{ roledict|key:student }}</p>
+                                    <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student %}">{{ studentdict|key:student|key:'name' }} (s{{ studentdict|key:student|key:'pid' }})</a>
+                                    <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                                 </td>
-                                {% for test in testdict.keys %}
-                                {% with grade=testdict|key:test|key:student|last %}
-                                    <td id="gradeid_{{ grade.id }}" data-grade="{{ grade|grade_od }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                        <font data-toggle="tooltip" title="{{ grade|grade_od_no_round }}">{{ grade|grade_od }}</font>
-                                        {% if grade.released %}
+                                {% for test in tests %}
+                                {% with grade=gradedict|key:test.id|key:0 %}
+                                    <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                        <a data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}</a>
+                                        {% if gradedict|key:test.id|key:1 %}
                                         <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
                                         {% else %}
                                         <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
