@@ -55,7 +55,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'Seth.urls'
 
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -78,18 +77,15 @@ WSGI_APPLICATION = 'Seth.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-with open('../../secrets/postgres_host') as hfile:
-    with open('../../secrets/postgres_password') as pwfile:
-
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': 'djangoseth',
-                'USER': 'djangoseth',
-                'PASSWORD': pwfile.read().strip(),
-                'HOST': hfile.read().strip(),
-            }
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'djangoseth',
+        'USER': 'djangoseth',
+        'PASSWORD': 'nope',
+        'HOST': 'nottoday.pirate',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
