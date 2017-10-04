@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
+from .models import Studying, Person, Module_ed, Test, Course, Grade
 import csv
 import re
 from django.utils.encoding import smart_str
@@ -192,7 +192,6 @@ class ModuleStudentView(generic.DetailView):
         return handler(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        user = self.request.user
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
