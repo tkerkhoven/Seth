@@ -14,11 +14,14 @@
 
                     <ul class="navbar-nav mr-auto"></ul>
 
+                    <a href="{% url 'grades:test' test.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
+                        <i class="material-icons md-36 title-bar">spellcheck</i>
+                    </a>
                     <a href="{% url 'module_management:test_update' test.pk %}" data-toggle="tooltip" data-placement="bottom" title="Edit test">
-                        <i class="material-icons md-36">settings</i>
+                        <i class="material-icons md-36 title-bar">mode_edit</i>
                     </a>
                     <a href="{% url 'module_management:test_delete' test.pk %}" data-toggle="tooltip" data-placement="bottom" title="Delete test">
-                        <i class="material-icons md-36 text-danger">delete_forever</i>
+                        <i class="material-icons md-36 text-danger title-bar">delete_forever</i>
                     </a>
                 </nav>
             </div>
@@ -34,28 +37,8 @@
                 <li>Test Time: {{ test.time }}</li>
                 <li>Minimum Grade: {{ test.minimum_grade }}</li>
                 <li>Maximum Grade: {{ test.maximum_grade }}</li>
-                <li><a href="{% url 'grades:test' test.pk %}">Test Grades</a></li>
             </ul>
         </div>
         <div class="col-lg-7"></div>
-{#        <div class="row">#}
-{#            <div class="col-lg-12">#}
-{#                <ul>#}
-{#                    <li>Course: <a#}
-{#                            href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}#}
-{#                        - {{ test.course_id.name }}</a></li>#}
-{#                    <li>Test Name: {{ test.name }}</li>#}
-{#                    <li>Test Type: {{ test.get_type }}</li>#}
-{#                    <li>Test Time: {{ test.time }}</li>#}
-{#                    <li>Minimum Grade: {{ test.minimum_grade }}</li>#}
-{#                    <li>Maximum Grade: {{ test.maximum_grade }}</li>#}
-{#                    <li><a href="{% url 'grades:test' test.pk %}">Test Grades</a></li>#}
-{#                </ul>#}
-{##}
-{#                <a href="{% url 'module_management:test_update' test.pk %}">Edit</a>#}
-{#                -#}
-{#                <a href="{% url 'module_management:test_delete' test.pk %}">Delete</a>#}
-{#            </div>#}
-{#        </div>#}
     </div>
 {% endblock %}

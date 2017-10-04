@@ -15,13 +15,13 @@ Details: {{ course }}
 
                 <ul class="navbar-nav mr-auto"></ul>
                 <a href="{% url 'grades:course' course.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
-                    <i class="material-icons md-36">spellcheck</i>
+                    <i class="material-icons md-36 title-bar">spellcheck</i>
                 </a>
                 <a href="{% url 'module_management:course_update' course.pk %}" data-toggle="tooltip" data-placement="bottom" title="Edit course">
-                    <i class="material-icons md-36">mode_edit</i>
+                    <i class="material-icons md-36 title-bar">mode_edit</i>
                 </a>
                 <a href="{% url 'module_management:course_delete' course.pk %}" data-toggle="tooltip" data-placement="bottom" title="Delete course">
-                    <i class="material-icons md-36 text-danger">delete_forever</i>
+                    <i class="material-icons md-36 text-danger title-bar">delete_forever</i>
                 </a>
             </nav>
         </div>
