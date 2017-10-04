@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.views import generic
-from .models import Studying, Person, Module_ed, Test, Course, Grade
+from .models import Module, Studying, Person, Module_ed, Test, Course, Grade
 import csv
 import re
 from django.utils.encoding import smart_str
@@ -36,7 +36,7 @@ class ModuleView(generic.ListView):
         return set(module_set)
 
 
-class GradeView2(generic.DetailView):
+class GradeView(generic.DetailView):
     template_name = 'Grades/gradebook2.html'
     model = Module_ed
 
@@ -58,7 +58,7 @@ class GradeView2(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         user = self.request.user
-        context = super(GradeView2, self).get_context_data(**kwargs)
+        context = super(GradeView, self).get_context_data(**kwargs)
 
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
 
@@ -104,7 +104,6 @@ class GradeView2(generic.DetailView):
 
         return context
 
-
 class StudentView(generic.DetailView):
     template_name = 'Grades/student.html'
     model = Person
@@ -112,7 +111,7 @@ class StudentView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Studying.objects.filter(student_id__user=user, student_id__id=self.kwargs['pk']):
+        if not Module_ed.objects.filter(user=user, id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -156,13 +155,10 @@ class StudentView(generic.DetailView):
 
                     gradelist.sort(key=lambda gr: grade.time)
                     if gradelist == []:
-                        test_list.pop(-1)
+                        course_list.pop(-1)
                     else:
                         grade_dict[test] = gradelist
                         test_dict[course] = test_list
-
-                if test_list == []:
-                    course_list.pop(-1)
             course_dict[mod_ed] = course_list
             mod_width[mod_ed] = width
 
