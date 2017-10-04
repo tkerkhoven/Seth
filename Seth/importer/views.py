@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse
 from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
-from django.views import generic
+from django.views import generic, View
 from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
@@ -19,21 +19,28 @@ from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentFo
 # Create your views here.
 
 
-class IndexView(LoginRequiredMixin, generic.ListView):
-    template_name = 'importer/index.html'
+class MCImporterIndexView(LoginRequiredMixin, View):
     model = Module_ed
 
     @method_decorator(login_required)
-    def dispatch(self, *args, **kwargs):
-        if not Module_ed.objects.filter(module_coordinator__user=self.request.user):
-            return HttpResponseForbidden('Only module coordinators can view this page.')
-        return super(IndexView, self).dispatch(*args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        if Module_ed.objects.filter(module_coordinator__user=self.request.user):
+            return render(request, 'importer/mcindex.html', {
+                'module_ed_list': Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by(
+                    'start')})
+        elif Course.objects.filter(teacher__person__user=self.request.user):
+            return render(request, 'importer/teacherindex.html',
+                          {'course_list': Course.objects.filter(teacher__person__user=self.request.user).order_by(
+                              'module_ed__start')})
+
+        return HttpResponseForbidden('Only module coordinators can view this page.')
 
     def get_queryset(self):
         return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
 
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
+
 
 @login_required
 def import_module(request, pk):
@@ -59,11 +66,11 @@ def import_module(request, pk):
                     if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'student_id':
                         student_id_field = title_index
                     else:
-                        if Test.objects.filter(     # search by ID
+                        if Test.objects.filter(  # search by ID
                                 pk=sheet[table][COLUMN_TITLE_ROW][title_index]
                         ).filter(course_id__module_ed=pk):
                             test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]
-                        elif Test.objects.filter(   # search by name
+                        elif Test.objects.filter(  # search by name
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
                         ).filter(course_id__module_ed=pk):
                             test_rows[title_index] = Test.objects.filter(
@@ -86,14 +93,16 @@ def import_module(request, pk):
                     tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
 
                 # check for invalid students
-                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
-                    if not Person.objects.filter(person_id=row[student_id_field]):
-                        return HttpResponseBadRequest(
-                            'Student {} does not exist. Add this user first before retrying.'.format(
-                                row[student_id_field]))
+                invalid_students = []
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                    if not Studying.objects.filter(student_id__person_id=row[student_id_field]).filter(module_id=pk):
+                        invalid_students.append(row[student_id_field])
+                if invalid_students:
+                    return HttpResponseBadRequest(
+                        'Students {} are not enrolled in this module. '
+                        'Enroll these students first before retrying.'.format(invalid_students))
 
-
-                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
                     student = Person.objects.filter(person_id=row[student_id_field])[0]
                     if student:
                         for test_column in test_rows.keys():
@@ -136,7 +145,6 @@ def import_test(request, pk):
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
-
                 try:
                     student_id_field = sheet[table][COLUMN_TITLE_ROW].index('student_id')
                     grade_field = sheet[table][COLUMN_TITLE_ROW].index('grade')
@@ -146,13 +154,24 @@ def import_test(request, pk):
 
                 teacher = Person.objects.get(user=request.user)
 
+                invalid_students = []
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                    if not Studying.objects.filter(module_id__courses__test__exact=pk, student_id__person_id=row[student_id_field]):
+                        if not row[student_id_field] == '':
+                            invalid_students.append(row[student_id_field])
+                if invalid_students:
+                    return HttpResponseBadRequest(
+                        'Students {} are not enrolled in this module. '
+                        'Enroll these students first before retrying.'.format(invalid_students))
+
                 grades = []
-                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
-                    if not Person.objects.filter(person_id=row[student_id_field]):
-                        return HttpResponseBadRequest('Student {} does not exist. Add this user first before retrying.'.format(row[student_id_field]))
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
                     try:
+                        # Fix for empty student id field.
+                        if not Person.objects.get(person_id=row[student_id_field]):
+                            continue
                         grades.append(make_grade(
-                            student=Person.objects.filter(person_id=row[student_id_field])[0],
+                            student=Person.objects.get(person_id=row[student_id_field]),
                             corrector=teacher,
                             test=Test.objects.get(pk=pk),
                             grade=row[grade_field],
@@ -176,7 +195,6 @@ def import_test(request, pk):
 
 @login_required()
 def export_module(request, pk):
-
     if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
         return HttpResponseForbidden('You are not the module coordinator for this course.')
 
@@ -184,7 +202,7 @@ def export_module(request, pk):
     students = Person.objects.filter(studying__module_id=module)
     tests = Test.objects.filter(course_id__module_ed=module)
 
-    table = [['' for _ in range(len(tests)+1)] for _ in range(COLUMN_TITLE_ROW - 1)]
+    table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW - 1)]
 
     if COLUMN_TITLE_ROW > 1:
         table.append(['Module part >'] + [test.course_id.name for test in tests])
@@ -192,7 +210,7 @@ def export_module(request, pk):
     if COLUMN_TITLE_ROW > 0:
         table.append(['Test name >'] + [test.name for test in tests])
 
-    table.append(['student_id']+[test.pk for test in tests])
+    table.append(['student_id'] + [test.pk for test in tests])
 
     for student in students:
         table.append([student.person_id] + [None for _ in range(len(tests))])
@@ -230,8 +248,10 @@ def make_grade(student: Person, corrector: Person, test: Test, grade: float, des
         raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
                              .format(grade, student, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
-        raise GradeException('Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
-                             '({}-{}).'.format(student.name, student.id_prefix + student.person_id, test.name, grade, test.minimum_grade, test.maximum_grade))
+        raise GradeException(
+            'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
+            '({}-{}).'.format(student.name, student.id_prefix + student.person_id, test.name, grade, test.minimum_grade,
+                              test.maximum_grade))
 
     try:
         grade_obj = Grade(
@@ -253,10 +273,11 @@ def save_grades(grades):
     except:
         raise GradeException('Error when trying to save the grades to the database.')
 
+
 @login_required
 def import_student(request):
     if not Module_ed.objects.filter(Q(module_coordinator__user=request.user)):
-         return HttpResponseForbidden('Not allowed to add students if not a module coordinator')
+        return HttpResponseForbidden('Not allowed to add students if not a module coordinator')
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
@@ -295,7 +316,7 @@ def import_student(request):
 
 @login_required
 def import_student_to_module(request, pk):
-    if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
+    if not Module_ed.objects.filter(  # ToDo: Check if User is actually Admin
             Q(module_coordinator__user=request.user)
     ).filter(pk=pk):
         return HttpResponseForbidden('Not allowed to upload students to module.')

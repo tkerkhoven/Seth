@@ -6,7 +6,7 @@ from . import views
 
 
 urlpatterns = [
-    url(r'^$', views.IndexView.as_view(), name='import_index'),
+    url(r'^$', views.MCImporterIndexView.as_view(), name='import_index'),
     url(r'module/(?P<pk>[0-9]+)/get_workbook$', views.export_module, name='export_module'),
     url(r'test/(?P<pk>[0-9]+)/get_workbook$', views.export_test, name='export_test'),
     url(r'module/(?P<pk>[0-9]+)', views.import_module, name='import_module'),
