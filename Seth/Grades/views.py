@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
@@ -29,12 +31,13 @@ class ModuleView(generic.ListView):
         return handler(request, *args, **kwargs)
 
     def get_queryset(self):
-        module_set = Module.objects.prefetch_related('module_ed_set')
-        return module_set
+        user = self.request.user
+        module_set = Module_ed.objects.filter(Q(module_coordinator__user=user) | Q(courses__teachers__user=user))
+        return set(module_set)
 
 
 class GradeView(generic.DetailView):
-    template_name = 'Grades/gradebook.html'
+    template_name = 'Grades/gradebook2.html'
     model = Module_ed
 
     def dispatch(self, request, *args, **kwargs):
@@ -57,53 +60,49 @@ class GradeView(generic.DetailView):
         user = self.request.user
         context = super(GradeView, self).get_context_data(**kwargs)
 
-        student_list = []
-        course_dict = dict()
-        test_dict = dict()
-        test_all_released = dict()
-        study_dict = dict()
-        role_dict = dict()
-
         mod_ed = Module_ed.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
-        for studying in mod_ed.studying_set.prefetch_related('student_id'):
-            if studying.student_id not in student_list:
-                student_list.append(studying.student_id)
-                study_dict[studying.student_id] = studying.study
-                role_dict[studying.student_id] = studying.role
 
-        for course in mod_ed.courses.prefetch_related('test_set').filter(
-                        Q(teachers__user=user) | Q(module_ed__module_coordinator__user=user)):
-            test_list = []
+        dicts = Studying.objects \
+            .prefetch_related('student_id', 'study', 'student_id__Submitter') \
+            .values('study__full_name', 'study__short_name', 'student_id', 'student_id__name', 'student_id__person_id',
+                    'student_id__Submitter', 'student_id__Submitter__grade', 'student_id__Submitter__test_id',
+                    'student_id__Submitter__released') \
+            .filter(module_id=mod_ed) \
+            .order_by('student_id__Submitter__test_id', 'student_id__Submitter__time')
+        courses = Course.objects \
+            .prefetch_related('test_set') \
+            .filter(module_ed=mod_ed)
+        tests = Test.objects \
+            .filter(course_id__module_ed=mod_ed)
 
-            for test in course.test_set.prefetch_related('grade_set'):
+        students = dict()
+        temp_dict = dict()
+        context_dict = OrderedDict()
 
-                grade_dict = dict()
-                all_released = True
+        for d in dicts:
+            student = d['student_id']
+            if student not in students.keys():
+                students[student] = dict()
+            if student not in temp_dict.keys():
+                temp_dict[student] = dict()
 
-                for grade in test.grade_set.prefetch_related('student_id').all():
-                    if grade.student_id not in grade_dict.keys():
-                        grade_dict[grade.student_id] = []
+            students[student]['name'] = d['student_id__name']
+            students[student]['pid'] = d['student_id__person_id']
+            students[student]['study'] = d['study__full_name']
+            students[student]['sstudy'] = d['study__short_name']
 
-                    grade_dict[grade.student_id].append(grade)
+            temp_dict[student][d['student_id__Submitter__test_id']] = (
+            d['student_id__Submitter__grade'], d['student_id__Submitter__released'])
 
-                for key in grade_dict.keys():
-                    grade_dict[key].sort(key=lambda gr: grade.time)
-                    if not grade_dict[key][-1].released:
-                        all_released = False
+        for key in sorted(temp_dict):
+            context_dict[key] = temp_dict[key]
 
-                test_dict[test] = grade_dict
-                test_all_released[test] = all_released
-                test_list.append(test)
-            course_dict[course] = test_list
+        context['gradedict'] = context_dict
+        context['studentdict'] = students
+        context['courses'] = courses
+        context['tests'] = tests
 
-        context['studentlist'] = student_list
-        context['coursedict'] = course_dict
-        context['testdict'] = test_dict
-        context['testallreleased'] = test_all_released
-        context['studydict'] = study_dict
-        context['roledict'] = role_dict
         return context
-
 
 class StudentView(generic.DetailView):
     template_name = 'Grades/student.html'
@@ -199,34 +198,32 @@ class ModuleStudentView(generic.DetailView):
         mod_ed = Module_ed.objects.prefetch_related('courses').get(id=self.kwargs['pk'])
         student = Person.objects.get(id=self.kwargs['sid'])
 
-        course_list = []
-        test_dict = dict()
-        grade_dict = dict()
+        dicts = Grade.objects \
+            .prefetch_related('test_id') \
+            .values('grade', 'released', 'test_id') \
+            .filter(test_id__course_id__module_ed=mod_ed, student_id=student) \
+            .order_by('test_id', 'time')
+        courses = Course.objects \
+            .prefetch_related('test_set') \
+            .filter(module_ed=mod_ed)
+        tests = Test.objects \
+            .filter(course_id__module_ed=mod_ed)
 
-        for course in mod_ed.courses.prefetch_related('test_set').filter(
-                        Q(teachers__user=user) | Q(module_ed__module_coordinator__user=user)):
-            test_list = []
+        print(dicts)
 
-            if course not in course_list:
-                course_list.append(course)
+        temp_dict = dict()
+        context_dict = OrderedDict()
 
-            for test in course.test_set.prefetch_related('grade_set').all():
-                gradelist = []
+        for d in dicts:
+            temp_dict[d['test_id']] = (d['grade'], d['released'])
 
-                if test not in test_list:
-                    test_list.append(test)
-
-                for grade in test.grade_set.filter(student_id=student):
-                    gradelist.append(grade)
-
-                gradelist.sort(key=lambda gr: grade.time)
-                grade_dict[test] = gradelist
-                test_dict[course] = test_list
+        for key in sorted(temp_dict):
+            context_dict[key] = temp_dict[key]
 
         context['student'] = student
-        context['courselist'] = course_list
-        context['testdict'] = test_dict
-        context['gradedict'] = grade_dict
+        context['courses'] = courses
+        context['tests'] = tests
+        context['gradedict'] = context_dict
 
         return context
 
@@ -306,7 +303,7 @@ class TestView(generic.DetailView):
 
         if not Test.objects.filter(
                         Q(course_id__module_ed__module_coordinator__user=user) | Q(course_id__teachers__user=user),
-                        id=self.kwargs['pk']):
+                id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
