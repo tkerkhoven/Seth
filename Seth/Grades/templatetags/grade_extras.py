@@ -35,6 +35,7 @@ def gradeordash_nr(d):
 def g_round(d):
     try:
         value = round(d,1)
+
     except:
         value = '-'
 
