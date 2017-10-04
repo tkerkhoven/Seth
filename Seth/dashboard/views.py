@@ -1,7 +1,8 @@
-from django.shortcuts import render
 from django.http import Http404
+from django.shortcuts import render
 from django.utils import timezone
-from Grades.models import Module_ed
+
+from Grades.models import ModuleEdition
 
 
 # @permission_required('grades.add_grade')
@@ -39,7 +40,7 @@ def settings(request):
 
 
 def get_modules():
-    return Module_ed.objects.order_by('-start')
+    return ModuleEdition.objects.order_by('-start')
 
 
 def get_current_date():
@@ -47,16 +48,16 @@ def get_current_date():
 
 
 def server_error(request):
-    return render(request, 'errors/500.html')
+    return render(request, 'errors/500.html', status=500)
 
 
 def not_found(request):
-    return render(request, 'errors/404.html')
+    return render(request, 'errors/404.html', status=404)
 
 
 def permission_denied(request):
-    return render(request, 'errors/403.html')
+    return render(request, 'errors/403.html', status=403)
 
 
 def bad_request(request):
-    return render(request, 'errors/400.html')
+    return render(request, 'errors/400.html', status=400)

@@ -10,7 +10,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
 
-from Grades.models import Module, Module_ed, Course, Test, Person, Coordinator, Teacher, Grade, Studying
+from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying
 
 
 class IndexView(generic.ListView):
@@ -18,7 +18,6 @@ class IndexView(generic.ListView):
     context_object_name = 'module_list'
 
     def get_queryset(self):
-        """Return all modules"""
         user = self.request.user
         module_list = Module.objects.prefetch_related('module_ed_set').filter(
             module_ed__module_coordinator__user=user).distinct()
@@ -26,13 +25,13 @@ class IndexView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super(IndexView, self).get_context_data(**kwargs)
-        context['mod_eds'] = Module_ed.objects.filter(module_coordinator__user=self.request.user)
+        context['mod_eds'] = ModuleEdition.objects.filter(module_coordinator__user=self.request.user)
         return context
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Module_ed.objects.filter(module_coordinator__user=user):
+        if not ModuleEdition.objects.filter(module_coordinator__user=user):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -51,7 +50,7 @@ class ModuleView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ModuleView, self).get_context_data(**kwargs)
-        context['mod_eds'] = Module_ed.objects.filter(module_coordinator__user=self.request.user)
+        context['mod_eds'] = ModuleEdition.objects.filter(module_coordinator__user=self.request.user)
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -73,13 +72,13 @@ class ModuleView(generic.DetailView):
 
 class ModuleEdView(generic.DetailView):
     template_name = 'module_management/module_ed_detail.html'
-    model = Module_ed
+    model = ModuleEdition
 
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
         user = request.user
 
-        if not Module_ed.objects.filter(module_coordinator__user=user).filter(pk=pk):
+        if not ModuleEdition.objects.filter(module_coordinator__user=user).filter(pk=pk):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -93,7 +92,8 @@ class ModuleEdView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ModuleEdView, self).get_context_data(**kwargs)
-        studying = Studying.objects.filter(module_id=self.kwargs['pk']).prefetch_related('student_id').prefetch_related('study')
+        studying = Studying.objects.filter(module_id=self.kwargs['pk']).prefetch_related('person').prefetch_related(
+            'study')
 
         context['studying'] = studying
         print(context)
@@ -102,14 +102,14 @@ class ModuleEdView(generic.DetailView):
 
 class ModuleEdUpdateView(generic.UpdateView):
     template_name = 'module_management/module_ed_update.html'
-    model = Module_ed
-    fields = ['year', 'module_code_extension', 'courses', 'start', 'stop']
+    model = ModuleEdition
+    fields = ['year', 'block', 'start', 'stop']
 
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
         user = request.user
 
-        if not Module_ed.objects.filter(module_coordinator__user=user).filter(pk=pk):
+        if not ModuleEdition.objects.filter(module_coordinator__user=user).filter(pk=pk):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -124,8 +124,8 @@ class ModuleEdUpdateView(generic.UpdateView):
 
 class ModuleEdCreateForm(ModelForm):
     class Meta:
-        model = Module_ed
-        fields = ['module', 'module_code_extension', 'start', 'stop', 'year', 'module_coordinator']
+        model = ModuleEdition
+        fields = ['module', 'start', "end", 'year', "coordinators"]
 
     def __init__(self, *args, **kwargs):
         super(ModuleEdCreateForm, self).__init__(*args, **kwargs)
@@ -139,7 +139,7 @@ class ModuleEdCreateView(generic.CreateView):
 
     def get_initial(self):
         pk = self.request.path_info.split('/')[2]
-        latest_module_ed = Module_ed.objects.filter(module=pk).latest('year').pk
+        latest_module_ed = ModuleEdition.objects.filter(module=pk).latest('year').pk
         return {
             'module': Module.objects.get(pk=pk),
             'module_coordinator': Person.objects.filter(coordinator__module=latest_module_ed)
@@ -148,7 +148,7 @@ class ModuleEdCreateView(generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
         pk = self.request.path_info.split('/')[2]
-        latest_module_ed = Module_ed.objects.filter(module=pk).latest('year').pk
+        latest_module_ed = ModuleEdition.objects.filter(module=pk).latest('year').pk
 
         if not Person.objects.filter(coordinator__module=latest_module_ed).filter(user=user):
             raise PermissionDenied()
@@ -166,13 +166,12 @@ class ModuleEdCreateView(generic.CreateView):
         initial = self.get_form_kwargs()['initial']
         data = self.get_form_kwargs()['data']
         pk = request.path_info.split('/')[2]
-        latest_module_ed = Module_ed.objects.filter(module=pk).latest('year').pk
+        latest_module_ed = ModuleEdition.objects.filter(module=pk).latest('year').pk
 
         set_autocommit(False)
 
-        module_ed = Module_ed(
+        module_ed = ModuleEdition(
             module=initial['module'],
-            module_code_extension=data['module_code_extension'],
             start=data['start'],
             stop=data['stop'],
             year=data['year']
@@ -208,13 +207,14 @@ class ModuleEdCreateView(generic.CreateView):
 
 class CourseView(generic.DetailView):
     template_name = 'module_management/course_detail.html'
-    model = Course
+    model = ModulePart
 
     def get_context_data(self, **kwargs):
         context = super(CourseView, self).get_context_data(**kwargs)
-        module_eds = Module_ed.objects.filter(courses__id=self.kwargs['pk'])
+        module_eds = ModuleEdition.objects.filter(courses__id=self.kwargs['pk'])
         print(module_eds)
-        studying = Studying.objects.filter(module_id__in=module_eds)
+        studying = Studying.objects.filter(module_id__in=module_eds).prefetch_related('person').prefetch_related(
+            'study')
         print(studying)
         context['studying'] = studying
         return context
@@ -223,7 +223,8 @@ class CourseView(generic.DetailView):
         pk = request.path_info.split('/')[2]
         user = request.user
 
-        if not Course.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user) | Q(teachers__user=user))):
+        if not ModulePart.objects.filter(
+                        Q(pk=pk) & (Q(module_ed__module_coordinator__user=user) | Q(teachers__user=user))):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -236,17 +237,16 @@ class CourseView(generic.DetailView):
         return handler(request, *args, **kwargs)
 
 
-
 class CourseUpdateView(generic.UpdateView):
     template_name = 'module_management/course_update.html'
-    model = Course
-    fields = ['code', 'code_extension', 'teachers', 'name']
+    model = ModulePart
+    fields = ['teachers', 'name']
 
     def dispatch(self, request, *args, **kwargs):
         pk = request.path_info.split('/')[2]
         user = request.user
 
-        if not Course.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
+        if not ModulePart.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -263,9 +263,9 @@ class CourseUpdateView(generic.UpdateView):
         Teacher.objects.filter(course=self.object).delete()
         for t in form.cleaned_data['teachers']:
             teacher = Teacher()
-            teacher.course = self.object
+            teacher.module_part = self.object
             teacher.person = t
-            if t.id_prefix == 'm':
+            if t.univserity_number[0] == 'm':
                 teacher.role = 'T'
             else:
                 teacher.role = 'A'
@@ -275,8 +275,8 @@ class CourseUpdateView(generic.UpdateView):
 
 class CourseCreateForm(ModelForm):
     class Meta:
-        model = Course
-        fields = ['code', 'code_extension', 'name', 'teachers']
+        model = ModulePart
+        fields = ['name', 'teachers']
 
 
 class CourseCreateView(generic.CreateView):
@@ -305,9 +305,7 @@ class CourseCreateView(generic.CreateView):
 
         set_autocommit(False)
 
-        course = Course(
-            code=data['code'],
-            code_extension=data['code_extension'],
+        course = ModulePart(
             name=data['name']
         )
         try:
@@ -319,7 +317,7 @@ class CourseCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         course.save()
 
-        module_ed = Module_ed.objects.get(pk=pk)
+        module_ed = ModuleEdition.objects.get(pk=pk)
         module_ed.courses.add(course)
         try:
             module_ed.full_clean()
@@ -332,7 +330,7 @@ class CourseCreateView(generic.CreateView):
 
         for t in data.getlist('teachers'):
             t = Person.objects.get(pk=t)
-            if t.id_prefix == 'm':
+            if t.univserity_number[0] == 'm':
                 role = 'T'
             else:
                 role = 'A'
@@ -356,7 +354,7 @@ class CourseCreateView(generic.CreateView):
 
 
 class CourseDeleteView(generic.DeleteView):
-    model = Course
+    model = ModulePart
     template_name = 'module_management/course_delete.html'
     success_url = reverse_lazy('module_management:module_overview')
 
@@ -367,7 +365,7 @@ class CourseDeleteView(generic.DeleteView):
         if Grade.objects.filter(test_id__course_id=pk):
             raise PermissionDenied('Cannot remove a course that has grades')
 
-        if not Course.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
+        if not ModulePart.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -426,7 +424,7 @@ class TestUpdateView(generic.UpdateView):
 class TestCreateForm(ModelForm):
     class Meta:
         model = Test
-        fields = ['course_id', 'name', '_type', 'time', 'maximum_grade', 'minimum_grade']
+        fields = ["module_part", 'name', "type", 'time', 'maximum_grade', 'minimum_grade']
 
     def __init__(self, *args, **kwargs):
         super(TestCreateForm, self).__init__(*args, **kwargs)
@@ -440,14 +438,14 @@ class TestCreateView(generic.CreateView):
     def get_initial(self):
         pk = self.request.path_info.split('/')[2]
         return {
-            'course_id': Course.objects.get(pk=pk)
+            'course_id': ModulePart.objects.get(pk=pk)
         }
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
         pk = self.request.path_info.split('/')[2]
 
-        if not Course.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
+        if not ModulePart.objects.filter(Q(pk=pk) & (Q(module_ed__module_coordinator__user=user))):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
