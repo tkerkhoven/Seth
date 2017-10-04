@@ -37,15 +37,15 @@
                                 <div id="accordion" role="tablist">
                                     {% for course in mod.courses.all %}
                                     <div class="card">
-                                        <div class="card-header" role="tab" id="headingActiveCourse{{ course.pk }}">
+                                        <div class="card-header" role="tab" id="headingActiveCourse{{ course.pk }}{{ mod.pk }}">
                                             <h5 class="md-0 skin-text remove-margin">
-                                                <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ course.pk }}">
+                                                <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ course.pk }}{{ mod.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ course.pk }}{{ mod.pk }}">
                                                     {{ course.name }}
                                                 </a>
                                                 <a href="#"><i class="material-icons float-right md-20">settings</i></a>
                                             </h5>
                                         </div>
-                                        <div id="collapseActiveCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ course.pk }}" data-parent="#accordion">
+                                        <div id="collapseActiveCourse{{ course.pk }}{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ course.pk }}{{ mod.pk }}" data-parent="#accordion">
                                             <div class="card-body">
                                                 <ul class="list-group">
                                                     {% for test in course.test_set.all %}

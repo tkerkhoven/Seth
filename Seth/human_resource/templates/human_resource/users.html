@@ -15,22 +15,22 @@
                     <h3 class="display-4">Persons</h3>
                     <ul class="navbar-nav mr-auto"></ul>
 
-                    <a id="addUserLink" href="#"><i class="material-icons md-36">person_add</i></a>
+                    <a id="addUserLink" href="#">
+                        <i class="material-icons md-36" data-toggle="tooltip" data-placement="bottom" title="Create new person">person_add</i>
+                    </a>
                 </nav>
                 <hr class="remove-top-margin">
                 {% if persons %}
                 <table id="personTable" class="table table-hover table-bordered table-responsive">
                     <thead>
                         <tr>
-                            <th>User id</th>
                             <th>Employer/Student number</th>
-                            <th>Full name<input style="float: right;" type="text" id="searchInput" placeholder="Search by name.."></th>
+                            <th>Full name<input style="float: right;" type="text" id="searchInput" placeholder="Search..."></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for key, value in persons.items %}
                         <tr class="clickable-row pointer" data-href="{% url 'human_resource:user' pk=key%}">
-                            <td> <a href="{% url 'human_resource:user' pk=key %}"> {{ key }}</a></td>
                             <td> {{ value.full_id }} </td>
                             <td> {{ value.name }} </td>
                         </tr>

@@ -10,8 +10,12 @@
                 <nav class="navbar navbar-expand-lg navbar-light title-bar">
                     <h3 class="display-4">{{ person.name }}</h3>
                     <ul class="navbar-nav mr-auto"></ul>
-                    <a id="updateUserLink" href="#"><i class="material-icons md-36 text-secondary">settings</i></a>
-                    <a id="removeUserLink" href="#"><i class="material-icons md-36 text-danger">delete_forever</i></a>
+                    <a id="updateUserLink" href="#">
+                        <i class="material-icons md-36" data-toggle="tooltip" data-placement="bottom" title="Edit person">mode_edit</i>
+                    </a>
+                    <a id="removeUserLink" href="#">
+                        <i class="material-icons md-36 text-danger" data-toggle="tooltip" data-placement="bottom" title="Delete person">delete_forever</i>
+                    </a>
                 </nav>
 {#                <div style="height: 65px;">#}
 {#                    <h3 class="display-4 d-inline-block">{{ person.name }}</h3>#}

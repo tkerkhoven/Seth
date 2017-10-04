@@ -32,16 +32,17 @@ $(document).ready(function() {
 
 
     $("#searchInput").on('keyup', function() {
-       var input, filter, table, tr, td, i;
+       var input, filter, table, tr, tdNumber, tdName, i;
         input = $("#searchInput")[0];
         filter = input.value.toLowerCase();
         table = $("#personTable")[0];
         tr = table.getElementsByTagName("tr");
 
         for (i=0; i < tr.length; i++) {
-            td = tr[i].getElementsByTagName("td")[2];
-            if (td) {
-                if (td.innerHTML.toLowerCase().indexOf(filter) > -1) {
+            tdNumber = tr[i].getElementsByTagName("td")[0];
+            tdName = tr[i].getElementsByTagName("td")[1];
+            if (tdNumber || tdName) {
+                if (tdNumber.innerHTML.toLowerCase().indexOf(filter) > -1 || tdName.innerHTML.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
                     tr[i].style.display = "none"
