@@ -97,7 +97,7 @@ class ModuleEdition(models.Model):
         }[self.block]
 
     def get_absolute_url(self):
-        return reverse('module_management:module_ed_detail', kwargs={'pk': self.pk})
+        return reverse('module_management:module_edition_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
         return '{} ({}) ({} - {})'.format(self.module, self.code, self.start, self.end)
@@ -116,7 +116,7 @@ class ModulePart(models.Model):
         return self.module_edition.code
 
     def get_absolute_url(self):
-        return reverse('module_management:course_detail', kwargs={'pk': self.pk})
+        return reverse('module_management:module_part_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.module_edition_code)

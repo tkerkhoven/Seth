@@ -26,13 +26,13 @@
             <div class="col-lg-1"></div>
             <div class="col-lg-6">
                 <div class="card">
-                    <div class="card-header">Module editions<a href="{% url 'module_management:module_ed_create' module.pk %}"><i class="material-icons float-right">add_circle</i></a></div>
+                    <div class="card-header">Module editions<a href="{% url 'module_management:module_edition_create' module.pk %}"><i class="material-icons float-right">add_circle</i></a></div>
                     <div class="card-body">
                         <ul class="list-group">
-                            {% for mod_ed in module.module_ed_set.all %}
-                                {% if mod_ed in mod_eds %}
+                            {% for module_edition in module.module_ed_set.all %}
+                                {% if module_edition in module_editions %}
                                     <li class="list-group-item">
-                                        <a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                                        <a href="{% url 'module_management:module_edition_detail' module_edition.pk %}">{{ module_edition.module_code }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}

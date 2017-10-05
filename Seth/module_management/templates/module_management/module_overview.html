@@ -19,12 +19,12 @@
                                     {% for mod_ed in mod.module_ed_set.all %}
                                         {% if mod_ed in mod_eds %}
                                             <li>
-                                                <a href="{% url 'module_management:module_ed_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                                                <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
                                             </li>
                                         {% endif %}
                                     {% endfor %}
                                     <li>
-                                        <a href="{% url 'module_management:module_ed_create' mod.pk %}">Create new module
+                                        <a href="{% url 'module_management:module_edition_create' mod.pk %}">Create new module
                                             edition</a>
                                     </li>
                                 </ul>

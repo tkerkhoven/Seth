@@ -15,7 +15,7 @@ Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.
 
                 <ul class="navbar-nav mr-auto"></ul>
 
-                <a href="{% url 'module_management:module_ed_update' module_ed.pk %}" data-toggle="tooltip" data-placement="bottom" title="Edit module edition"><i class="material-icons md-36">settings</i></a>
+                <a href="{% url 'module_management:module_edition_update' module_ed.pk %}" data-toggle="tooltip" data-placement="bottom" title="Edit module edition"><i class="material-icons md-36">settings</i></a>
             </nav>
         </div>
     </div>
@@ -35,7 +35,7 @@ Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.
             <div class="card">
                 <div class="card-header">
                     Courses
-                    <a href="{% url 'module_management:course_create' module_ed.pk %}">
+                    <a href="{% url 'module_management:module_part_create' module_ed.pk %}">
                         <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Create new course">add_circle</i>
                     </a>
                 </div>
@@ -43,7 +43,7 @@ Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.
                     <ul class="list-group">
                         {% for course in module_ed.courses.all %}
                         <li class="list-group-item">
-                            <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}
+                            <a href="{% url 'module_management:module_part_detail' course.pk %}">{{ course.course_code }}
                                 - {{ course.name }}</a>
                         </li>
                         {% endfor %}
