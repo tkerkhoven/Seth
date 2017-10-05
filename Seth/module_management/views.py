@@ -94,15 +94,24 @@ class ModuleEditionDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related('study')
+
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related('study').order_by(
+            'person__university_number')
         context['studying'] = studying
+
+        module_parts = ModulePart.objects.filter(module_edition=pk)
+        context['module_parts'] = module_parts
+
+        coordinators = Coordinator.objects.filter(module_edition=pk).order_by('person__university_number')
+        context['coordinators'] = coordinators
+
         return context
 
 
 class ModuleEditionUpdateView(generic.UpdateView):
     template_name = 'module_management/module_edition_update.html'
     model = ModuleEdition
-    fields = ['year', 'block', 'start', 'end', 'modulepart']
+    fields = ['year', 'block', 'start', 'end']
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -141,8 +150,17 @@ class ModuleEditionCreateView(generic.CreateView):
         latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
         return {
             'module': Module.objects.get(pk=pk),
-            'module_coordinator': Person.objects.filter(coordinator__module_edition=latest_module_edition)
+            'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition)
         }
+
+    def get_context_data(self, **kwargs):
+        context = super(ModuleEditionCreateView, self).get_context_data(**kwargs)
+        pk = self.kwargs['pk']
+
+        mod = Module.objects.get(pk=pk)
+        context['module'] = mod
+
+        return context
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
@@ -165,7 +183,7 @@ class ModuleEditionCreateView(generic.CreateView):
         initial = self.get_form_kwargs()['initial']
         data = self.get_form_kwargs()['data']
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('year')
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('year').pk
 
         set_autocommit(False)
 
@@ -174,6 +192,7 @@ class ModuleEditionCreateView(generic.CreateView):
             start=data['start'],
             end=data['end'],
             year=data['year'],
+            block=data['block']
         )
 
         try:
@@ -185,9 +204,9 @@ class ModuleEditionCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_edition.save()
 
-        for old_module_part in latest_module_edition.modulepart_set:
+        for old_module_part in ModulePart.objects.filter(module_edition=latest_module_edition):
             module_part = ModulePart(
-                module_edition=module_edition.pk,
+                module_edition=module_edition,
                 name=old_module_part.name
             )
             try:
@@ -199,7 +218,7 @@ class ModuleEditionCreateView(generic.CreateView):
                 return HttpResponseBadRequest(pp.pformat(('Module Part is invalid: ', e.message_dict)))
             module_part.save()
 
-            for old_test in old_module_part.test_set:
+            for old_test in Test.objects.filter(module_part=old_module_part.pk).distinct():
                 test = Test(
                     maximum_grade=old_test.maximum_grade,
                     minimum_grade=old_test.minimum_grade,
@@ -220,9 +239,9 @@ class ModuleEditionCreateView(generic.CreateView):
 
         for person in initial['coordinators']:
             coordinator = Coordinator(
-                module=module_edition,
+                module_edition=module_edition,
                 person=person,
-                is_assistant=Coordinator.objects.get(person=person, module=latest_module_edition.pk).is_assistant
+                is_assistant=Coordinator.objects.get(person=person, module_edition=latest_module_edition).is_assistant
             )
             try:
                 coordinator.full_clean()

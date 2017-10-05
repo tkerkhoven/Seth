@@ -16,12 +16,12 @@
         </div>
         <div class="row">
             <div class="col-lg-5">
-                <ul>
-                    <li>Module code: {{ module.module_code }}</li>
-                    <li>Module name: {{ module.name }}</li>
-                    <li>Start: {{ module.start }}</li>
-                    <li>Stop: {{ module.stop }}</li>
-                </ul>
+                <p>
+                    Code: {{ module.code }}<br>
+                    Name: {{ module.name }}<br>
+                    Start: {{ module.start }}<br>
+                    End: {{ module.end }}
+                </p>
             </div>
             <div class="col-lg-1"></div>
             <div class="col-lg-6">
@@ -29,10 +29,10 @@
                     <div class="card-header">Module editions<a href="{% url 'module_management:module_edition_create' module.pk %}"><i class="material-icons float-right">add_circle</i></a></div>
                     <div class="card-body">
                         <ul class="list-group">
-                            {% for module_edition in module.module_ed_set.all %}
+                            {% for module_edition in module.moduleedition_set.all %}
                                 {% if module_edition in module_editions %}
                                     <li class="list-group-item">
-                                        <a href="{% url 'module_management:module_edition_detail' module_edition.pk %}">{{ module_edition.module_code }}</a>
+                                        <a href="{% url 'module_management:module_edition_detail' module_edition.pk %}">{{ module_edition.code }}</a>
                                     </li>
                                 {% endif %}
                             {% endfor %}

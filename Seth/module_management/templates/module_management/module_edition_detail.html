@@ -1,129 +1,154 @@
 {% extends 'base.html' %}
 
 {% block title %}
-Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.year.year }}
+    Details: {{ moduleedition.code }}
 {% endblock %}
 
 {% block content %}
 
-{% include 'navbar.html' with active_page="module_management" %}
-<div class="container">
-    <div class="row">
-        <div class="col-lg-12">
-            <nav class="navbar navbar-expand-lg navbar-light title-bar">
-                <h3 class="display-4">Module edition: {{ module_ed.module_code }}</h3>
+    {% include 'navbar.html' with active_page="module_management" %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                    <h3 class="display-4">{{ moduleedition.module.name }}: {{ moduleedition.year }}-{{ moduleedition.block }}</h3>
 
-                <ul class="navbar-nav mr-auto"></ul>
+                    <ul class="navbar-nav mr-auto"></ul>
 
-                <a href="{% url 'module_management:module_edition_update' module_ed.pk %}" data-toggle="tooltip" data-placement="bottom" title="Edit module edition"><i class="material-icons md-36">settings</i></a>
-            </nav>
+                    <a href="{% url 'module_management:module_edition_update' moduleedition.pk %}" data-toggle="tooltip" data-placement="bottom"
+                       title="Edit module edition"><i class="material-icons md-36">settings</i></a>
+                </nav>
+            </div>
         </div>
-    </div>
-    <hr class="remove-top-margin">
-    <div class="row">
-        <div class="col-lg-5">
-            <ul>
-                <li>Module Code: {{ module_ed.module_code }}</li>
-                <li>Year: {{ module_ed.year.year }}</li>
-                <li>Start: {{ module_ed.start }}</li>
-                <li>Stop: {{ module_ed.stop }}</li>
-                <li><a href="{% url 'grades:gradebook' module_ed.pk %}">Module Edition Grades</a></li>
-            </ul>
-        </div>
-        <div class="col-lg-1"></div>
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-header">
-                    Courses
-                    <a href="{% url 'module_management:module_part_create' module_ed.pk %}">
-                        <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Create new course">add_circle</i>
-                    </a>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group">
-                        {% for course in module_ed.courses.all %}
-                        <li class="list-group-item">
-                            <a href="{% url 'module_management:module_part_detail' course.pk %}">{{ course.course_code }}
-                                - {{ course.name }}</a>
-                        </li>
-                        {% endfor %}
-                    </ul>
+        <hr class="remove-top-margin">
+        <div class="row">
+            <div class="col-lg-5">
+                <p>
+                    Module: {{ moduleedition.module }}<br>
+                    Code: {{ moduleedition.code }}<br>
+                    Year: {{ moduleedition.year }}<br>
+                    Block: {{ moduleedition.block }}<br>
+                    Start: {{ moduleedition.start }}<br>
+                    End: {{ moduleedition.end }}<br>
+                    <a href="{% url 'grades:gradebook' moduleedition.pk %}">Grades</a>
+                </p>
+            </div>
+            <div class="col-lg-1"></div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        Module Parts
+                        <a href="{% url 'module_management:module_part_create' moduleedition.pk %}">
+                            <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Create new module part">add_circle</i>
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for module_part in module_parts %}
+                                <li class="list-group-item">
+                                    <a href="{% url 'module_management:module_part_detail' module_part.pk %}">{{ module_part.name }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-{#    <ul>#}
-{#        <li>Module Code: {{ module_ed.module_code }}</li>#}
-{#        <li>Year: {{ module_ed.year.year }}</li>#}
-{#        <li>Start: {{ module_ed.start }}</li>#}
-{#        <li>Stop: {{ module_ed.stop }}</li>#}
-{#        <li>#}
-{#            Courses:#}
-{#            <ul>#}
-{#                {% for course in module_ed.courses.all %}#}
-{#                <li>#}
-{#                    <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}#}
-{#                        - {{ course.name }}</a>#}
-{#                </li>#}
-{#                {% endfor %}#}
-{#                <li>#}
-{#                    <a href="{% url 'module_management:course_create' module_ed.pk %}">Create new course</a>#}
-{#                </li>#}
-{#            </ul>#}
-{#        </li>#}
-{#        <li><a href="{% url 'grades:gradebook' module_ed.pk %}">Module Edition Grades</a></li>#}
-{#    </ul>#}
-{##}
-{#    <a href="{% url 'module_management:module_ed_update' module_ed.pk %}">Edit</a>#}
-{#    <hr>#}
-    <div class="row">
-        <div class="col-lg-12">
-            <h3 class="display-4">Students in Module</h3>
-            {% if studying %}
-            <table class="table">
-                <tr>
-                    <th> Name</th>
-                    <th> S-number</th>
-                    <th> Study</th>
-                    <th> Role</th>
-                </tr>
-                {% for s in studying %}
-                <tr>
-                    <td> {{ s.person.name }}</td>
-                    <td> {{ s.person }}</td>
-                    <td> {{ s.study.abbreviation }}</td>
-                    <td> {{ s.role }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-            {% else %}
-            There are no students enrolled in this module yet.
+        {#    <ul>#}
+        {#        <li>Module Code: {{ moduleedition.module_code }}</li>#}
+        {#        <li>Year: {{ moduleedition.year.year }}</li>#}
+        {#        <li>Start: {{ moduleedition.start }}</li>#}
+        {#        <li>Stop: {{ moduleedition.stop }}</li>#}
+        {#        <li>#}
+        {#            Courses:#}
+        {#            <ul>#}
+        {#                {% for course in moduleedition.courses.all %}#}
+        {#                <li>#}
+        {#                    <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}#}
+        {#                        - {{ course.name }}</a>#}
+        {#                </li>#}
+        {#                {% endfor %}#}
+        {#                <li>#}
+        {#                    <a href="{% url 'module_management:course_create' moduleedition.pk %}">Create new course</a>#}
+        {#                </li>#}
+        {#            </ul>#}
+        {#        </li>#}
+        {#        <li><a href="{% url 'grades:gradebook' moduleedition.pk %}">Module Edition Grades</a></li>#}
+        {#    </ul>#}
+        {##}
+        {#    <a href="{% url 'module_management:module_ed_update' moduleedition.pk %}">Edit</a>#}
+        {#    <hr>#}
 
-            {% endif %}
+        <div class="row">
+            <div class="col-lg-12">
+                <h3 class="display-4">Coordinators</h3>
+                {% if coordinators %}
+                    <table class="table">
+                        <tr>
+                            <th> Name</th>
+                            <th> Employee number</th>
+                            <th> Assistant</th>
+                        </tr>
+                        {% for coordinator in coordinators %}
+                            <tr>
+                                <td> {{ coordinator.person.name }}</td>
+                                <td> {{ coordinator.person.university_number }}</td>
+                                <td> {{ coordinator.is_assistant }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    This module edition does not have coordinators.
+                {% endif %}
+            </div>
         </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <h3 class="display-4">Students in Module</h3>
+                {% if studying %}
+                    <table class="table">
+                        <tr>
+                            <th> Name</th>
+                            <th> S-number</th>
+                            <th> Study</th>
+                            <th> Role</th>
+                        </tr>
+                        {% for s in studying %}
+                            <tr>
+                                <td> {{ s.person.name }}</td>
+                                <td> {{ s.person.university_number }}</td>
+                                <td> {{ s.study.abbreviation }}</td>
+                                <td> {{ s.role }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    There are no students enrolled in this module yet.
+                {% endif %}
+            </div>
+        </div>
+        {#    <h3 class="display-3">Students in Module</h3>#}
+        {#    {% if studying %}#}
+        {#    <table class="table">#}
+        {#        <tr>#}
+        {#            <th> Name</th>#}
+        {#            <th> S-number</th>#}
+        {#            <th> Study</th>#}
+        {#            <th> Role</th>#}
+        {#        </tr>#}
+        {#        {% for s in studying %}#}
+        {#        <tr>#}
+        {#            <td> {{ s.student_id.name }}</td>#}
+        {#            <td> {{ s.student_id }}</td>#}
+        {#            <td> {{ s.study.short_name }}</td>#}
+        {#            <td> {{ s.role }}</td>#}
+        {#        </tr>#}
+        {#        {% endfor %}#}
+        {#    </table>#}
+        {#    {% else %}#}
+        {#    There are no students enrolled in this module yet.#}
+        {##}
+        {#    {% endif %}#}
     </div>
-{#    <h3 class="display-3">Students in Module</h3>#}
-{#    {% if studying %}#}
-{#    <table class="table">#}
-{#        <tr>#}
-{#            <th> Name</th>#}
-{#            <th> S-number</th>#}
-{#            <th> Study</th>#}
-{#            <th> Role</th>#}
-{#        </tr>#}
-{#        {% for s in studying %}#}
-{#        <tr>#}
-{#            <td> {{ s.student_id.name }}</td>#}
-{#            <td> {{ s.student_id }}</td>#}
-{#            <td> {{ s.study.short_name }}</td>#}
-{#            <td> {{ s.role }}</td>#}
-{#        </tr>#}
-{#        {% endfor %}#}
-{#    </table>#}
-{#    {% else %}#}
-{#    There are no students enrolled in this module yet.#}
-{##}
-{#    {% endif %}#}
-</div>
 
 {% endblock %}

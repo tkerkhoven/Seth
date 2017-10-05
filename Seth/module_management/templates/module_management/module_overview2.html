@@ -21,17 +21,17 @@
                         <div class="col-lg-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod.module_code }} - {{ mod.name }}</a>
+                                    <a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod }}</a>
                                     <a href="{% url 'module_management:module_edition_create' mod.pk %}">
                                         <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Add new module edition">add_circle</i>
                                     </a>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-group">
-                                        {% for mod_ed in mod.module_ed_set.all %}
+                                        {% for mod_ed in mod.moduleedition_set.all %}
                                             {% if mod_ed in mod_eds %}
                                                 <li class="list-group-item">
-                                                    <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                                                    <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.code }}</a>
                                                 </li>
                                             {% endif %}
 {#                                                    <li class="list-group-item">#}
@@ -47,17 +47,17 @@
                         <div class="col-lg-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod.module_code }} - {{ mod.name }}</a>
+                                    <a href="{% url 'module_management:module_detail' mod.pk %}">{{ mod }}</a>
                                     <a href="{% url 'module_management:module_edition_create' mod.pk %}">
                                         <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Add new module edition">add_circle</i>
                                     </a>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-group">
-                                        {% for mod_ed in mod.module_ed_set.all %}
+                                        {% for mod_ed in mod.moduleedition_set.all %}
                                             {% if mod_ed in mod_eds %}
                                                 <li class="list-group-item">
-                                                    <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.module_code }}</a>
+                                                    <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.code }}</a>
                                                 </li>
                                             {% endif %}
 {#                                                    <li class="list-group-item">#}
