@@ -264,9 +264,12 @@ class ModulePartDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(ModulePartDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
-        module_eds = ModuleEdition.objects.filter(modulepart=pk)
-        studying = Studying.objects.filter(module_edition__in=module_eds).prefetch_related('person').prefetch_related('study')
+
+        module_edition = ModuleEdition.objects.get(modulepart=pk)
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related('study').order_by(
+            'person__university_number')
         context['studying'] = studying
+
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -290,7 +293,7 @@ class ModulePartDetailView(generic.DetailView):
 class ModulePartUpdateView(generic.UpdateView):
     template_name = 'module_management/module_part_update.html'
     model = ModulePart
-    fields = ['teachers', 'name']
+    fields = ['name', 'teachers']
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -315,11 +318,12 @@ class ModulePartUpdateView(generic.UpdateView):
             teacher = Teacher()
             teacher.module_part = self.object
             teacher.person = t
-            if t.univserity_number[0] == 'm':
+            if t.university_number[0] == 'm':
                 teacher.role = 'T'
             else:
                 teacher.role = 'A'
             teacher.save()
+        self.object.save()
         return super(ModelFormMixin, self).form_valid(form)
 
 
@@ -332,6 +336,15 @@ class ModulePartCreateForm(ModelForm):
 class ModulePartCreateView(generic.CreateView):
     template_name = 'module_management/module_part_create.html'
     form_class = ModulePartCreateForm
+
+    def get_context_data(self, **kwargs):
+        context = super(ModulePartCreateView, self).get_context_data(**kwargs)
+        pk = self.kwargs['pk']
+
+        module_edition = ModuleEdition.objects.get(pk=pk)
+        context['module_edition'] = module_edition
+
+        return context
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
@@ -357,7 +370,7 @@ class ModulePartCreateView(generic.CreateView):
 
         module_part = ModulePart(
             name=data['name'],
-            module_edition=pk
+            module_edition=ModuleEdition.objects.get(pk=pk)
         )
         try:
             module_part.full_clean()
@@ -368,20 +381,9 @@ class ModulePartCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_part.save()
 
-        # module_edition = ModuleEdition.objects.get(pk=pk)
-        # module_edition.courses.add(module_part)
-        # try:
-        #     module_edition.full_clean()
-        # except ValidationError as e:
-        #     pp = pprint.PrettyPrinter(indent=4, width=120)
-        #     rollback()
-        #     set_autocommit(True)
-        #     return HttpResponseBadRequest(pp.pformat(('Module Edition is invalid: ', e.message_dict)))
-        # module_edition.save()
-
         for t in data.getlist('teachers'):
             t = Person.objects.get(pk=t)
-            if t.univserity_number[0] == 'm':
+            if t.university_number[0] == 'm':
                 role = 'T'
             else:
                 role = 'A'
@@ -489,6 +491,15 @@ class TestCreateView(generic.CreateView):
         return {
             'module_part': ModulePart.objects.get(pk=pk)
         }
+
+    def get_context_data(self, **kwargs):
+        context = super(TestCreateView, self).get_context_data(**kwargs)
+        pk = self.kwargs['pk']
+
+        module_part = ModulePart.objects.get(pk=pk)
+        context['module_part'] = module_part
+
+        return context
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user

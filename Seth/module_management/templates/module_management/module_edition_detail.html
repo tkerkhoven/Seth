@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Details: {{ moduleedition.code }}
+    {{ moduleedition }}
 {% endblock %}
 
 {% block content %}
@@ -11,7 +11,7 @@
         <div class="row">
             <div class="col-lg-12">
                 <nav class="navbar navbar-expand-lg navbar-light title-bar">
-                    <h3 class="display-4">{{ moduleedition.module.name }}: {{ moduleedition.year }}-{{ moduleedition.block }}</h3>
+                    <h3 class="display-4">{{ moduleedition }}</h3>
 
                     <ul class="navbar-nav mr-auto"></ul>
 
@@ -24,7 +24,7 @@
         <div class="row">
             <div class="col-lg-5">
                 <p>
-                    Module: {{ moduleedition.module }}<br>
+                    Module: <a href="{% url 'module_management:module_detail' moduleedition.module.pk %}">{{ moduleedition.module }}</a><br>
                     Code: {{ moduleedition.code }}<br>
                     Year: {{ moduleedition.year }}<br>
                     Block: {{ moduleedition.block }}<br>
@@ -54,46 +54,29 @@
                 </div>
             </div>
         </div>
-        {#    <ul>#}
-        {#        <li>Module Code: {{ moduleedition.module_code }}</li>#}
-        {#        <li>Year: {{ moduleedition.year.year }}</li>#}
-        {#        <li>Start: {{ moduleedition.start }}</li>#}
-        {#        <li>Stop: {{ moduleedition.stop }}</li>#}
-        {#        <li>#}
-        {#            Courses:#}
-        {#            <ul>#}
-        {#                {% for course in moduleedition.courses.all %}#}
-        {#                <li>#}
-        {#                    <a href="{% url 'module_management:course_detail' course.pk %}">{{ course.course_code }}#}
-        {#                        - {{ course.name }}</a>#}
-        {#                </li>#}
-        {#                {% endfor %}#}
-        {#                <li>#}
-        {#                    <a href="{% url 'module_management:course_create' moduleedition.pk %}">Create new course</a>#}
-        {#                </li>#}
-        {#            </ul>#}
-        {#        </li>#}
-        {#        <li><a href="{% url 'grades:gradebook' moduleedition.pk %}">Module Edition Grades</a></li>#}
-        {#    </ul>#}
-        {##}
-        {#    <a href="{% url 'module_management:module_ed_update' moduleedition.pk %}">Edit</a>#}
-        {#    <hr>#}
-
+        <hr>
         <div class="row">
             <div class="col-lg-12">
                 <h3 class="display-4">Coordinators</h3>
                 {% if coordinators %}
                     <table class="table">
                         <tr>
-                            <th> Name</th>
-                            <th> Employee number</th>
-                            <th> Assistant</th>
+                            <th>Name</th>
+                            <th>Univserity Number</th>
+                            <th>Assistant</th>
                         </tr>
                         {% for coordinator in coordinators %}
                             <tr>
-                                <td> {{ coordinator.person.name }}</td>
-                                <td> {{ coordinator.person.university_number }}</td>
-                                <td> {{ coordinator.is_assistant }}</td>
+                                <td>{{ coordinator.person.name }}</td>
+                                <td>{{ coordinator.person.university_number }}</td>
+                                <td>
+                                    {% if coordinator.is_assistant %}
+                                        <i class="material-icons float-left" data-toggle="tooltip" data-placement="right"
+                                           title="True">check_circle</i>
+                                    {% else %}
+                                        <i class="material-icons float-left" data-toggle="tooltip" data-placement="right" title="False">cancel</i>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </table>
@@ -104,21 +87,21 @@
         </div>
         <div class="row">
             <div class="col-lg-12">
-                <h3 class="display-4">Students in Module</h3>
+                <h3 class="display-4">Students</h3>
                 {% if studying %}
                     <table class="table">
                         <tr>
-                            <th> Name</th>
-                            <th> S-number</th>
-                            <th> Study</th>
-                            <th> Role</th>
+                            <th>Name</th>
+                            <th>University Number</th>
+                            <th>Study</th>
+                            <th>Role</th>
                         </tr>
                         {% for s in studying %}
                             <tr>
-                                <td> {{ s.person.name }}</td>
-                                <td> {{ s.person.university_number }}</td>
-                                <td> {{ s.study.abbreviation }}</td>
-                                <td> {{ s.role }}</td>
+                                <td>{{ s.person.name }}</td>
+                                <td>{{ s.person.university_number }}</td>
+                                <td>{{ s.study.abbreviation }}</td>
+                                <td>{{ s.role }}</td>
                             </tr>
                         {% endfor %}
                     </table>
@@ -127,28 +110,6 @@
                 {% endif %}
             </div>
         </div>
-        {#    <h3 class="display-3">Students in Module</h3>#}
-        {#    {% if studying %}#}
-        {#    <table class="table">#}
-        {#        <tr>#}
-        {#            <th> Name</th>#}
-        {#            <th> S-number</th>#}
-        {#            <th> Study</th>#}
-        {#            <th> Role</th>#}
-        {#        </tr>#}
-        {#        {% for s in studying %}#}
-        {#        <tr>#}
-        {#            <td> {{ s.student_id.name }}</td>#}
-        {#            <td> {{ s.student_id }}</td>#}
-        {#            <td> {{ s.study.short_name }}</td>#}
-        {#            <td> {{ s.role }}</td>#}
-        {#        </tr>#}
-        {#        {% endfor %}#}
-        {#    </table>#}
-        {#    {% else %}#}
-        {#    There are no students enrolled in this module yet.#}
-        {##}
-        {#    {% endif %}#}
     </div>
 
 {% endblock %}

@@ -41,6 +41,9 @@ class Person(models.Model):
     def __str__(self):
         return '{} ({})\t\t'.format(self.name, self.university_number)
 
+    class Meta:
+        ordering = ['university_number']
+
 
 class Study(models.Model):
     abbreviation = models.CharField(primary_key=True, max_length=10)
@@ -67,8 +70,8 @@ class ModuleEdition(models.Model):
     # Update BLOCKS in @property:get_blocks()
     BLOCKS = (
         ('1A', 'Block 1A'),
-        ('1B', 'Block 2A'),
-        ('2A', 'Block 1B'),
+        ('1B', 'Block 1B'),
+        ('2A', 'Block 2A'),
         ('2B', 'Block 2B'),
         ('3A', 'Block 3A'),
         ('3B', 'Block 3B'),
@@ -88,8 +91,8 @@ class ModuleEdition(models.Model):
     def get_block(self):
         return {
             '1A': 'Block 1A',
-            '1B': 'Block 2A',
-            '2A': 'Block 1B',
+            '1B': 'Block 1B',
+            '2A': 'Block 2A',
             '2B': 'Block 2B',
             '3A': 'Block 3A',
             '3B': 'Block 3B',
@@ -100,10 +103,11 @@ class ModuleEdition(models.Model):
         return reverse('module_management:module_edition_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
-        return '{} ({}) ({} - {})'.format(self.module, self.code, self.start, self.end)
+        return '{} ({})'.format(self.module.name, self.code)
 
     class Meta:
         unique_together = (('year', 'module', 'block'),)
+        ordering = ['module', '-year', '-block']
 
 
 class ModulePart(models.Model):
@@ -121,11 +125,17 @@ class ModulePart(models.Model):
     def __str__(self):
         return '{} ({})'.format(self.name, self.module_edition_code)
 
+    class Meta:
+        ordering = ['module_edition', 'name']
+
 
 class Coordinator(models.Model):
     person = models.ForeignKey(Person)
     module_edition = models.ForeignKey(ModuleEdition)
     is_assistant = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['person']
 
 
 class Teacher(models.Model):
@@ -145,6 +155,9 @@ class Teacher(models.Model):
             'T': 'Teacher',
             'A': 'Teaching Assistant'
         }[self.role]
+
+    class Meta:
+        ordering = ['person']
 
 
 ####################################################################
