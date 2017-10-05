@@ -4,75 +4,92 @@ import datetime
 
 
 def is_module_coordinator(user):
-    result = Coordinator.objects.filter(person__user=user, is_assistant=False).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    today = now()
+    result = Coordinator.objects.filter(person__user=user, is_assistant=False)
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_coordinator_of_module(user, mid):
-    result = Coordinator.objects.filter(person__user=user, module_edition=mid, is_assistant=False).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    """Untested"""
+    today = now()
+    result = Coordinator.objects.filter(person__user=user, module_edition=mid, is_assistant=False)
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_teacher(user):
-    result = Teacher.objects.filter(person__user=user, roles='T').count > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    today = now()
+    result = Teacher.objects.filter(person__user=user, role='T')
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_teacher_of_course(user, mpid):
-    result = Teacher.objects.filter(person__user=user, module_part=mpid, roles='T').count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    """Untested"""
+    today = now()
+    result = Teacher.objects.filter(person__user=user, module_part=mpid, role='T')
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_teaching_assistant(user):
-    result = Teacher.objects.filter(person__user=user, roles='A').count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    today = now()
+    result = Teacher.objects.filter(person__user=user, role='A')
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_teaching_assistant_of_course(user, mpid):
-    result = Teacher.objects.filter(person__user=user, roles='A', module_part=mpid).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    """Untested"""
+    today = now()
+    result = Teacher.objects.filter(person__user=user, role='A', module_part=mpid)
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_student(user):
-    result = Studying.objects.filter(person__user=user).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    today = now()
+    result = Studying.objects.filter(person__user=user)
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_student_of_module(user, mid):
-    result = Studying.objects.filter(person__user=user, module_edition=mid).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    """Untested"""
+    today = now()
+    result = Studying.objects.filter(person__user=user, module_edition=mid)
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_study_adviser(user):
-    result = Study.objects.filter(advisers__user=user).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    today = now()
+    result = Study.objects.filter(advisers__user=user)
+    result = result.filter(Q(advisers__end__lte=today) | Q(advisers__end=None))
+    return result.count() > 0
 
 
 def is_study_adviser_of_study(user, sid):
+    """Untested"""
+    today = now()
     result = Study.objects.filter(advisers__user=user, abbrevation=sid)
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_module_coordinator_assistant(user):
-    result = Coordinator.objects.filter(person__user=user, is_assistant=True).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    result = Coordinator.objects.filter(person__user=user, is_assistant=True)
+    result = result.filter(Q(person__end__lte=now()) | Q(person__end=None))
+    return result.count() > 0
 
 
 def is_coordinator_assistant_of_module(user, mid):
-    result = Coordinator.objects.filter(person__user=user, is_assistant=True, module_edition=mid).count() > 0
-    result = result.filter(Q(person__end__lte=now() | Q(person__end=None)))
-    return result
+    """Untested"""
+    today = now()
+    result = Coordinator.objects.filter(person__user=user, is_assistant=True, module_edition=mid)
+    result = result.filter(Q(person__end__lte=today) | Q(person__end=None))
+    return result.count() > 0
 
 
 def now():
