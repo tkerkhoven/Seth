@@ -3,13 +3,15 @@ from django.shortcuts import render
 from django.utils import timezone
 
 from Grades.models import ModuleEdition
+import permission_utils as pu
 
 
 # @permission_required('grades.add_grade')
 def home(request):
     context = {
         'modules': get_modules(),
-        'time': get_current_date()
+        'time': get_current_date(),
+        'coordinator': pu.is_module_coordinator(request.user),
         # [
         #     {
         #         'name': 'Pearls of Computer Science',
@@ -21,12 +23,13 @@ def home(request):
         #     }
         # ],
     }
+    print(context)
     return render(request, 'dashboard/index.html', context)
 
 
 def modules(request):
     context = {
-        'modules': get_modules()
+        'modules': get_modules(),
     }
     return render(request, 'dashboard/modules.html', context)
 
