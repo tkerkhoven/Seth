@@ -86,7 +86,7 @@
                                 {% with grade=gradedict|key:student|last %}
                                 <td> <input type="checkbox" class="child" name="check{{ grade.id }}" /> </td>
                                 <td>
-                                    <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.univserity_number }})</a>
+                                    <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.university_number }})</a>
                                     <p style="display: none">{{ studydict|key:student|study_od }} {{ roledict|key:student }}</p>
                                 </td>
                                 <td id="gradeid_{{ grade.id }}" data-grade="{{ grade|grade_od }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
