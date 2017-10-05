@@ -22,8 +22,10 @@ Importer
                 <ul>
                     {% for test in course.test_set.all %}
                     <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a
-                            href="{% url 'export_test' test.pk %}"><i
-                            class="material-icons">view_list</i></a>
+                            href="{% url 'export_test' test.pk %}">
+{#                        <i class="material-icons">view_list</i>#}
+                        <i class="fa fa-file-excel-o" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" title="Download template"></i>
+                    </a>
                     </li>
                     {% endfor %}
                 </ul>
