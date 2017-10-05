@@ -30,6 +30,16 @@ $(document).ready(function() {
         window.location = $(this).data("href");
     });
 
+    $(".date-picker").datepicker({
+        dateFormat: "yy-mm-dd",
+        changeMonth: true,
+        changeYear: true,
+        showAnim: "blind",
+        showOptions: {direction: "up"},
+        showOn: "button",
+        buttonText: "<i class='material-icons'>event</i>"
+    });
+
 
     $("#searchInput").on('keyup', function() {
        var input, filter, table, tr, tdNumber, tdName, i;

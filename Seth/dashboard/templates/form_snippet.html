@@ -3,6 +3,13 @@
     <div class="form-group">
         {{ field.errors }}
         {{ field.label_tag }}
-        {{ field|add_class:"form-control" }}
+{#        {{ field|field_type }}#}
+        {% if field|field_type == "datefield" %}
+            <div class="input-group">
+                {{ field|add_class:"form-control date-picker" }}
+            </div>
+        {% else %}
+            {{ field|add_class:"form-control" }}
+        {% endif %}
     </div>
 {% endfor %}
