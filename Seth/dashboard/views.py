@@ -60,7 +60,7 @@ def not_found(request):
 
 
 def permission_denied(request):
-    return render(request, 'errors/403.html', status=403)
+    return render(request, 'errors/403.html', status=403,)
 
 
 def bad_request(request):
