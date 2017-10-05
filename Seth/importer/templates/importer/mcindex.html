@@ -20,10 +20,10 @@ Importer
             <li><a href="{% url 'import_module' mod.pk %}">{{ mod }}</a> - <a
                     href="{% url 'export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
             <ul>
-                {% for course in mod.courses.all %}
-                <li>{{ course.name }}</li>
+                {% for module_part in mod.modulepart_set.all %}
+                <li>{{ module_part.name }}</li>
                 <ul>
-                    {% for test in course.test_set.all %}
+                    {% for test in module_part.test_set.all %}
                     <li><a href="{% url 'import_test' test.pk %}">{{ test.name }}</a> - <a
                             href="{% url 'export_test' test.pk %}"><i
                             class="material-icons">view_list</i></a>

@@ -18,35 +18,37 @@ import django_excel as excel
 class GradeImportStressTest(TestCase):
     def setUp(self):
 
-        tcs = Study.objects.create(short_name='TCS', full_name='Technical Computer Science')
+        tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(module_code='201300070', name='Parels der Informatica', start=datetime.date(2017, 1, 1), stop=datetime.date(9999, 1, 1))
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica', start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
-        teacher = Person.objects.create(name='Pietje Puk', id_prefix='m', person_id='13377331', user=user)
+        teacher = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        courses = [Course.objects.create(code='201300070', code_extension='_{}'.format(i), name='Parel {}'.format(i), teacher=[teacher]) for i in range(100)]
 
-        module_ed = Module_ed.objects.create(module=module_tcs, year=datetime.date(2017, 1, 1), module_code_extension='_2017')
 
-        module_ed.courses = courses
+        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
 
         module_ed.save()
 
-        Coordinator.objects.create(module=module_ed, person=teacher, mc_assistant=False)
+        module_parts = [
+            ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[teacher]) for i in
+            range(10)]
 
-        tests = [Test.objects.create(name='Theory Test', course_id=course, _type='E') for course in courses]
+        Coordinator.objects.create(module=module_ed, person=teacher, is_assistant=False)
 
-        students = [Person.objects.create(name='Pietje Puk {}'.format(i), id_prefix='s', person_id='1337{}'.format(i)) for i in range(600)]
+        tests = [Test.objects.create(name='Theory Test {}'.format(course.name), module_part=course, type='E') for course in module_parts]
 
-        [Studying.objects.create(module_id=module_ed, study=tcs, student_id=student, role='s') for student in students]
+        students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i in range(600)]
+
+        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
 
     def test_module_import(self):
-        module = Module_ed.objects.get(pk=1)
-        students = Person.objects.filter(studying__module_id=module)
+        module = ModuleEdition.objects.get(pk=1)
+        students = Person.objects.filter(studying__module_edition=module)
 
-        tests = Test.objects.filter(course_id__module_ed=module)
+        tests = Test.objects.filter(module_part__module_edition=module)
 
         table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW)] + [['student_id'] + [test.pk for test in tests]]
 

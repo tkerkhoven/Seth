@@ -5,7 +5,7 @@ from Grades.models import *
 
 
 class CoordinatorAdmin(admin.ModelAdmin):
-    list_display = ['person', 'module', 'is_assistant']
+    list_display = ['person', 'module_edition', 'is_assistant']
 
 
 admin.site.register(Coordinator, CoordinatorAdmin)

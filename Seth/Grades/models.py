@@ -29,9 +29,9 @@ class Module(models.Model):
 class Person(models.Model):
     name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True)
     start = models.DateField(default=timezone.now)
-    end = models.DateField(blank=True)
+    end = models.DateField(null=True)
 
     @property
     def full_id(self):
@@ -124,7 +124,7 @@ class ModulePart(models.Model):
 
 class Coordinator(models.Model):
     person = models.ForeignKey(Person)
-    module = models.ForeignKey(ModuleEdition)
+    module_edition = models.ForeignKey(ModuleEdition)
     is_assistant = models.BooleanField(default=False)
 
 
