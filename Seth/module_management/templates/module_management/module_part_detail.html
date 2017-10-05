@@ -34,7 +34,7 @@
                             href="{% url 'module_management:module_edition_detail' modulepart.module_edition.pk %}">{{ modulepart.module_edition_code }}</a>
                     </li>
                     <li>Name: {{ modulepart.name }}</li>
-                    <li><a href="{% url 'grades:course' modulepart.pk %}">Grades</a></li>
+                    <li><a href="{% url 'grades:module_part' modulepart.pk %}">Grades</a></li>
                 </ul>
             </div>
             <div class="col-lg-1"></div>
