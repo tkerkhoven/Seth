@@ -16,6 +16,25 @@ $(document).ready(function() {
       }]
     });
 
+    var studenttable = $('#studentbook').DataTable({
+      "ordering": false,
+      "paging": false,
+      "searching": false
+    });
+
+    var testtable = $('#testbook').DataTable({
+      "ordering": true,
+      "order": [[1, 'asc']],
+      "columnDefs": [{
+        orderable: false,
+        targets: "no-sort"
+      }]
+    });
+
+    testtable.on('draw', function() {
+      updateColoring();
+    });
+
     table.on('draw', function() {
       updateColoring();
     });

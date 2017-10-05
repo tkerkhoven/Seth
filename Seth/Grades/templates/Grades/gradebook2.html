@@ -81,6 +81,9 @@
                             {% for test in tests %}
                             <td class="no-sort">
                                 <a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                                {% if testallreleased|key:test.id %}
+                                <i class="material-icons float-right" data-toggle="tooltip" title="All grade in this test have been released">done</i>
+                                {% endif %}
                             </td>
                             {% endfor %}
                         </tr>
