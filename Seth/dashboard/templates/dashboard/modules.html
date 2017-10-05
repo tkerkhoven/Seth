@@ -34,20 +34,20 @@
                             <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">
                                 <div class="card-body">
                                     <div id="accordion" role="tablist">
-                                        {% for course in mod.courses.all %}
+                                        {% for module_part in mod.modulepart_set.all %}
                                         <div class="card">
-                                            <div class="card-header" role="tab" id="headingCourse{{ course.pk }}{{ mod.pk }}">
+                                            <div class="card-header" role="tab" id="headingCourse{{ module_part.pk }}{{ mod.pk }}">
                                                 <h5 class="md-0 skin-text remove-margin">
-                                                    <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ course.pk }}{{ mod.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ course.pk }}{{ mod.pk }}">
-                                                        {{ course.name }}
+                                                    <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ module_part.pk }}{{ mod.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ module_part.pk }}{{ mod.pk }}">
+                                                        {{ module_part.name }}
                                                     </a>
                                                     <a href="#"><i class="material-icons float-right md-20">settings</i></a>
                                                 </h5>
                                             </div>
-                                            <div id="collapseCourse{{ course.pk }}{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ course.pk }}{{ mod.pk }}" data-parent="#accordion">
+                                            <div id="collapseCourse{{ module_part.pk }}{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ module_part.pk }}{{ mod.pk }}" data-parent="#accordion">
                                                 <div class="card-body">
                                                     <ul class="list-group">
-                                                        {% for test in course.test_set.all %}
+                                                        {% for test in module_part.test_set.all %}
                                                             <li class="list-group-item"><a href="#" class="text-dark">{{ test.name }}</a></li>
                                                         {% endfor %}
                                                     </ul>
@@ -74,20 +74,20 @@
                             <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">
                                 <div class="card-body">
                                     <div id="accordion" role="tablist">
-                                        {% for course in mod.courses.all %}
+                                        {% for module_part in mod.courses.all %}
                                         <div class="card">
-                                            <div class="card-header" role="tab" id="headingCourse{{ course.pk }}">
+                                            <div class="card-header" role="tab" id="headingCourse{{ module_part.pk }}">
                                                 <h5 class="md-0 skin-text remove-margin">
-                                                    <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ course.pk }}">
-                                                        {{ course.name }}
+                                                    <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ module_part.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ module_part.pk }}">
+                                                        {{ module_part.name }}
                                                     </a>
                                                     <a href="#"><i class="material-icons float-right md-20">settings</i></a>
                                                 </h5>
                                             </div>
-                                            <div id="collapseCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ course.pk }}" data-parent="#accordion">
+                                            <div id="collapseCourse{{ module_part.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ module_part.pk }}" data-parent="#accordion">
                                                 <div class="card-body">
                                                     <ul class="list-group">
-                                                        {% for test in course.test_set.all %}
+                                                        {% for test in module_part.test_set.all %}
                                                             <li class="list-group-item"><a href="#" class="text-dark">{{ test.name }}</a></li>
                                                         {% endfor %}
                                                     </ul>
@@ -117,20 +117,20 @@
 {#                        <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">#}
 {#                            <div class="card-body">#}
 {#                                <div id="accordion" role="tablist">#}
-{#                                    {% for course in mod.courses.all %}#}
+{#                                    {% for module_part in mod.courses.all %}#}
 {#                                    <div class="card">#}
-{#                                        <div class="card-header" role="tab" id="headingCourse{{ course.pk }}">#}
+{#                                        <div class="card-header" role="tab" id="headingCourse{{ module_part.pk }}">#}
 {#                                            <h5 class="md-0 skin-text remove-margin">#}
-{#                                                <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ course.pk }}">#}
-{#                                                    {{ course.name }}#}
+{#                                                <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ module_part.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ module_part.pk }}">#}
+{#                                                    {{ module_part.name }}#}
 {#                                                </a>#}
 {#                                                <a href="#"><i class="material-icons float-right md-20">settings</i></a>#}
 {#                                            </h5>#}
 {#                                        </div>#}
-{#                                        <div id="collapseCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ course.pk }}" data-parent="#accordion">#}
+{#                                        <div id="collapseCourse{{ module_part.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ module_part.pk }}" data-parent="#accordion">#}
 {#                                            <div class="card-body">#}
 {#                                                <ul class="list-group">#}
-{#                                                    {% for test in course.test_set.all %}#}
+{#                                                    {% for test in module_part.test_set.all %}#}
 {#                                                        <li class="list-group-item"><a href="#" class="text-dark">{{ test.name }}</a></li>#}
 {#                                                    {% endfor %}#}
 {#                                                </ul>#}

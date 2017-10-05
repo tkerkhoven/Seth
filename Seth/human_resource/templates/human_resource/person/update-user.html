@@ -13,7 +13,7 @@
 
                     <ul class="navbar-nav mr-auto"></ul>
 
-                    <a href="#" data-toggle="tooltip" data-placement="bottom" title="Save">
+                    <a href="#" id="updateUserSave" data-toggle="tooltip" data-placement="bottom" title="Save">
                         <i class="material-icons md-36 title-bar">save</i>
                     </a>
                     <a href="#" onclick="history.back()" data-toggle="tooltip" data-placement="bottom" title="Cancel">
@@ -22,14 +22,14 @@
                 </nav>
             </div>
         </div>
-        <hr class="remove-top-margins">
+        <hr class="remove-top-margin">
         <div class="row justify-content-center">
             <div class="col-lg-6">
-                <form action="" method="post">{% csrf_token %}
+                <form id="updateUserForm" action="" method="post">{% csrf_token %}
                     {% include 'form_snippet.html' %}
 {#                    {{ form.as_p }}#}
-                    <input class="btn btn-primary pointer" type="submit" value="Update" />
-                    <input onclick="history.back()" class="btn btn-secondary pointer" type="button" value="Cancel" />
+{#                    <input class="btn btn-primary pointer" type="submit" value="Update" />#}
+{#                    <input onclick="history.back()" class="btn btn-secondary pointer" type="button" value="Cancel" />#}
                 </form>
             </div>
         </div>

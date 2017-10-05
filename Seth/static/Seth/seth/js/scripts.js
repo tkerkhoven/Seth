@@ -51,18 +51,6 @@ $(document).ready(function() {
       $('#parent').prop('checked',$('.child:checked').length == $('.child').length);
     });
 
-    $("#addUserLink").on('click', function() {
-        $("#addUser").submit();
-    });
-
-    $("#updateUserLink").on('click', function() {
-        $("#updateUser").submit();
-    });
-
-    $("#removeUserLink").on('click', function() {
-        $("#removeUser").submit();
-    });
-
     $(".clickable-row").click(function() {
         window.location = $(this).data("href");
     });
