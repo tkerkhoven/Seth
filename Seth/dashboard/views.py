@@ -11,7 +11,13 @@ def home(request):
     context = {
         'modules': get_modules(),
         'time': get_current_date(),
-        'coordinator': pu.is_module_coordinator(request.user),
+        'permissions': {'mc': pu.is_module_coordinator(request.user),
+                        'ta': pu.is_teaching_assistant(request.user),
+                        'tc': pu.is_teacher(request.user),
+                        'ad': pu.is_study_adviser(request.user),
+                        'st': pu.is_student(request.user),
+                        'mca':pu.is_module_coordinator_assistant(request.user)
+                        }
         # [
         #     {
         #         'name': 'Pearls of Computer Science',
