@@ -7,6 +7,43 @@ $(".btn").mouseup(function(){
 });
 
 $(document).ready(function() {
+    var table = $('#gradebook').DataTable({
+      "ordering": true,
+      "order": [[0, 'asc']],
+      "columnDefs": [{
+        orderable: false,
+        targets: "no-sort"
+      }]
+    });
+
+    table.on('draw', function() {
+      updateColoring();
+    });
+
+    $("#lowerNum").bind('keyup mouseup', function () {
+      if(+$(this).val() <= +$("#upperNum").val()) {
+        oldfrom = $(this).val();
+        oldto = $("#upperNum").val();
+      }
+      else {
+        oldfrom = $("#upperNum").val();
+        oldto = $(this).val();
+      }
+      updateColoring()
+    });
+
+    $("#upperNum").bind('keyup mouseup', function () {
+      if(+$(this).val() > +$("#lowerNum").val()) {
+        oldto = $(this).val();
+        oldfrom = $("#lowerNum").val();
+      }
+      else {
+        oldto = $("#lowerNum").val();
+        oldfrom = $(this).val();
+      }
+      updateColoring()
+    });
+
     $('#parent').on('change',function(){
       $('.child').prop('checked',$(this).prop('checked'));
     });
@@ -113,67 +150,3 @@ function updateColoring() {
     });
   }
 };
-
-$(document).ready(function() {
-  var table = $('#gradebook').DataTable({
-    "ordering": true,
-    "order": [[0, 'asc']],
-    "columnDefs": [{
-      orderable: false,
-      targets: "no-sort"
-    }],
-    "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-
-    dom: 'Bfrtip',
-    buttons: [
-        {
-            text: 'Toggle Color',
-            className: 'btn btn-secondary coloroff',
-            action: function ( e, dt, node, config ) {
-              if(node.hasClass("coloron")) {
-                node.removeClass("coloron")
-                node.addClass("coloroff")
-
-                $('[id^="gradeid_"]').each(function(index) {
-                  node.removeClass("success warning error")
-                });
-              }
-              else {
-                node.removeClass("coloroff")
-                node.addClass("coloron")
-
-                updateColoring()
-              }
-            }
-        }
-    ]
-  });
-
-  table.on('draw', function() {
-    updateColoring();
-  });
-
-  $("#lowerNum").bind('keyup mouseup', function () {
-    if(+$(this).val() <= +$("#upperNum").val()) {
-      oldfrom = $(this).val();
-      oldto = $("#upperNum").val();
-    }
-    else {
-      oldfrom = $("#upperNum").val();
-      oldto = $(this).val();
-    }
-    updateColoring()
-  });
-
-  $("#upperNum").bind('keyup mouseup', function () {
-    if(+$(this).val() > +$("#lowerNum").val()) {
-      oldto = $(this).val();
-      oldfrom = $("#lowerNum").val();
-    }
-    else {
-      oldto = $("#lowerNum").val();
-      oldfrom = $(this).val();
-    }
-    updateColoring()
-  });
-});

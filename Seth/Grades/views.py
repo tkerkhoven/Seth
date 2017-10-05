@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.views import generic
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade
 import csv
@@ -17,6 +18,9 @@ class ModuleView(generic.ListView):
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
+
+        if Studying.objects.filter(person__user=user):
+            return redirect("grades:student")
 
         if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user)):
             raise PermissionDenied()
@@ -79,7 +83,7 @@ class GradeView(generic.DetailView):
         grade_dict = OrderedDict()
 
         for d in dicts:
-            student = d['student']
+            student = d['person']
             if student not in students.keys():
                 students[student] = dict()
             if student not in temp_dict.keys():
@@ -110,7 +114,8 @@ class StudentView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not Person.objects.filter(user=user, id=self.kwargs['pk']):
+        print(str(user) + " | " + self.kwargs['pk'])
+        if not Studying.objects.filter(person__user=user, person__id=self.kwargs['pk']):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -177,7 +182,7 @@ class ModuleStudentView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(moduleparts__teachers__user=user),
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user),
                                             id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -193,7 +198,7 @@ class ModuleStudentView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(ModuleStudentView, self).get_context_data(**kwargs)
 
-        mod_ed = ModuleEdition.objects.prefetch_related('moduleparts_set').get(id=self.kwargs['pk'])
+        mod_ed = ModuleEdition.objects.get(id=self.kwargs['pk'])
         student = Person.objects.get(id=self.kwargs['sid'])
 
         dicts = Grade.objects \
@@ -231,7 +236,7 @@ class ModulePartView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
-        if not ModulePart.objects.filter(Q(module_ed__coordinators__user=user) | Q(teachers__user=user),
+        if not ModulePart.objects.filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user),
                                          id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -255,19 +260,19 @@ class ModulePartView(generic.DetailView):
 
         module_part = ModulePart.objects.get(id=self.kwargs['pk'])
 
-        for mod_ed in ModuleEdition.objects.filter(module_parts=module_part).prefetch_related('studying_set'):
+        for mod_ed in ModuleEdition.objects.filter(modulepart=module_part).prefetch_related('studying_set'):
             for studying in mod_ed.studying_set.prefetch_related('person').all():
-                if studying.student not in student_list:
-                    student_list.append(studying.student)
-                    study_dict[studying.student] = studying.study
-                    role_dict[studying.student] = studying.role
+                if studying.person not in student_list:
+                    student_list.append(studying.person)
+                    study_dict[studying.person] = studying.study
+                    role_dict[studying.person] = studying.role
 
         for test in Test.objects.filter(module_part=module_part).prefetch_related('grade_set'):
 
             grade_dict = dict()
             all_released = True
 
-            for grade in test.grade_set.prefetch_related('person').all():
+            for grade in test.grade_set.prefetch_related('student').all():
                 if grade.student not in grade_dict.keys():
                     grade_dict[grade.student] = []
                 grade_dict[grade.student].append(grade)
@@ -280,13 +285,15 @@ class ModulePartView(generic.DetailView):
             test_dict[test] = grade_dict
             test_all_released[test] = all_released
 
+        print(student_list)
+
         context['module_part'] = module_part
         context['studentlist'] = student_list
         context['testdict'] = test_dict
         context['testallreleased'] = test_all_released
         context['studydict'] = study_dict
         context['roledict'] = role_dict
-        context['module_ed'] = ModuleEdition.objects.filter(module_parts=module_part)[0]
+        context['module_ed'] = ModuleEdition.objects.filter(modulepart=module_part)[0]
         return context
 
 
@@ -329,12 +336,12 @@ class TestView(generic.DetailView):
 
         test = Test.objects.get(id=self.kwargs['pk'])
 
-        for mod_ed in ModuleEdition.objects.filter(module_parts=test.module_part).prefetch_related('studying_set'):
+        for mod_ed in ModuleEdition.objects.filter(modulepart=test.module_part).prefetch_related('studying_set'):
             for studying in mod_ed.studying_set.prefetch_related('person').all():
-                if studying.student not in student_list:
-                    student_list.append(studying.student)
-                    study_dict[studying.student] = studying.study
-                    role_dict[studying.student] = studying.role
+                if studying.person not in student_list:
+                    student_list.append(studying.person)
+                    study_dict[studying.person] = studying.study
+                    role_dict[studying.person] = studying.role
 
         for grade in test.grade_set.prefetch_related('student').all():
             if grade.student not in grade_dict.keys():
@@ -348,7 +355,7 @@ class TestView(generic.DetailView):
         context['gradedict'] = grade_dict
         context['studydict'] = study_dict
         context['roledict'] = role_dict
-        context['module_ed'] = ModuleEdition.objects.filter(module_parts=test.module_part)[0]
+        context['module_ed'] = ModuleEdition.objects.filter(modulepart=test.module_part)[0]
         return context
 
 

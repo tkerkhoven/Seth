@@ -31,7 +31,7 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <h1 class="display-3">{{ module_ed.module.name }}</h1>
+                <h1 class="display-3">{{ moduleedition.module.name }}</h1>
 
                 {% if error_message %}
                     <p><strong>{{ error_message }}</strong></p>
@@ -39,7 +39,7 @@
 
                 {% if gradedict %}
 
-                    <form action="{% url 'grades:export' module_ed.id %}">
+                    <form action="{% url 'grades:export' moduleedition.id %}">
                         <input class="btn btn-secondary" type="submit" value="Export to .csv" />
                     </form>
 
@@ -89,7 +89,7 @@
                         {% for student,grades in gradedict.items %}
                         <tr>
                             <td>
-                                <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student %}">{{ studentdict|key:student|key:'name' }} (s{{ studentdict|key:student|key:'pid' }})</a>
+                                <a href="{% url 'grades:modstudent' pk=moduleedition.id sid=student %}">{{ studentdict|key:student|key:'name' }} (s{{ studentdict|key:student|key:'pid' }})</a>
                                 <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                             </td>
                             {% for test in tests %}
