@@ -70,7 +70,7 @@ class GradeView(generic.DetailView):
             .order_by('person__Submitter__test', 'person__Submitter__time')
         module_parts = ModulePart.objects \
             .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user),
-                    Q(module_edition=mod_ed)) \
+                    Q(module_edition=mod_ed), Q(test__isnull=False)) \
             .order_by('id').distinct()
 
         tests = Test.objects \
@@ -215,11 +215,11 @@ class ModuleStudentView(generic.DetailView):
         module_parts = ModulePart.objects \
             .prefetch_related('test_set') \
             .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user),
-                    Q(module_edition=mod_ed)) \
+                    Q(module_edition=mod_ed), Q(test__isnull=False)) \
             .order_by('id').distinct()
         tests = Test.objects \
-            .filter(Q(module_part__module_edition__coordinators__user=self.request.user) | Q(
-            module_part__teachers__user=self.request.user), Q(module_part__module_edition=mod_ed)) \
+            .filter(Q(module_part__module_edition__coordinators__user=self.request.user) |
+            Q(module_part__teachers__user=self.request.user), Q(module_part__module_edition=mod_ed)) \
             .order_by('module_part__id').distinct()
 
         temp_dict = dict()
@@ -384,6 +384,7 @@ class TestView(generic.DetailView):
         context['studentdict'] = students
         context['testallreleased'] = testallreleased
         context['test'] = test
+        context['can_release'] = Test.objects.filter(module_part__module_edition__coordinators__user=self.request.user).exists()
         return context
 
 
