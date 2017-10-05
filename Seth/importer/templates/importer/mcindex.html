@@ -40,10 +40,10 @@ Importer
         </div>
         <div class="col-lg-4">
             <form action="{% url 'import_module' mod.pk %}">
-                <input class="btn btn-secondary pointer" type="submit" value="Upload Grades"/>
+                <input class="btn btn-info pointer" type="submit" value="Upload Grades"/>
             </form>
             <form action="{% url 'import_student_to_module' mod.pk %}">
-                <input class="btn btn-secondary pointer" type="submit" value="Upload Students"/>
+                <input class="btn btn-info pointer" type="submit" value="Upload Students"/>
             </form>
         </div>
     </div>
@@ -61,7 +61,7 @@ Importer
     <ul>
         <div class="row">
             <form action="{% url 'import_new_student' %}">
-                <input class="btn btn-secondary pointer" type="submit" value="Upload Students into System"/>
+                <input class="btn btn-info pointer" type="submit" value="Upload Students into System"/>
             </form>
         </div>
     </ul>

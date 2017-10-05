@@ -13,8 +13,9 @@
                 <hr>
                 <form action="{% url 'import_test' pk %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
-                    {{ form.as_p }}
-                    <input type="submit" value="Upload" /></p>
+{#                    {{ form.as_p }}#}
+                    {% include 'form_snippet.html' %}
+                    <input class="btn btn-info" type="submit" value="Upload" /></p>
                 </form>
             </div>
         </div>
