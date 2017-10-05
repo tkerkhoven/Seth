@@ -89,9 +89,9 @@ Details: {{ module_ed.module.name }} ({{ module_ed.module_code }}) {{ module_ed.
                 </tr>
                 {% for s in studying %}
                 <tr>
-                    <td> {{ s.student_id.name }}</td>
-                    <td> {{ s.student_id }}</td>
-                    <td> {{ s.study.short_name }}</td>
+                    <td> {{ s.person.name }}</td>
+                    <td> {{ s.person }}</td>
+                    <td> {{ s.study.abbreviation }}</td>
                     <td> {{ s.role }}</td>
                 </tr>
                 {% endfor %}

@@ -121,7 +121,32 @@ $(document).ready(function() {
     "columnDefs": [{
       orderable: false,
       targets: "no-sort"
-    }]
+    }],
+    "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+
+    dom: 'Bfrtip',
+    buttons: [
+        {
+            text: 'Toggle Color',
+            className: 'btn btn-secondary coloroff',
+            action: function ( e, dt, node, config ) {
+              if(node.hasClass("coloron")) {
+                node.removeClass("coloron")
+                node.addClass("coloroff")
+
+                $('[id^="gradeid_"]').each(function(index) {
+                  node.removeClass("success warning error")
+                });
+              }
+              else {
+                node.removeClass("coloroff")
+                node.addClass("coloron")
+
+                updateColoring()
+              }
+            }
+        }
+    ]
   });
 
   table.on('draw', function() {
@@ -142,12 +167,12 @@ $(document).ready(function() {
 
   $("#upperNum").bind('keyup mouseup', function () {
     if(+$(this).val() > +$("#lowerNum").val()) {
-      oldfrom = $(this).val();
-      oldto = $("#upperNum").val();
+      oldto = $(this).val();
+      oldfrom = $("#lowerNum").val();
     }
     else {
-      oldfrom = $("#upperNum").val();
-      oldto = $(this).val();
+      oldto = $("#lowerNum").val();
+      oldfrom = $(this).val();
     }
     updateColoring()
   });

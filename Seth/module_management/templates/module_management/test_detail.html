@@ -27,7 +27,7 @@
         <div class="col-lg-5">
             <ul>
                 <li>Course: <a
-                        href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
+                        href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.module_edition_code }}
                     - {{ test.course_id.name }}</a></li>
                 <li>Test Name: {{ test.name }}</li>
                 <li>Test Type: {{ test.get_type }}</li>

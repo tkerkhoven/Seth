@@ -72,8 +72,8 @@
                         <thead>
                         <tr>
                             <th>Student</th>
-                            {% for course in courses %}
-                                <th class="no-sort" colspan="{{ course.test_set.count }}"><a href="{% url 'grades:course' pk=course.id %}"> {{ course }} </a></th>
+                            {% for module_part in module_parts %}
+                                <th class="no-sort" colspan="{{ module_part.test_set.count }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part }} </a></th>
                             {% endfor %}
                         </tr>
                         <tr>

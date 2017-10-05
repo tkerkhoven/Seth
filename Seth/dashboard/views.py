@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import render
 from django.utils import timezone
 
-from Grades.models import Module_ed
+from Grades.models import ModuleEdition
 
 
 # @permission_required('grades.add_grade')
@@ -40,7 +40,7 @@ def settings(request):
 
 
 def get_modules():
-    return Module_ed.objects.order_by('-start')
+    return ModuleEdition.objects.order_by('-start')
 
 
 def get_current_date():
