@@ -31,7 +31,7 @@ class MCImporterIndexView(LoginRequiredMixin, View):
         elif ModulePart.objects.filter(teacher__person__user=self.request.user):
             return render(request, 'importer/teacherindex.html',
                           {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-                              'module_ed__start')})
+                              'module_edition__start')})
 
         return HttpResponseForbidden('Only module coordinators can view this page.')
 
@@ -95,7 +95,8 @@ def import_module(request, pk):
                 # check for invalid students
                 invalid_students = []
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
-                    if not Studying.objects.filter(person__university_number=row[student_id_field]).filter(module_edition=pk):
+                    if not Studying.objects.filter(person__university_number=row[student_id_field]).filter(
+                            module_edition=pk):
                         invalid_students.append(row[student_id_field])
                 if invalid_students:
                     return HttpResponseBadRequest(
@@ -156,7 +157,8 @@ def import_test(request, pk):
 
                 invalid_students = []
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
-                    if not Studying.objects.filter(module_id__courses__test__exact=pk, student_id__person_id=row[student_id_field]):
+                    if not Studying.objects.filter(module_id__courses__test__exact=pk,
+                                                   student_id__person_id=row[student_id_field]):
                         if not row[student_id_field] == '':
                             invalid_students.append(row[student_id_field])
                 if invalid_students:
@@ -215,7 +217,10 @@ def export_module(request, pk):
     for student in students:
         table.append([student.university_number] + [None for _ in range(len(tests))])
 
-    return excel.make_response_from_array(table, 'xlsx')
+    return excel.make_response_from_array(table,
+                                          file_name='Module Grades {} {}-{}.xlsx'.format(module.module.name, module.year,
+                                                                                         module.block),
+                                          file_type='xlsx')
 
 
 @login_required()
@@ -235,7 +240,11 @@ def export_test(request, pk):
     for student in students:
         table.append([student.university_number, '', ''])
 
-    return excel.make_response_from_array(table, 'xlsx')
+    return excel.make_response_from_array(table, file_name='Test Grades {} {}-{}.xlsx'
+                                          .format(test.name,
+                                                  test.module_part.module_edition.year,
+                                                  test.module_part.module_edition.block),
+                                          file_type='xlsx')
 
 
 def make_grade(student: Person, corrector: Person, test: Test, grade: float, description: str = ''):

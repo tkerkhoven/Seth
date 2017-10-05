@@ -29,9 +29,9 @@ class Module(models.Model):
 class Person(models.Model):
     name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
-    user = models.ForeignKey(User, null=True)
+    user = models.ForeignKey(User, null=True, blank=True)
     start = models.DateField(default=timezone.now)
-    end = models.DateField(null=True)
+    end = models.DateField(null=True, blank=True)
 
     @property
     def full_id(self):
