@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 
 from Grades.models import ModuleEdition, Studying
+from Grades.models import ModuleEdition
 
 
 # @permission_required('grades.add_grade')
