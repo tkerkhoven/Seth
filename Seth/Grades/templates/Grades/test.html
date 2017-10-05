@@ -65,7 +65,7 @@
                     </div>
                     <br>
 
-                    <form action="{% url 'grades:release' module_ed.id %}" method="POST">
+                    <form action="{% url 'grades:release' test.module_part.module_edition.id %}" method="POST">
                     {% csrf_token %}
 
                     <select name="action">
@@ -75,23 +75,26 @@
                     </select>
                     <input class="btn btn-secondary" type="submit" value="Go" />
 
-                    <table id="gradebook" data-skip-to-row="0" class="table table-striped table-bordered table-responsive">
+                    <table id="testbook" data-skip-to-row="0" class="table table-striped table-bordered table-responsive">
+                        <thead>
                         <tr>
-                            <th><input type="checkbox" name="global" id="parent" /></th>
+                            <th class="no-sort"><input type="checkbox" name="global" id="parent" /></th>
                             <th>Student</th>
-                            <th>Grade</th>
+                            <th class="no-sort">Grade</th>
                         </tr>
-                        {% for student in studentlist %}
+                        </thead>
+                        <tbody>
+                        {% for student,grades in gradedict.items %}
                             <tr>
-                                {% with grade=gradedict|key:student|last %}
+                                {% with grade=grades|key:test.id|key:0 %}
                                 <td> <input type="checkbox" class="child" name="check{{ grade.id }}" /> </td>
                                 <td>
-                                    <a href="{% url 'grades:modstudent' pk=module_ed.id sid=student.id %}">{{ student.name }} ({{ student.univserity_number }})</a>
-                                    <p style="display: none">{{ studydict|key:student|study_od }} {{ roledict|key:student }}</p>
+                                    <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
+                                    <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                                 </td>
-                                <td id="gradeid_{{ grade.id }}" data-grade="{{ grade|grade_od }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                    <font data-toggle="tooltip" title="{{ grade|grade_od_no_round }}">{{ grade|grade_od }}</font>
-                                    {% if grade.released %}
+                                <td id="gradeid_{{ student }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                    <font data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}</font>
+                                    {% if grades|key:test.id|key:1 %}
                                     <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
                                     {% else %}
                                     <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
@@ -100,6 +103,7 @@
                                 {% endwith %}
                             </tr>
                         {% endfor %}
+                        </tbody>
                     </table>
 
                     </form>

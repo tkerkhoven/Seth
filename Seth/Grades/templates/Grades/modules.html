@@ -12,10 +12,8 @@
                 <hr>
                 {% if module_list %}
                     <ul class="list-group">
-                    {% for module in module_list %}
-                    {% for mod_ed in module.module_ed_set.all %}
-                        <li class="list-group-item"><a href="{% url 'grades:gradebook' mod_ed.id %}">{{mod_ed.module_code}} - {{ module.name }}</a></li>
-                    {% endfor %}
+                    {% for mod_ed in module_list %}
+                        <li class="list-group-item"><a href="{% url 'grades:gradebook' mod_ed.id %}">{{mod_ed.module_code}} - {{ mod_ed.module.name }}</a></li>
                     {% endfor %}
                     </ul>
                 {% else %}
