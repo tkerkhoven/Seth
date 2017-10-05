@@ -141,7 +141,7 @@ class ModuleEditionCreateView(generic.CreateView):
         latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
         return {
             'module': Module.objects.get(pk=pk),
-            'module_coordinator': Person.objects.filter(coordinator__module=latest_module_edition)
+            'module_coordinator': Person.objects.filter(coordinator__module_edition=latest_module_edition)
         }
 
     def dispatch(self, request, *args, **kwargs):
@@ -149,7 +149,7 @@ class ModuleEditionCreateView(generic.CreateView):
         pk = self.kwargs['pk']
         latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
 
-        if not Person.objects.filter(coordinator__module=latest_module_edition).filter(user=user):
+        if not Person.objects.filter(coordinator__module_edition=latest_module_edition).filter(user=user):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -318,7 +318,7 @@ class ModulePartCreateView(generic.CreateView):
         user = request.user
         pk = self.kwargs['pk']
 
-        if not Person.objects.filter(coordinator__module=pk).filter(user=user):
+        if not Person.objects.filter(coordinator__module_edition=pk).filter(user=user):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
