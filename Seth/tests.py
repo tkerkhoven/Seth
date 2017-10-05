@@ -9,10 +9,16 @@ from module_management.views import IndexView, ModuleView, ModuleEdView
 
 
 class ModuleManagementIndexTests(TestCase):
+    study_assigned = None
+    study_unassigned = None
+
     module_assigned = None
     module_unassigned = None
     module_ed_assigned = None
     module_ed_unassigned = None
+
+    module_part_assigned = None
+    module_part_unassigned = None
 
     coordinator = None
     coordinator_assistant = None
@@ -47,6 +53,7 @@ class ModuleManagementIndexTests(TestCase):
             username=u'StudentTest',
             password=u'blablabla'
         )
+
         # Setup Person objects
         self.coordinator = Person.objects.get_or_create(
             name='Coordinator Test',
@@ -72,8 +79,68 @@ class ModuleManagementIndexTests(TestCase):
             name='Student Test',
             user='StudentTest',
         )
-        # Setup module objects
-        module_assigned = Module.objects.get_or_create(
+
+        # Setup study and module and modulepart objects
+        self.study_assigned = Study.objects.get_or_create(
+            abbreviation='PTA',
+            name='Permission Test Assigned'
+        )
+        self.study_unassigned = Study.objects.get_or_create(
+            abbreviation='PTU',
+            name='Permission Test Unassigned'
+        )
+        self.module_assigned = Module.objects.get_or_create(
             code=1738494738393,
-            name='PermissionTestModule',
+            name='PermissionTestModuleAss',
+        )
+        self.module_unassigned = Module.objects.get_or_create(
+            code=1738494738394,
+            name='PermissionTestModuleUnass',
+        )
+        self.module_ed_assigned = ModuleEdition.objects.get_or_create(
+            year=2000,
+            module=self.module_assigned,
+            block='block JAAR',
+        )
+        self.module_ed_unassigned = ModuleEdition.objects.get_or_create(
+            year=2000,
+            module=self.module_assigned,
+            block='block JAAR',
+        )
+        self.module_part_assigned = ModulePart.objects.get_or_create(
+            name='PermissionTest Assigned',
+            module_edition=self.module_ed_assigned
+        )
+        self.module_part_unassigned = ModulePart.objects.get_or_create(
+            name='PermissionTest Unassigned',
+            module_edition=self.module_ed_unassigned
+        )
+
+        # Assigning persons to modules
+        Coordinator.objects.get_or_create(
+            person=self.coordinator,
+            module_edition=self.module_ed_assigned,
+            is_assistant=False,
+        )
+        Coordinator.objects.get_or_create(
+            person=self.coordinator_assistant,
+            module_edition=self.module_ed_assigned,
+            is_assistant=True,
+        )
+        self.study_assigned.update(
+            advisers=self.adviser
+        )
+        self.module_part_assigned.update(
+            teachers=self.teacher,
+            role='T'
+        )
+        self.module_part_assigned.update(
+            teachers=self.teacher,
+            role='A'
+        )
+        Studying.objects.get_or_create(
+            person=self.student,
+            study=self.study_assigned,
+            module_edition=self.module_assigned,
+            role='Bachelor'
         )
