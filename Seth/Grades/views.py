@@ -153,10 +153,10 @@ class StudentView(generic.DetailView):
         for module_edition in modules:
             module_parts = ModulePart.objects \
                 .filter(module_edition=module_edition, test__grade__released=True, test__grade__student=person) \
-                .order_by('id').distinct('id')
+                .order_by('id').distinct()
             tests = Test.objects \
                 .filter(module_part__module_edition=module_edition, grade__released=True, grade__student=person) \
-                .order_by('module_part__id')
+                .order_by('module_part__id').distinct()
 
             module_parts_dict[module_edition] = module_parts
             test_dict[module_edition] = tests
