@@ -12,12 +12,28 @@ from django.utils.encoding import smart_str
 
 
 class ModuleView(generic.ListView):
+    """ Module view of the grades module.
+
+    Module coordinator and teachers are presented with a list of modules they have access to.
+    Module coordinators have access to all modules they are a coordinator of, as well as all modules they are a teacher in.
+
+    Teachers are presented with all modules they are a teacher in.
+    """
     template_name = 'Grades/modules.html'
     context_object_name = 'module_list'
 
+    # Check if the user is a module coordinator or a teacher.
+    # If not, show them an error page.
+    # If they are a student, this redirects them to their specific grade page.
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
+        # Redirect students
+        studying = Studying.objects.filter(person__user=request.user)
+        if studying:
+            return redirect('grades:student', studying.get(person__user=request.user).person.id)
+
+        # Check if the user is a module coordinator or a teacher
         if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user)):
             raise PermissionDenied()
 
@@ -30,6 +46,7 @@ class ModuleView(generic.ListView):
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
 
+    # Get the queryset for the specified user.
     def get_queryset(self):
         user = self.request.user
         module_set = ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user))
@@ -37,12 +54,19 @@ class ModuleView(generic.ListView):
 
 
 class GradeView(generic.DetailView):
+    """ The main gradebook view for Module Coordinators and Teachers.
+    This view will show the overview of students, module parts, tests and grades of a certain module.
+    Module coordinators will see every module part and its information, while teachers will only see their respective module parts.
+    """
     template_name = 'Grades/gradebook2.html'
     model = ModuleEdition
 
+    # Check if the user is a module coordinator or a teacher.
+    # If not, show them an error page.
     def dispatch(self, request, *args, **kwargs):
         user = request.user
 
+        # Check if the user is a module coordinator or a teacher
         if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user),
                                             id=self.kwargs['pk']):
             raise PermissionDenied()
@@ -56,33 +80,46 @@ class GradeView(generic.DetailView):
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
 
+    # Sets the context data to be used in the template.
     def get_context_data(self, **kwargs):
         context = super(GradeView, self).get_context_data(**kwargs)
 
+        # Get the specific module edition
         mod_ed = ModuleEdition.objects.prefetch_related('studying_set').get(id=self.kwargs['pk'])
 
-        dicts = Studying.objects \
-            .prefetch_related('person', 'study', 'person__Submitter') \
-            .values('study__name', 'study__abbreviation', 'person', 'person__name', 'person__university_number',
-                    'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
-                    'person__Submitter__released') \
-            .filter(module_edition=mod_ed) \
-            .order_by('person__Submitter__test', 'person__Submitter__time')
+        # Gather all module parts the user is allowed to see, ordered by their ID (primary key)
+        # It is also filtered on the specific module edition of this page and whether or not the given part has a test.
+        # If they don't have a test, they won't be included in the queryset.
         module_parts = ModulePart.objects \
             .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user),
                     Q(module_edition=mod_ed), Q(test__isnull=False)) \
             .order_by('id').distinct()
 
+        # Gather all tests the user is allowed to see, ordered by the ID of their respective module part.
         tests = Test.objects \
-            .filter(Q(module_part__module_edition__coordinators__user=self.request.user) | Q(
-            module_part__teachers__user=self.request.user), Q(module_part__module_edition=mod_ed)) \
+            .filter(module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
+
+        # Gather all important information about students and their grades.
+        # It returns a dictionary of values, denoted by the .values().
+        # It filters the queryset by checking if the test id for a specific grade is in the test set the user is allowed to see.
+        # It orders the result by the test id of the grades, and further orders it by the date/time of the test.
+        dicts = Studying.objects \
+            .prefetch_related('person', 'study', 'person__Submitter') \
+            .values('study__name', 'study__abbreviation', 'person', 'person__name', 'person__university_number',
+                    'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
+                    'person__Submitter__released') \
+            .filter(person__Submitter__test__in=tests) \
+            .order_by('person__Submitter__test', 'person__Submitter__time')
 
         students = dict()
         temp_dict = dict()
         testallreleased = dict()
         grade_dict = OrderedDict()
 
+        # Changing the queryset to something more easily usable.
+        # Makes a dictionary of student information (students[PERSON][name/pid/study/sstudy])
+        # Makes a dictionary of grade information, which will be sorted later on (temp_dict[PERSON][TEST] = (GRADE, RELEASED)
         for d in dicts:
             student = d['person']
             if student not in students.keys():
@@ -103,14 +140,19 @@ class GradeView(generic.DetailView):
             if not d['person__Submitter__released']:
                 testallreleased[d['person__Submitter__test']] = False
 
+        # Sort the dictionary of grade information.
         for key in sorted(temp_dict):
             grade_dict[key] = temp_dict[key]
 
+        # Add everything to the context.
         context['gradedict'] = grade_dict
         context['studentdict'] = students
         context['module_parts'] = module_parts
         context['testallreleased'] = testallreleased
         context['tests'] = tests
+        # A check if the user is allowed to export the grades to .xls.
+        context['can_export'] = Test.objects.filter(
+            module_part__module_edition__coordinators__user=self.request.user).exists()
 
         return context
 
@@ -160,8 +202,6 @@ class StudentView(generic.DetailView):
 
             module_parts_dict[module_edition] = module_parts
             test_dict[module_edition] = tests
-
-        print(module_parts_dict)
 
         temp_dict = dict()
         context_dict = OrderedDict()
@@ -219,7 +259,7 @@ class ModuleStudentView(generic.DetailView):
             .order_by('id').distinct()
         tests = Test.objects \
             .filter(Q(module_part__module_edition__coordinators__user=self.request.user) |
-            Q(module_part__teachers__user=self.request.user), Q(module_part__module_edition=mod_ed)) \
+                    Q(module_part__teachers__user=self.request.user), Q(module_part__module_edition=mod_ed)) \
             .order_by('module_part__id').distinct()
 
         temp_dict = dict()
@@ -272,7 +312,8 @@ class ModulePartView(generic.DetailView):
             .filter(module_edition__modulepart=module_part) \
             .order_by('person__Submitter__test', 'person__Submitter__time')
         tests = Test.objects \
-            .filter(module_part=module_part)
+            .filter(module_part=module_part) \
+            .order_by('time')
 
         students = dict()
         temp_dict = dict()
@@ -384,7 +425,8 @@ class TestView(generic.DetailView):
         context['studentdict'] = students
         context['testallreleased'] = testallreleased
         context['test'] = test
-        context['can_release'] = Test.objects.filter(module_part__module_edition__coordinators__user=self.request.user).exists()
+        context['can_release'] = Test.objects.filter(
+            module_part__module_edition__coordinators__user=self.request.user).exists()
         return context
 
 
@@ -440,11 +482,15 @@ def release(request, *args, **kwargs):
 
     action = request.POST['action']
 
+    person_list = []
+
     for key in request.POST:
         key_search = re.search('check([0-9]+)', key)
         if key_search:
             grade_id = int(key_search.group(1))
             grade = Grade.objects.get(id=grade_id)
+
+            person_list.append(grade.student)
 
             if action == 'release':
                 grade.released = True
@@ -455,6 +501,6 @@ def release(request, *args, **kwargs):
                 grade.save()
                 request.session['change'] = 2
 
-    # TODO: Send mail
+    SendMail(action, person_list)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

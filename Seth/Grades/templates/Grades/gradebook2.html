@@ -39,9 +39,11 @@
 
                 {% if gradedict %}
 
+                    {% if can_export %}
                     <form action="{% url 'grades:export' moduleedition.id %}">
-                        <input class="btn btn-secondary" type="submit" value="Export to .csv" />
+                        <input class="btn btn-secondary" type="submit" value="Export to .xls" />
                     </form>
+                    {% endif %}
 
                     <div id="accordion" role="tablist">
                       <div class="card">
