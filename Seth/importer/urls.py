@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'test/(?P<pk>[0-9]+)', views.import_test, name='import_test'),
     url(r'import-new-student', views.import_student, name='import_new_student'),
     url(r'import-module-student/(?P<pk>[0-9]+)', views.import_student_to_module, name='import_student_to_module'),
+    url(r'import-module-student/(?P<pk>[0-9]+)/get_workbook', views.export_student_to_module, name='export_student_to_module'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
