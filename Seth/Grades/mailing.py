@@ -5,6 +5,16 @@ from Grades.models import *
 
 
 def make_mail_grade_released(person, grade=None, test=None):
+    """ Generates an EmailMessage that notifies the Person of his grade being released.
+
+    Accepts a Person object, along with either a Grade or a Test. Generates an email with both plaintext and HTML
+    content.
+
+    :param person: Recipient, student of the released grade.
+    :param grade: Grade object that the student received. Can be empty if test is filled in instead.
+    :param test: Test object that the grade was released for. Can be empty if grade is filled in instead.
+    :return: The notification mail as an EmailMultiAlternatives object.
+    """
     if not test:
         test = grade.test
     module_edition = test.module_part.module_edition
@@ -33,6 +43,16 @@ def make_mail_grade_released(person, grade=None, test=None):
 
 
 def make_mail_grade_retracted(person, grade=None, test=None):
+    """ Generates an EmailMessage that notifies the Person of his grade being retracted.
+
+    Accepts a Person object, along with either a Grade or a Test. Generates an email with both plaintext and HTML
+    content.
+
+    :param person: Recipient, student of the released grade.
+    :param grade: Grade object that the student received. Can be empty if test is filled in instead.
+    :param test: Test object that the grade was released for. Can be empty if grade is filled in instead.
+    :return: The notification mail as an EmailMultiAlternatives object.
+    """
     if not test:
         test = grade.test
     module_edition = test.module_part.module_edition
