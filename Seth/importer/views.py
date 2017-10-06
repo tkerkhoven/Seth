@@ -420,7 +420,7 @@ def import_student(request):
 
 
 @login_required
-def export_student_to_module(request, pk):
+def workbook_student_to_module(request, pk):
     """ Creates an excel sheet that may be filled in to register students to a module. This sheet is compatible with
         def:import_student_to_module.
 
@@ -428,6 +428,7 @@ def export_student_to_module(request, pk):
         :param pk: Test ID
         :return: A file response containing an .xlsx file.
         """
+    print("foo")
     # Check if user is a module coordinator.
     if not ModuleEdition.objects.filter(pk=pk).filter(coordinator__person__user=request.user):
         raise PermissionDenied('You are not the module coordinator for this course.')
