@@ -92,7 +92,7 @@
                             <tr>
                                 {% with grade=grades|key:test.id|key:0 %}
                                 {% if can_release %}
-                                <td> <input type="checkbox" class="child" name="check{{ grade.id }}" /> </td>
+                                <td> <input type="checkbox" class="child" name="check{{ grades|key:test.id|key:2 }}" /> </td>
                                 {% endif %}
                                 <td>
                                     <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>

@@ -1,10 +1,14 @@
 from collections import OrderedDict
+
+from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.views import generic
+
+from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade
 import csv
 import re
@@ -411,7 +415,7 @@ class TestView(generic.DetailView):
             students[student]['sstudy'] = d['study__abbreviation']
 
             temp_dict[student][d['person__Submitter__test']] = (
-                d['person__Submitter__grade'], d['person__Submitter__released'])
+                d['person__Submitter__grade'], d['person__Submitter__released'], d['person__Submitter'])
 
             if not d['person__Submitter__test'] in testallreleased.keys():
                 testallreleased[d['person__Submitter__test']] = True
@@ -482,7 +486,7 @@ def release(request, *args, **kwargs):
 
     action = request.POST['action']
 
-    person_list = []
+    mail_list = []
 
     for key in request.POST:
         key_search = re.search('check([0-9]+)', key)
@@ -490,17 +494,18 @@ def release(request, *args, **kwargs):
             grade_id = int(key_search.group(1))
             grade = Grade.objects.get(id=grade_id)
 
-            person_list.append(grade.student)
-
             if action == 'release':
                 grade.released = True
                 grade.save()
+                mail_list.append(make_mail_grade_released(grade.student, user, grade))
                 request.session['change'] = 1
             elif action == 'retract':
                 grade.released = False
                 grade.save()
+                mail_list.append(make_mail_grade_retracted(grade.student, grade))
                 request.session['change'] = 2
 
-    SendMail(action, person_list)
+    connection = mail.get_connection()
+    connection.send_messages(mail_list)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
