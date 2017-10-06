@@ -502,7 +502,7 @@ def release(request, *args, **kwargs):
             elif action == 'retract':
                 grade.released = False
                 grade.save()
-                mail_list.append(make_mail_grade_retracted(grade.student, grade))
+                mail_list.append(make_mail_grade_retracted(grade.student, user, grade))
                 request.session['change'] = 2
 
     connection = mail.get_connection()
