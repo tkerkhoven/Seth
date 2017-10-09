@@ -349,7 +349,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
     if test.minimum_grade > grade or grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
-            '({}-{}).'.format(student.name, student.univserity_number, test.name, grade, test.minimum_grade,
+            '({}-{}).'.format(student.name, student.university_number, test.name, grade, test.minimum_grade,
                               test.maximum_grade))
 
     try:
