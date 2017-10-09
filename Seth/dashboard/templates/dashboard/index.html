@@ -22,7 +22,7 @@
                 <h1 class="display-4">Active modules</h1>
                 <hr>
                 {% for mod in modules %}
-                    {% if mod.start < time and mod.stop > time %}
+                    {% if mod.start < time and mod.end > time %}
                     <div class="card">
                         <div class="card-header" role="tab" id="headingActive{{ mod.pk }}">
                             <h4 class="md-0 skin-text remove-margin">
@@ -42,7 +42,7 @@
                                                 <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ module_part.pk }}{{ mod.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ module_part.pk }}{{ mod.pk }}">
                                                     {{ module_part.name }}
                                                 </a>
-                                                <a href="{% url 'module_management:module_part_detail' pk=course.pk %}"><i class="material-icons float-right md-20">settings</i></a>
+                                                <a href="{% url 'module_management:module_part_detail' pk=module_part.pk %}"><i class="material-icons float-right md-20">settings</i></a>
                                             </h5>
                                         </div>
                                         <div id="collapseActiveCourse{{ module_part.pk }}{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ module_part.pk }}{{ mod.pk }}" data-parent="#accordion">
