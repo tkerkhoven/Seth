@@ -330,7 +330,7 @@ def export_test(request, pk):
                                           file_type='xlsx')
 
 
-def make_grade(student: Person, corrector: Person, test: Test, grade: float, description: str = ''):
+def make_grade(student: Person, corrector: Person, test: Test, grade, description: str = ''):
     """ Helper function that makes Grade objects so they can be inserted in bulk with def:save_grades.
     :param student: Person object of the student.
     :param corrector: Person object of the corrector.

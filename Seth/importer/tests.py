@@ -7,6 +7,7 @@ from django.test import TestCase
 # Create your tests here.
 from pyexcel import Sheet
 
+from Grades.exceptions import GradeException
 from Grades.models import *
 from importer.forms import GradeUploadForm
 from importer.views import make_grade, COLUMN_TITLE_ROW
@@ -272,3 +273,98 @@ class ImporterPermissionsTest(TestCase):
         response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
 
         self.assertEqual(response.status_code, 403)
+
+
+class MakeGradeTest(TestCase):
+    def setUp(self):
+        tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
+
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica',
+                                           start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
+
+        user = User.objects.create(username='mverkleij', password='welkom123')
+
+        module_coordinator = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
+
+        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+
+        module_ed.save()
+
+        module_parts = [
+            ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[module_coordinator])
+            for i in
+            range(10)]
+
+        teacher = User.objects.create(username='teacher', password='welkom123')
+
+        teacher_user = Person.objects.create(name='Teacher', university_number='m12345678', user=teacher)
+
+        Teacher.objects.create(person=teacher_user, module_part=module_parts[0], role='T')
+
+        Coordinator.objects.create(module_edition=module_ed, person=module_coordinator, is_assistant=False)
+
+        tests = [Test.objects.create(name='Theory Test {}'.format(course.name), module_part=course, type='E') for course
+                 in module_parts]
+
+        students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
+                    in range(4)]
+
+        student_user = User.objects.create(username='student', password='welkom123')
+
+        students.append(Person.objects.create(name='Student', university_number='s2453483', user=student_user))
+
+        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+
+    def test_make_grade(self):
+        student = Person.objects.filter(name='Student')[0]
+        corrector = Person.objects.filter(name='Teacher')[0]
+        test = Test.objects.all()[0]
+        grade = 1.0
+        description = 'foo'
+
+        grade = make_grade(student, corrector, test, grade, description)
+        grade.save()
+
+        saved_grade = Grade.objects.all()[0]
+
+        self.assertEqual(saved_grade.student, student)
+        self.assertEqual(saved_grade.corrector, corrector)
+        self.assertEqual(saved_grade.test, test)
+        self.assertEqual(saved_grade.grade, grade)
+        self.assertEqual(saved_grade.description, description)
+
+    def test_make_too_small_grade(self):
+        student = Person.objects.filter(name='Student')[0]
+        corrector = Person.objects.filter(name='Teacher')[0]
+        test = Test.objects.all()[0]
+        grade = test.minimum_grade - 0.1
+        description = 'foo'
+        try:
+            grade = make_grade(student, corrector, test, grade, description)
+            self.fail('Grade created successfully that is too small')
+        except GradeException:
+            pass
+
+    def test_make_too_large_grade(self):
+        student = Person.objects.filter(name='Student')[0]
+        corrector = Person.objects.filter(name='Teacher')[0]
+        test = Test.objects.all()[0]
+        grade = test.maximum_grade + 0.1
+        description = 'foo'
+        try:
+            grade = make_grade(student, corrector, test, grade, description)
+            self.fail('Grade created successfully that is too large')
+        except GradeException:
+            pass
+
+    def test_make_invalid_grade(self):
+        student = Person.objects.filter(name='Student')[0]
+        corrector = Person.objects.filter(name='Teacher')[0]
+        test = Test.objects.all()[0]
+        grade = 'e'
+        description = 'foo'
+        try:
+            grade = make_grade(student, corrector, test, grade, description)
+            self.fail('Grade created successfully that is no number')
+        except GradeException:
+            pass
