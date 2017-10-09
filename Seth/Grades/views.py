@@ -3,7 +3,6 @@ from collections import OrderedDict
 from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.views import generic
@@ -11,7 +10,6 @@ import django_excel as excel
 from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade
 import re
-from django.utils.encoding import smart_str
 
 
 class ModuleView(generic.ListView):
@@ -102,6 +100,7 @@ class GradeView(generic.DetailView):
         tests = Test.objects \
             .filter(module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
+
         # Gather all important information about students and their grades.
         # It returns a dictionary of values, denoted by the .values().
         # It filters the queryset by checking if the test id for a specific grade is in the test set the user is allowed to see.
@@ -111,14 +110,17 @@ class GradeView(generic.DetailView):
             .values('study__name', 'study__abbreviation', 'person', 'person__name', 'person__university_number',
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
-            .filter(person__Submitter__test__in=tests) \
+            .filter(module_edition=mod_ed) \
             .order_by('person__Submitter__test', 'person__Submitter__time')
+
         students = dict()
         temp_dict = dict()
         testallreleased = dict()
         grade_dict = OrderedDict()
+
         # Changing the queryset to something more easily usable.
         QuerySetChanger(dicts, students, temp_dict, testallreleased)
+
         # Sort the dictionary of grade information.
         for key in sorted(temp_dict):
             grade_dict[key] = temp_dict[key]
