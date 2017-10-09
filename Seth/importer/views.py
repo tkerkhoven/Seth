@@ -9,7 +9,7 @@ from django.views import generic, View
 from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET
 from xlsxwriter.utility import xl_rowcol_to_cell
 
 import re
@@ -158,8 +158,8 @@ def import_module(request, pk):
             return redirect('grades:gradebook', pk)
         else:
             raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel file. Are you'
-                                          'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
-                                          'using that instead.')
+                                      'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+                                      'using that instead.')
     else:  # GET request
         form = GradeUploadForm()
         return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
@@ -189,7 +189,7 @@ def import_test(request, pk):
                     Q(module_part__module_edition__coordinator__person__user=request.user)
     ).filter(pk=pk):
         raise PermissionDenied('You are not a module coordinator or teacher of this test. Please refer to the'
-                                     'module coordinator of this test if you think this is in error.')
+                               'module coordinator of this test if you think this is in error.')
 
     if request.method == "POST":
         form = TestGradeUploadForm(request.POST, request.FILES)
@@ -205,7 +205,7 @@ def import_test(request, pk):
                     description_field = sheet[table][COLUMN_TITLE_ROW].index('description')
                 except ValueError:
                     raise SuspiciousOperation('One of the required fields [student_id, grade, description] could'
-                                                  ' not be found.')
+                                              ' not be found.')
 
                 # The current user's Person is the corrector of the grades.
                 teacher = Person.objects.get(user=request.user)
@@ -458,10 +458,11 @@ def import_student_to_module(request, pk):
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
             startpattern = re.compile('start*')
-            if students_to_module[0][0].lower() == 's-number' and students_to_module[0][1].lower() == 'name' and \
-                    startpattern.match(students_to_module[0][
-                                           2].lower()) and students_to_module[0][3].lower() == 'study' and \
-                            students_to_module[0][4].lower() == 'role':
+            emailpattern = re.compile('email*')
+            if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
+                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
+                    students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
+                            students_to_module[0][5].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
@@ -472,7 +473,8 @@ def import_student_to_module(request, pk):
                         university_number=str(students_to_module[i][0]),
                         defaults={
                             'name': students_to_module[i][1],
-                            'start': students_to_module[i][2],
+                            'email': students_to_module[i][2],
+                            'start': students_to_module[i][3],
                         }
                     )
                     if created:
@@ -480,9 +482,9 @@ def import_student_to_module(request, pk):
                     studying, created = Studying.objects.get_or_create(
                         person=student,
                         module_edition=ModuleEdition.objects.get(pk=pk),
-                        study=Study.objects.get(abbreviation=students_to_module[i][3]),
+                        study=Study.objects.get(abbreviation=students_to_module[i][4]),
                         defaults={
-                            'role': students_to_module[i][4],
+                            'role': students_to_module[i][5],
                         }
                     )
                     if created:

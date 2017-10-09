@@ -29,6 +29,7 @@ class Module(models.Model):
 class Person(models.Model):
     name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
+    email = models.EmailField(verbose_name='Student e-mail', null=True)
     user = models.ForeignKey(User, null=True, blank=True)
     start = models.DateField(default=timezone.now)
     end = models.DateField(null=True, blank=True)
