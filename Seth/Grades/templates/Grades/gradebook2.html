@@ -94,7 +94,7 @@
                             {% for test in tests %}
                             {% with grade=grades|key:test.id|key:0 %}
                             <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                <a title="{{ grade }}">{{ grade|round }}</a>
+                                <a id="grade_{{ student }}_{{ test.id }}" title="{{ grade }}">{{ grade|round }}</a>
 
                                 {% if grades|key:test.id != 'N/A' %}
                                     {% if grades|key:test.id|key:1 %}

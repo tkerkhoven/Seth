@@ -581,5 +581,5 @@ def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
         if not testallreleased == None:
             if not test in testallreleased.keys():
                 testallreleased[test] = True
-            if not test:
+            if not d['person__Submitter__released']:
                 testallreleased[test] = False
