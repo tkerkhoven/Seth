@@ -7,10 +7,9 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.views import generic
-
+import django_excel as excel
 from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade
-import csv
 import re
 from django.utils.encoding import smart_str
 
@@ -103,7 +102,6 @@ class GradeView(generic.DetailView):
         tests = Test.objects \
             .filter(module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
-
         # Gather all important information about students and their grades.
         # It returns a dictionary of values, denoted by the .values().
         # It filters the queryset by checking if the test id for a specific grade is in the test set the user is allowed to see.
@@ -115,15 +113,12 @@ class GradeView(generic.DetailView):
                     'person__Submitter__released') \
             .filter(person__Submitter__test__in=tests) \
             .order_by('person__Submitter__test', 'person__Submitter__time')
-
         students = dict()
         temp_dict = dict()
         testallreleased = dict()
         grade_dict = OrderedDict()
-
         # Changing the queryset to something more easily usable.
         QuerySetChanger(dicts, students, temp_dict, testallreleased)
-
         # Sort the dictionary of grade information.
         for key in sorted(temp_dict):
             grade_dict[key] = temp_dict[key]
@@ -134,9 +129,6 @@ class GradeView(generic.DetailView):
         context['module_parts'] = module_parts
         context['testallreleased'] = testallreleased
         context['tests'] = tests
-        # A check if the user is allowed to export the grades to .xls.
-        context['can_export'] = Test.objects.filter(
-            module_part__module_edition__coordinators__user=self.request.user).exists()
 
         return context
 
@@ -444,6 +436,9 @@ class TestView(generic.DetailView):
         context['studentdict'] = students
         context['testallreleased'] = testallreleased
         context['test'] = test
+        # A check if the user is allowed to export the grades to .xls.
+        context['can_export'] = Test.objects.filter(
+            module_part__module_edition__coordinators__user=self.request.user).exists()
         # Set whether the user can release/retract grades.
         context['can_release'] = Test.objects.filter(
             module_part__module_edition__coordinators__user=self.request.user).exists()
@@ -459,45 +454,48 @@ def export(request, *args, **kwargs):
     """
     user = request.user
 
-    if not ModuleEdition.objects.filter(coordinators__user=user, id=kwargs['pk']):
+    if not Test.objects.filter(module_part__module_edition__coordinators__user=user, id=kwargs['pk']):
         raise PermissionDenied()
 
-    mod_ed = ModuleEdition.objects.prefetch_related('studying_set').prefetch_related('module_parts').get(
-        id=kwargs['pk'])
+    test = Test.objects.get(id=kwargs['pk'])
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename=' + mod_ed.module.name + '.csv'
-    writer = csv.writer(response, csv.excel)
-    response.write(u'\ufeff'.encode('utf8'))
+    # Gather all students who have done the test.
+    # This dictionary is ordered by the university ID and the date their grade has been added.
+    dicts = Studying.objects \
+        .prefetch_related('person', 'study', 'person__Submitter') \
+        .values('person__name', 'person__university_number',
+                'study__abbreviation',
+                'person__Submitter__grade', 'person__Submitter__time') \
+        .filter(module_edition__modulepart__test=test) \
+        .order_by('person__name', 'person__Submitter__time')
 
-    output = u'Student'
-    for module_part in mod_ed.module_parts.prefetch_related('test_set').all():
-        for test in module_part.test_set.all():
-            output += ',' + test.name
+    mod_ed = test.module_part.module_edition
 
-    writer.writerow([
-        smart_str(output),
-    ])
+    table = [
+        ['Cursus', '{}'.format(mod_ed.module.code), '', '', 'Tijdstip', '{}'.format(test.time)],
+        ['Naam', '{}'.format(dicts[0]['study__abbreviation'])],
+        ['Collegejaar', '{}'.format(mod_ed.year)],
+        ['Toets', '{}'.format(test.name)],
+        ['Blok', '{}'.format(mod_ed.block), '', 'Resultaatschaal', ''],
+        ['Gelegenheid', ''],
+        [''],
+        ['Studentnummer', 'Naam', 'Toetsdatum', 'Resultaat', 'Afwijkende catogorie', 'Geldigheidsduur']
+    ]
 
-    for studying in mod_ed.studying_set.prefetch_related('student'):
+    temp_dict = OrderedDict()
+    for d in dicts:
+        temp_dict[d['person__university_number'][1:]] = (d['person__name'], d['person__Submitter__grade'],
+                                                     d['person__Submitter__time'].date())
 
-        output = u'' + studying.student.user.last_name + ' (' + studying.student.univserity_number + ')'
-        for module_part in mod_ed.module_parts.prefetch_related('test_set').all():
-            for test in module_part.test_set.prefetch_related('grade_set').all():
+    for u_num, details in temp_dict.items():
+        table.append(
+            ['{}'.format(u_num), '{}'.format(details[0]), '{}'.format(details[2]), '{}'.format(details[1]),
+             '-', '-']
+        )
 
-                gradelist = []
-                for grade in test.grade_set.filter(student=studying.student):
-                    gradelist.append(grade)
-
-                gradelist.sort(key=lambda gr: grade.time)
-                if gradelist != []:
-                    output += ',' + str(gradelist[-1].grade)
-                else:
-                    output += ',-'
-        writer.writerow([
-            smart_str(output)
-        ])
-    return response
+    return excel.make_response_from_array(table, file_name='{} MODXX {} {}.xlsx'
+                                              .format(dicts[0]['study__abbreviation'], mod_ed.module.code, test.name),
+                                              file_type='xlsx')
 
 
 def release(request, *args, **kwargs):
@@ -549,6 +547,7 @@ def release(request, *args, **kwargs):
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
     """ Change a queryset to something more useable.
     :param dicts: The queryset to be changed.
@@ -559,6 +558,8 @@ def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
     """
     for d in dicts:
         student = d['person']
+        test = d['person__Submitter__test']
+
         if student not in students.keys():
             students[student] = dict()
         if student not in temp_dict.keys():
@@ -571,12 +572,12 @@ def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
         students[student]['sstudy'] = d['study__abbreviation']
 
         # Create the grade dictionary.
-        temp_dict[student][d['person__Submitter__test']] = (
+        temp_dict[student][test] = (
             d['person__Submitter__grade'], d['person__Submitter__released'])
 
         # Create the test released dictionary.
         if not testallreleased == None:
-            if not d['person__Submitter__test'] in testallreleased.keys():
-                testallreleased[d['person__Submitter__test']] = True
-            if not d['person__Submitter__released']:
-                testallreleased[d['person__Submitter__test']] = False
+            if not test in testallreleased.keys():
+                testallreleased[test] = True
+            if not test:
+                testallreleased[test] = False
