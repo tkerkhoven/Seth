@@ -64,7 +64,7 @@
 
                         <tr>
                             {% for test in tests %}
-                                <td><a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></td>
+                                <td><a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></td>
                             {% endfor %}
                         </tr>
                         </thead>
@@ -73,13 +73,15 @@
                             {% for test in tests %}
                             {% with grade=gradedict|key:test.id|key:0 %}
                                 <td id="gradeid_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                    <a data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}</a>
+                                    <a title="{{ grade }}">{{ grade|round }}</a>
 
-                                    {% if gradedict|key:test.id|key:1 %}
-                                    <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
-                                    {% else %}
-                                    <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
-                                    {% endif%}
+                                    {% if grades|key:test.id != 'N/A' %}
+                                        {% if grades|key:test.id|key:1 %}
+                                        <i class="material-icons float-right" title="Grade has been released">done</i>
+                                        {% else %}
+                                        <i class="material-icons float-right" title="Grade has not been released">clear</i>
+                                        {% endif %}
+                                    {% endif %}
                                 </td>
                             {% endwith %}
                             {% endfor %}
