@@ -11,7 +11,6 @@ def is_coordinator(person):
 
 
 def is_coordinator_of_module(person, mid):
-    """Untested"""
     today = now()
     result = Coordinator.objects.filter(person=person, module_edition=mid, is_assistant=False)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
@@ -26,7 +25,6 @@ def is_teacher(person):
 
 
 def is_teacher_of_part(person, mp):
-    """Untested"""
     today = now()
     result = Teacher.objects.filter(person=person, module_part=mp, role='T')
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
@@ -41,7 +39,6 @@ def is_teaching_assistant(person):
 
 
 def is_teaching_assistant_of_part(person, mpid):
-    """Untested"""
     today = now()
     result = Teacher.objects.filter(person=person, role='A', module_part=mpid)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
@@ -56,7 +53,6 @@ def is_student(person):
 
 
 def is_student_of_module(person, mid):
-    """Untested"""
     today = now()
     result = Studying.objects.filter(person=person, module_edition=mid)
     # print(result)
@@ -72,7 +68,6 @@ def is_study_adviser(person):
 
 
 def is_study_adviser_of_study(person, study):
-    """Untested"""
     today = now()
     result = Study.objects.filter(abbreviation=study.abbreviation)
     result = result.filter(Q(advisers__end__gte=today) | Q(advisers__end=None))
@@ -89,7 +84,6 @@ def is_coordinator_assistant(person):
 
 
 def is_coordinator_assistant_of_module(person, mid):
-    """Untested"""
     today = now()
     result = Coordinator.objects.filter(person=person, is_assistant=True, module_edition=mid)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
