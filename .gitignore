@@ -5,7 +5,6 @@ Seth/static/Seth/bootstrap_new/*
 Seth/_build
 Seth/_static
 Seth/_templates
-Seth/docs
 
 # Not ignore:
 !Seth/static/Seth/bootstrap_new/dist
