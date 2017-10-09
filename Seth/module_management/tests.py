@@ -5,7 +5,9 @@ from django.utils import timezone
 
 from Grades.models import Module, Person, Study, ModuleEdition, ModulePart, Studying, Test, Grade, Teacher, Coordinator
 from Seth.settings import LOGIN_URL
-from module_management.views import ModuleListView, ModuleDetailView, ModuleEditionDetailView
+from module_management.views import ModuleListView, ModuleDetailView, ModuleEditionDetailView, TestDetailView, ModuleEditionUpdateView, \
+    ModulePartUpdateView, ModulePartDetailView, ModulePartDeleteView, TestDeleteView, TestUpdateView, ModuleEditionCreateView, \
+    ModuleEditionCreateForm, ModulePartCreateView, ModulePartCreateForm, TestCreateView, TestCreateForm
 
 
 def set_up_base_data():
@@ -67,6 +69,12 @@ def set_up_base_data():
     module_part0 = ModulePart(name='module_part0', module_edition=module_ed0)
     module_part0.save()
 
+    module_part1 = ModulePart(name='module_part1', module_edition=module_ed1)
+    module_part1.save()
+
+    module_part2 = ModulePart(name='module_part2', module_edition=module_ed0)
+    module_part2.save()
+
     # Define Studying
     studying = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
     studying.save()
@@ -74,6 +82,12 @@ def set_up_base_data():
     # Define Tests
     test0 = Test(module_part=module_part0, name='test0', type='E')
     test0.save()
+
+    test1 = Test(module_part=module_part1, name='test1', type='E')
+    test1.save()
+
+    test2 = Test(module_part=module_part2, name='test2', type='E')
+    test2.save()
 
     # Define Grades
     grade0 = Grade(test=test0, teacher=teacher_person, student=student_person0, description='grade0', grade=6)
@@ -93,6 +107,10 @@ def set_up_base_data():
 
     coordinator1 = Coordinator(person=coordinator_person, module_edition=module_ed3, is_assistant=False)
     coordinator1.save()
+
+
+def get_list_from_queryset(queryset):
+    return [repr(r) for r in queryset]
 
 
 class ModuleManagementModuleListTests(TestCase):
@@ -148,17 +166,29 @@ class ModuleManagementModuleListTests(TestCase):
         response = self.client.get(reverse('module_management:module_overview'))
 
         self.assertEqual(response.resolver_match.func.__name__, ModuleListView.as_view().__name__)
-        self.assertTemplateUsed(response, 'module_management/module_overview.html')
+        self.assertTemplateUsed(response, 'module_management/module_overview2.html')
 
-        self.assertEqual(response.context['module_list'], Module.objects.filter(moduleedition__coordinators__user=user).distinct())
-        self.assertEqual(response.context['mod_eds'], ModuleEdition.objects.filter(coordinators__user=user))
+        self.assertQuerysetEqual(response.context['module_list'],
+                                 get_list_from_queryset(Module.objects.filter(moduleedition__coordinators__user=user).distinct()))
+        self.assertQuerysetEqual(response.context['mod_eds'], get_list_from_queryset(ModuleEdition.objects.filter(coordinators__user=user)))
 
         self.assertContains(response, 'Module 1')
-        self.assertContains(response, '{}-{}-{}'.format(timezone.now().year, 'Module 1', '1A'))
-        self.assertContains(response, '{}-{}-{}'.format(timezone.now().year - 1, 'Module 1', '1A'))
-        self.assertNotContains(response, '{}-{}-{}'.format(timezone.now().year - 2, 'Module 1', '1A'))
+        self.assertContains(response, '{}-{}-{}'.format(timezone.now().year, '001', '1A'))
+        self.assertContains(response, '{}-{}-{}'.format(timezone.now().year - 1, '001', '1A'))
+        self.assertNotContains(response, '{}-{}-{}'.format(timezone.now().year - 2, '001', '1A'))
         self.assertNotContains(response, 'Module 2')
-        self.assertNotContains(response, '{}-{}-{}'.format(timezone.now().year, 'Module 2', '1B'))
+        self.assertNotContains(response, '{}-{}-{}'.format(timezone.now().year, '002', '1B'))
+
+    def test_queries(self):
+        user = User.objects.get(username='coordinator0')
+        url_1 = reverse('module_management:module_overview')
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(6):
+            self.client.get(url_1, follow=True)
 
 
 class ModuleManagementModuleDetailTests(TestCase):
@@ -231,7 +261,19 @@ class ModuleManagementModuleDetailTests(TestCase):
         self.assertTemplateUsed(response, 'module_management/module_detail.html')
 
         self.assertEqual(response.context['module'], Module.objects.get(pk=pk))
-        self.assertEqual(response.context['module_editions'], ModuleEdition.objects.filter(coordinators__user=user))
+        self.assertQuerysetEqual(response.context['module_editions'], get_list_from_queryset(ModuleEdition.objects.filter(coordinators__user=user)))
+
+    def test_queries(self):
+        user = User.objects.get(username='coordinator0')
+        pk_1 = Module.objects.get(name='Module 1').pk
+        url_1 = reverse('module_management:module_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(6):
+            self.client.get(url_1, follow=True)
 
 
 class ModuleManagementModuleEditionDetailTests(TestCase):
@@ -290,7 +332,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
     def test_contents(self):
         user = User.objects.get(username='coordinator0')
         module_edition = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
-        url = reverse('module_management:module_ed_detail', kwargs={'pk': module_edition})
+        url = reverse('module_management:module_edition_detail', kwargs={'pk': module_edition})
 
         # Log in as coordinator
         self.client.logout()
@@ -302,6 +344,751 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.assertTemplateUsed(response, 'module_management/module_edition_detail.html')
 
         self.assertEqual(response.context['moduleedition'], ModuleEdition.objects.get(pk=module_edition))
-        self.assertEqual(response.context['studying'], Studying.objects.filter(module_edition=module_edition))
-        self.assertEqual(response.context['module_parts'], ModulePart.objects.filter(module_edition=module_edition))
-        self.assertEqual(response.context['coordinators'], Coordinator.objects.filter(module_edition=module_edition))
+        self.assertQuerysetEqual(response.context['studying'], get_list_from_queryset(Studying.objects.filter(module_edition=module_edition)))
+        self.assertQuerysetEqual(response.context['module_parts'], get_list_from_queryset(ModulePart.objects.filter(module_edition=module_edition)))
+        self.assertQuerysetEqual(response.context['coordinators'], get_list_from_queryset(Coordinator.objects.filter(module_edition=module_edition)))
+
+    def test_queries(self):
+        user = User.objects.get(username='coordinator0')
+        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(11):
+            self.client.get(url_1, follow=True)
+
+
+# WIP
+class ModuleManagementModuleEditionUpdateTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_edition_update'
+        self.template = 'module_management/module_edition_update.html'
+        self.view_cls = ModuleEditionUpdateView
+        self.model_cls = ModuleEdition
+        self.model_name = 'moduleedition'
+        self.pk_1 = self.model_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        self.pk_2 = self.model_cls.objects.get(module='001', block='1A', year=timezone.now().year - 2).pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(5):
+            self.client.get(self.url_1, follow=True)
+
+
+# WIP
+class ModuleManagementModuleEditionCreateTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_edition_create'
+        self.template = 'module_management/module_edition_create.html'
+        self.view_cls = ModuleEditionCreateView
+        self.model_cls = ModuleEdition
+        self.model_name = 'moduleedition'
+        self.super_cls = Module
+        self.form_cls = ModuleEditionCreateForm
+        self.pk_1 = self.super_cls.objects.get(code='001').pk
+        self.pk_2 = self.super_cls.objects.get(code='002').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+
+# WIP
+class ModuleManagementModulePartDetailTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_part_detail'
+        self.template = 'module_management/module_part_detail.html'
+        self.view_cls = ModulePartDetailView
+        self.model_cls = ModulePart
+        self.model_name = 'modulepart'
+        self.pk_1 = self.model_cls.objects.get(name='module_part0').pk
+        self.pk_2 = self.model_cls.objects.get(name='module_part1').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+
+# WIP
+class ModuleManagementModulePartUpdateTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_part_update'
+        self.template = 'module_management/module_part_update.html'
+        self.view_cls = ModulePartUpdateView
+        self.model_cls = ModulePart
+        self.model_name = 'modulepart'
+        self.pk_1 = self.model_cls.objects.get(name='module_part0').pk
+        self.pk_2 = self.model_cls.objects.get(name='module_part1').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+
+# WIP
+class ModuleManagementModulePartCreateTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_part_create'
+        self.template = 'module_management/module_part_create.html'
+        self.view_cls = ModulePartCreateView
+        self.model_cls = ModulePart
+        self.model_name = 'modulepart'
+        self.super_cls = ModuleEdition
+        self.form_cls = ModulePartCreateForm
+        self.pk_1 = self.super_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        self.pk_2 = self.super_cls.objects.get(module='001', block='1A', year=timezone.now().year - 2).pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+
+# WIP
+class ModuleManagementModulePartDeleteTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_part_delete'
+        self.template = 'module_management/module_part_delete.html'
+        self.view_cls = ModulePartDeleteView
+        self.model_cls = ModulePart
+        self.model_name = 'moduleedition'
+        self.pk_1 = self.model_cls.objects.get(name='module_part0').pk
+        self.pk_2 = self.model_cls.objects.get(name='module_part1').pk
+        self.pk_3 = self.model_cls.objects.get(name='module_part2').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.url_3 = reverse(self.base_url, kwargs={'pk': self.pk_3})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_insufficient_permissions_deletion_with_grades(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 200)
+
+
+class ModuleManagementTestDetailTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:test_detail'
+        self.pk_1 = Test.objects.get(name='test0').pk
+        self.pk_2 = Test.objects.get(name='test1').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+        self.model_cls = Test
+        self.view_cls = TestDetailView
+        self.template = 'module_management/test_detail.html'
+        self.model_name = 'test'
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(7):
+            self.client.get(self.url_1, follow=True)
+
+
+# WIP
+class ModuleManagementTestUpdateTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:test_update'
+        self.template = 'module_management/test_update.html'
+        self.view_cls = TestUpdateView
+        self.model_cls = Test
+        self.model_name = 'test'
+        self.pk_1 = self.model_cls.objects.get(name='test0').pk
+        self.pk_2 = self.model_cls.objects.get(name='test1').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+
+# WIP
+class ModuleManagementTestCreateTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:test_create'
+        self.template = 'module_management/test_create.html'
+        self.view_cls = TestCreateView
+        self.model_cls = Test
+        self.model_name = 'test'
+        self.super_cls = ModulePart
+        self.form_cls = TestCreateForm
+        self.pk_1 = self.super_cls.objects.get(name='module_part0').pk
+        self.pk_2 = self.super_cls.objects.get(name='module_part1').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 200)
+
+
+# WIP
+class ModuleManagementTestDeleteTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:test_delete'
+        self.template = 'module_management/test_delete.html'
+        self.view_cls = TestDeleteView
+        self.model_cls = Test
+        self.model_name = 'test'
+        self.pk_1 = self.model_cls.objects.get(name='test0').pk
+        self.pk_2 = self.model_cls.objects.get(name='test1').pk
+        self.pk_3 = self.model_cls.objects.get(name='test2').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.url_3 = reverse(self.base_url, kwargs={'pk': self.pk_3})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_insufficient_permissions_deletion_with_grades(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 200)
