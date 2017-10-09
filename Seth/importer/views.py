@@ -330,7 +330,7 @@ def export_test(request, pk):
                                           file_type='xlsx')
 
 
-def make_grade(student: Person, corrector: Person, test: Test, grade: float, description: str = ''):
+def make_grade(student: Person, corrector: Person, test: Test, grade, description: str = ''):
     """ Helper function that makes Grade objects so they can be inserted in bulk with def:save_grades.
     :param student: Person object of the student.
     :param corrector: Person object of the corrector.
@@ -417,6 +417,28 @@ def import_student(request):
 
         # else:
         # return HttpResponseBadRequest('You are not an Admin')
+
+
+@login_required
+def workbook_student_to_module(request, pk):
+    """ Creates an excel sheet that may be filled in to register students to a module. This sheet is compatible with
+        def:import_student_to_module.
+
+        :param request: Django request
+        :param pk: Test ID
+        :return: A file response containing an .xlsx file.
+        """
+    print("foo")
+    # Check if user is a module coordinator.
+    if not ModuleEdition.objects.filter(pk=pk).filter(coordinator__person__user=request.user):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    # Insert column titles
+    table = [['student_id', 'name', 'email', 'start date', 'study', 'role']]
+
+    print("foo")
+
+    return excel.make_response_from_array(table, file_name='Module import Sheet.xlsx', file_type='xlsx')
 
 
 @login_required
