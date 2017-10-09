@@ -420,28 +420,6 @@ def import_student(request):
 
 
 @login_required
-def workbook_student_to_module(request, pk):
-    """ Creates an excel sheet that may be filled in to register students to a module. This sheet is compatible with
-        def:import_student_to_module.
-
-        :param request: Django request
-        :param pk: Test ID
-        :return: A file response containing an .xlsx file.
-        """
-    print("foo")
-    # Check if user is a module coordinator.
-    if not ModuleEdition.objects.filter(pk=pk).filter(coordinator__person__user=request.user):
-        raise PermissionDenied('You are not the module coordinator for this course.')
-
-    # Insert column titles
-    table = [['student_id', 'name', 'email', 'start date', 'study', 'role']]
-
-    print("foo")
-
-    return excel.make_response_from_array(table, file_name='Module import Sheet.xlsx', file_type='xlsx')
-
-
-@login_required
 @require_http_methods(["GET", "POST"])
 def import_student_to_module(request, pk):
     if not ModuleEdition.objects.filter(  # ToDo: Check if User is actually Admin
