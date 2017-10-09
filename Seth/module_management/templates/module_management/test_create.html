@@ -14,14 +14,23 @@
                     <h3 class="display-4">Create Test for {{ module_part }}</h3>
 
                     <ul class="navbar-nav mr-auto"></ul>
+
+                    <a href="#" id="createTestSave" data-toggle="tooltip" data-placement="bottom" title="Save">
+                        <i class="material-icons md-36 title-bar text-info">save</i>
+                    </a>
+                    <a href="#" onclick="history.back()" data-toggle="tooltip" data-placement="bottom" title="Cancel">
+                        <i class="material-icons md-36 title-bar">clear</i>
+                    </a>
                 </nav>
             </div>
         </div>
-        <div class="row">
-            <div class="col-lg-12">
-                <form action="" method="post">{% csrf_token %}
-                    {{ form.as_p }}
-                    <input type="submit" value="Create"/>
+        <hr class="remove-top-margin">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <form id="createTestForm" action="" method="post">{% csrf_token %}
+{#                    {{ form.as_p }}#}
+                    {% include 'form_snippet.html' %}
+{#                    <input type="submit" value="Create"/>#}
                 </form>
             </div>
         </div>

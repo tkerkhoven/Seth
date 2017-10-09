@@ -28,13 +28,27 @@
         </div>
         <hr class="remove-top-margin">
         <div class="col-lg-5">
-            <p>Module Part: <a href="{% url 'module_management:module_part_detail' test.module_part.pk %}">{{ test.module_part }}</a><br>
-            Test Name: {{ test.name }}<br>
-            Test Type: {{ test.get_type }}<br>
-            Test Time: {{ test.time }}<br>
-            Minimum Grade: {{ test.minimum_grade }}<br>
-            Maximum Grade: {{ test.maximum_grade }}<br>
-            <a href="{% url 'grades:test' test.pk %}">Grades</a></p>
+            <div class="card">
+                <h5 class="card-header">
+                    Info
+                </h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Module part: <a href="{% url 'module_management:module_part_detail' test.module_part.pk %}">{{ test.module_part }}</a></li>
+                    <li class="list-group-item">Test Name: <span class="font-italic">{{ test.name }}</span></li>
+                    <li class="list-group-item">Test Type: <span class="font-italic">{{ test.get_type }}</span></li>
+                    <li class="list-group-item">Test Time: <span class="font-italic">{{ test.time }}</span></li>
+                    <li class="list-group-item">Minimum Grade: <span class="font-italic">{{ test.minimum_grade }}</span></li>
+                    <li class="list-group-item">Maximum Grade: <span class="font-italic">{{ test.maximum_grade }}</span></li>
+                </ul>
+            </div>
+{#            <p>#}
+{#                Module Part: <a href="{% url 'module_management:module_part_detail' test.module_part.pk %}">{{ test.module_part }}</a><br>#}
+{#                Test Name: {{ test.name }}<br>#}
+{#                Test Type: {{ test.get_type }}<br>#}
+{#                Test Time: {{ test.time }}<br>#}
+{#                Minimum Grade: {{ test.minimum_grade }}<br>#}
+{#                Maximum Grade: {{ test.maximum_grade }}<br>#}
+{#            </p>#}
         </div>
         <div class="col-lg-7"></div>
     </div>

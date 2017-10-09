@@ -16,28 +16,42 @@
         </div>
         <div class="row">
             <div class="col-lg-5">
-                <p>
-                    Code: {{ module.code }}<br>
-                    Name: {{ module.name }}<br>
-                    Start: {{ module.start }}<br>
-                    End: {{ module.end }}
-                </p>
+                <div class="card">
+                    <h5 class="card-header">
+                        Info
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Code: <span class="font-italic">{{ module.code }}</span></li>
+                        <li class="list-group-item">Name: <span class="font-italic">{{ module.name }}</span></li>
+                        <li class="list-group-item">Start: <span class="font-italic">{{ module.start }}</span></li>
+                        <li class="list-group-item">End: <span class="font-italic">{{ module.end }}</span></li>
+                    </ul>
+                </div>
+{#                <p>#}
+{#                    Code: {{ module.code }}<br>#}
+{#                    Name: {{ module.name }}<br>#}
+{#                    Start: {{ module.start }}<br>#}
+{#                    End: {{ module.end }}#}
+{#                </p>#}
             </div>
             <div class="col-lg-1"></div>
             <div class="col-lg-6">
                 <div class="card">
-                    <div class="card-header">Module editions<a href="{% url 'module_management:module_edition_create' module.pk %}"><i class="material-icons float-right">add_circle</i></a></div>
-                    <div class="card-body">
-                        <ul class="list-group">
-                            {% for module_edition in module.moduleedition_set.all %}
-                                {% if module_edition in module_editions %}
-                                    <li class="list-group-item">
-                                        <a href="{% url 'module_management:module_edition_detail' module_edition.pk %}">{{ module_edition.code }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                    </div>
+                    <h5 class="card-header">
+                        Module editions
+                        <a href="{% url 'module_management:module_edition_create' module.pk %}">
+                            <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Add module edition">add_circle</i>
+                        </a>
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        {% for module_edition in module.moduleedition_set.all %}
+                            {% if module_edition in module_editions %}
+                                <li class="list-group-item">
+                                    <a href="{% url 'module_management:module_edition_detail' module_edition.pk %}">{{ module_edition.code }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
                 </div>
 {#                <ul>#}
 {#                    <li>Module Code: {{ module.module_code }}</li>#}

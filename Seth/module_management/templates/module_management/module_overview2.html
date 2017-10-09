@@ -26,17 +26,15 @@
                                         <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Add new module edition">add_circle</i>
                                     </a>
                                 </div>
-                                <div class="card-body">
-                                    <ul class="list-group">
-                                        {% for mod_ed in mod.moduleedition_set.all %}
-                                            {% if mod_ed in mod_eds %}
-                                                <li class="list-group-item">
-                                                    <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.code }}</a>
-                                                </li>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                </div>
+                                <ul class="list-group list-group-flush">
+                                    {% for mod_ed in mod.moduleedition_set.all %}
+                                        {% if mod_ed in mod_eds %}
+                                            <li class="list-group-item">
+                                                <a href="{% url 'module_management:module_edition_detail' mod_ed.pk %}">{{ mod_ed.code }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
                             </div>
                         </div>
                 {% else %}
