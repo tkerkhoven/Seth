@@ -37,6 +37,8 @@ class PersonDetailView(generic.DetailView):
         data['start'] = person.start
         data['end'] = person.end
         data['full_id'] = person.full_id
+        data['email'] = person.email
+        data['studying_set'] = person.studying_set.all()
         context['person'] = data
         return context
 
