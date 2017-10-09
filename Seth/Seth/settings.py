@@ -140,6 +140,9 @@ FIXTURE_DIRS = (
     './fixtures/',
 )
 
+# Console mailing backend for development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # Django-excel requires these, used in importer.
 FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",
                         "django_excel.TemporaryExcelFileUploadHandler")

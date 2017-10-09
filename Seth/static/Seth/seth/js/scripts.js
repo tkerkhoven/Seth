@@ -13,7 +13,51 @@ $(document).ready(function() {
       "columnDefs": [{
         orderable: false,
         targets: "no-sort"
-      }]
+      }],
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    var studenttable = $('#studentbook').DataTable({
+      "ordering": false,
+      "paging": false,
+      "searching": false,
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    var testtable = $('#testbook').DataTable({
+      "paging": false,
+      "ordering": true,
+      "order": [[1, 'asc']],
+      "columnDefs": [{
+        orderable: false,
+        targets: "no-sort"
+      }],
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    testtable.on('draw', function() {
+      updateColoring();
     });
 
     table.on('draw', function() {

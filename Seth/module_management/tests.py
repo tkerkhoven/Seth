@@ -127,7 +127,7 @@
 #
 #         self.assertEqual(response.status_code, 200)
 #         self.assertEqual(response.resolver_match.func.__name__, IndexView.as_view().__name__)
-#         self.assertTemplateUsed(response, 'module_management/index.html')
+#         self.assertTemplateUsed(response, 'module_management/module_overview.html')
 #
 #         self.assertContains(response, 'Module 1')
 #         self.assertContains(response, '0010')
@@ -417,7 +417,7 @@
 #
 #         self.assertEqual(response.status_code, 200)
 #         self.assertEqual(response.resolver_match.func.__name__, ModuleEdView.as_view().__name__)
-#         self.assertTemplateUsed(response, 'module_management/module_ed_detail.html')
+#         self.assertTemplateUsed(response, 'module_management/module_edition_detail.html')
 #
 #         self.assertEqual(response.context['module_ed'], ModuleEdition.objects.get(pk=mod_ed))
 #

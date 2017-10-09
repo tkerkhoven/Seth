@@ -1,8 +1,8 @@
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.utils import timezone
 
-from Grades.models import ModuleEdition
+from Grades.models import ModuleEdition, Studying
 
 
 # @permission_required('grades.add_grade')
@@ -21,6 +21,10 @@ def home(request):
         #     }
         # ],
     }
+    studying = Studying.objects.filter(person__user=request.user)
+    if studying:
+        return redirect('grades:student', studying.get(person__user=request.user).person.id)
+
     return render(request, 'dashboard/index.html', context)
 
 
@@ -56,7 +60,7 @@ def not_found(request):
 
 
 def permission_denied(request):
-    return render(request, 'errors/403.html', status=403)
+    return render(request, 'errors/403.html', status=403,)
 
 
 def bad_request(request):

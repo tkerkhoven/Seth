@@ -39,9 +39,11 @@
 
                 {% if gradedict %}
 
+                    {% if can_export %}
                     <form action="{% url 'grades:export' moduleedition.id %}">
-                        <input class="btn btn-secondary" type="submit" value="Export to .csv" />
+                        <input class="btn btn-secondary" type="submit" value="Export to .xls" />
                     </form>
+                    {% endif %}
 
                     <div id="accordion" role="tablist">
                       <div class="card">
@@ -80,7 +82,10 @@
                             <td></td>
                             {% for test in tests %}
                             <td class="no-sort">
-                                <a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                                <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                                {% if testallreleased|key:test.id %}
+                                <i class="material-icons float-right" title="All grades in this test have been released">done</i>
+                                {% endif %}
                             </td>
                             {% endfor %}
                         </tr>
@@ -93,15 +98,19 @@
                                 <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                             </td>
                             {% for test in tests %}
-                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grades|key:test.id|key:0|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                <a data-toggle="tooltip" title="{{ grades|key:test.id|key:0 }}">{{ grades|key:test.id|key:0|round }}</a>
+                            {% with grade=grades|key:test.id|key:0 %}
+                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                <a title="{{ grade }}">{{ grade|round }}</a>
 
-                                {% if grades|key:test.id|key:1 %}
-                                <i class="material-icons float-right" data-toggle="tooltip" title="Grade has been released">done</i>
-                                {% else %}
-                                <i class="material-icons float-right" data-toggle="tooltip" title="Grade has not been released">clear</i>
-                                {% endif%}
+                                {% if grades|key:test.id != 'N/A' %}
+                                    {% if grades|key:test.id|key:1 %}
+                                    <i class="material-icons float-right" title="Grade has been released">done</i>
+                                    {% else %}
+                                    <i class="material-icons float-right" title="Grade has not been released">clear</i>
+                                    {% endif %}
+                                {% endif %}
                             </td>
+                            {% endwith %}
                             {% endfor %}
                         </tr>
                         {% endfor %}
