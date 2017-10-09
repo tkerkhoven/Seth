@@ -19,7 +19,6 @@ class PersonsView(generic.ListView):
             data['name'] = person.name
             data['full_id'] = person.full_id
             person_dict[person.id] = data
-            print(person.name)
         context['persons'] = person_dict
         return context
 
