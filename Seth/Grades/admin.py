@@ -17,7 +17,7 @@ class TeacherInline(admin.TabularInline):
 
 # Admin Views
 class PersonAdmin(admin.ModelAdmin):
-    list_display = ('name', 'university_number', 'start', 'end', 'user')
+    list_display = ('name', 'university_number', 'email', 'start', 'end', 'user')
     list_filter = ['university_number']
     inlines = (CoordinatorInline, TeacherInline)
 
