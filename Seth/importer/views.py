@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
 from django.views.decorators.http import require_http_methods, require_GET
-from xlsxwriter.utility import xl_rowcol_to_cell
+from permission_utils import *
 
 import re
 
