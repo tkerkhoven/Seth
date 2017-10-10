@@ -100,12 +100,10 @@ def is_coordinator_or_assistant_of_module(person, module_edition):
 
 def is_coordinator_or_teacher_of_test(person, test):
 
-    if Test.objects.filter(
+    return Test.objects.filter(
         Q(module_part__teachers=person) |
         Q(module_part__module_edition__coordinator__person=person)
-    ).filter(pk=test.pk):
-        return True
-    return False
+    ).filter(pk=test.pk).count() > 0
 
 
 def now():
