@@ -295,6 +295,13 @@ def export_module(request, pk):
 
 @login_required()
 @require_http_methods(["GET"])
+def export_student_import_format(request):
+    table = [['Student_id', 'name', 'E-mail', 'Start (yyyy-mm-dd)', 'study', 'role']]
+    return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
+
+
+@login_required()
+@require_http_methods(["GET"])
 def export_test(request, pk):
     """ Creates an excel sheet that contains all students that may take the test. This sheet is compatible with
     def:import_test. It contains a description row, which can be used to submit feedback through.
@@ -451,17 +458,16 @@ def import_student_to_module(request, pk):
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
-        print('hello')
         if student_form.is_valid():
             file = request.FILES['file']
             dict = file.get_book_dict()
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
             startpattern = re.compile('start*')
-            emailpattern = re.compile('email*')
+            emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
                 1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
-                    students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
+                students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
                             students_to_module[0][5].lower() == 'role':
                 context = {}
                 context['created'] = []
@@ -499,9 +505,14 @@ def import_student_to_module(request, pk):
                             [student.name, student.full_id, module.name, module_ed.code, studying.study])
                         context['studying'].append(
                             [student.name, student.full_id, module.name, module_ed.code, studying.study])
-                print(context)
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
+                print(students_to_module[0][0].lower() == 'student_id')
+                print(students_to_module[0][1].lower() == 'name')
+                print(emailpattern.match(students_to_module[0][2].lower()))
+                print(startpattern.match(students_to_module[0][3].lower()))
+                print(students_to_module[0][4].lower() == 'study')
+                print(students_to_module[0][5].lower() == 'role')
                 raise SuspiciousOperation("Incorrect xls-format")
         else:
             raise SuspiciousOperation('Bad POST')
