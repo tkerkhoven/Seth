@@ -12,15 +12,8 @@ class PersonsView(generic.ListView):
     def get_context_data(self, **kwargs):
         context = super(PersonsView, self).get_context_data(**kwargs)
 
-        persons = Person.objects.all()
-        person_dict = dict()
-        for person in persons.all():
-            data = dict()
-            data['name'] = person.name
-            data['full_id'] = person.full_id
-            person_dict[person.id] = data
-            print(person.name)
-        context['persons'] = person_dict
+        persons = Person.objects.all().order_by('name')
+        context['persons'] = persons
         return context
 
 
@@ -32,12 +25,9 @@ class PersonDetailView(generic.DetailView):
         context = super(PersonDetailView, self).get_context_data(**kwargs)
         person = Person.objects.get(id=self.kwargs['pk'])
         data = dict()
-        data['name'] = person.name
-        data['id'] = person.id
-        data['start'] = person.start
-        data['stop'] = person.stop
-        data['full_id'] = person.full_id
-        context['person'] = data
+        context['person'] = person
+        if person.studying_set.values('study'):
+            context['studies'] = person.studying_set.values('study')[0].values
         return context
 
 
