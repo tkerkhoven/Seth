@@ -69,9 +69,7 @@ def is_study_adviser(person):
 
 def is_study_adviser_of_study(person, study):
     today = now()
-    if Study.objects.filter(advisers=person).filter(Q(advisers__end=None) | Q(advisers__end__lte=today)).filter(pk=study.pk):
-        return True
-    return False
+    return Study.objects.filter(advisers=person).filter(Q(advisers__end=None) | Q(advisers__end__lte=today)).filter(pk=study.pk).count() > 0
 
 
 def is_coordinator_assistant(person):
@@ -92,7 +90,8 @@ def is_coordinator_or_assistant(person):
 
 
 def is_coordinator_or_assistant_of_module(person, module_edition):
-    return is_coordinator_of_module(person, module_edition) or is_coordinator_assistant_of_module(person, module_edition)
+    return is_coordinator_of_module(person, module_edition) or is_coordinator_assistant_of_module(person,
+                                                                                                  module_edition)
 
 
 # Test related queries
