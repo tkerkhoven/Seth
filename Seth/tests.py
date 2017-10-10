@@ -149,7 +149,6 @@ class ModuleManagementIndexTests(TestCase):
             is_assistant=True,
         )
         self.study_assigned.advisers.add(self.adviser)
-        # print(self.study_assigned.advisers.all())
         Teacher.objects.get_or_create(
             person=self.teacher,
             module_part = self.module_part_assigned,
@@ -211,7 +210,7 @@ class ModuleManagementIndexTests(TestCase):
         self.assertEqual(is_adviser, True)
 
         is_adviser_of_study_success = pu.is_study_adviser_of_study(self.adviser, self.study_assigned)
-        # print(self.study_assigned.advisers)
+        # print(Study.objects.filter(pk=self.study_assigned.pk)[0].advisers.all())
         # print(self.adviser)
         self.assertEqual(is_adviser_of_study_success, True)
 

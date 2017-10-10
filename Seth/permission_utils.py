@@ -10,9 +10,9 @@ def is_coordinator(person):
     return result.count() > 0
 
 
-def is_coordinator_of_module(person, mid):
+def is_coordinator_of_module(person, module_edition):
     today = now()
-    result = Coordinator.objects.filter(person=person, module_edition=mid, is_assistant=False)
+    result = Coordinator.objects.filter(person=person, module_edition=module_edition, is_assistant=False)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
     return result.count() > 0
 
@@ -24,9 +24,9 @@ def is_teacher(person):
     return result.count() > 0
 
 
-def is_teacher_of_part(person, mp):
+def is_teacher_of_part(person, module_part):
     today = now()
-    result = Teacher.objects.filter(person=person, module_part=mp, role='T')
+    result = Teacher.objects.filter(person=person, module_part=module_part, role='T')
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
     return result.count() > 0
 
@@ -38,9 +38,9 @@ def is_teaching_assistant(person):
     return result.count() > 0
 
 
-def is_teaching_assistant_of_part(person, mpid):
+def is_teaching_assistant_of_part(person, module_part):
     today = now()
-    result = Teacher.objects.filter(person=person, role='A', module_part=mpid)
+    result = Teacher.objects.filter(person=person, role='A', module_part=module_part)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
     return result.count() > 0
 
@@ -52,9 +52,9 @@ def is_student(person):
     return result.count() > 0
 
 
-def is_student_of_module(person, mid):
+def is_student_of_module(person, module_part):
     today = now()
-    result = Studying.objects.filter(person=person, module_edition=mid)
+    result = Studying.objects.filter(person=person, module_edition=module_part)
     # print(result)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
     return result.count() > 0
@@ -69,11 +69,8 @@ def is_study_adviser(person):
 
 def is_study_adviser_of_study(person, study):
     today = now()
-    result = Study.objects.filter(abbreviation=study.abbreviation)
-    result = result.filter(Q(advisers__end__gte=today) | Q(advisers__end=None))
-    for study in result:
-        if person in study.advisers.all():
-            return True
+    if Study.objects.filter(advisers=person).filter(Q(advisers__end=None) | Q(advisers__end__lte=today)).filter(pk=study.pk):
+        return True
     return False
 
 
@@ -83,9 +80,9 @@ def is_coordinator_assistant(person):
     return result.count() > 0
 
 
-def is_coordinator_assistant_of_module(person, mid):
+def is_coordinator_assistant_of_module(person, module_edition):
     today = now()
-    result = Coordinator.objects.filter(person=person, is_assistant=True, module_edition=mid)
+    result = Coordinator.objects.filter(person=person, is_assistant=True, module_edition=module_edition)
     result = result.filter(Q(person__end__gte=today) | Q(person__end=None))
     return result.count() > 0
 
@@ -94,8 +91,8 @@ def is_coordinator_or_assistant(person):
     return is_coordinator(person) or is_coordinator_assistant(person)
 
 
-def is_coordinator_or_assistant_of_module(person, mid):
-    return is_coordinator_of_module(person, mid) or is_coordinator_assistant_of_module(person, mid)
+def is_coordinator_or_assistant_of_module(person, module_edition):
+    return is_coordinator_of_module(person, module_edition) or is_coordinator_assistant_of_module(person, module_edition)
 
 
 def now():
