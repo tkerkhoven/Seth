@@ -296,6 +296,14 @@ def export_module(request, pk):
 @login_required()
 @require_http_methods(["GET"])
 def export_student_import_format(request):
+    """
+    Creates an excel sheet with appropriate headers (id, name, mail, start, study and role). In this sheet student
+    information can be added that is taken by def:import_student_to_module. The sheet is a default and is not altered
+    when called upon from within another module_edition.
+
+    :param request: Django request; not used in function
+    :return: .xlsx file response, named Import_students.xlsx
+    """
     table = [['Student_id', 'name', 'E-mail', 'Start (yyyy-mm-dd)', 'study', 'role']]
     return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
 
@@ -451,6 +459,19 @@ def workbook_student_to_module(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def import_student_to_module(request, pk):
+    """
+    Take .xlsx file, as produced by def:export_student_import_format and retrieve all students and metainformation from it.
+    Case 1 - Known User - Add the user to the active module edition with the right study and role by making a new Studying object
+    Case 2 - Unknown User - Add the student to the database by making a new Person object and proceed like Case 1
+    Case 3 - Already Added User - Ignore row
+    The function returns a view in which all newly added users, all users that are now added to the module edition and all users that were already in the module are shown.
+
+    :param request: Django request
+    :param pk: The module edition id
+    :return: /students-module-imported.html redirect in which all fails, successes and addeds are given
+    :raises: Permission denied if the user is not the Module Coordinator
+    :raises: SuspiciousOperation in case of faulty file input
+    """
     if not ModuleEdition.objects.filter(  # ToDo: Check if User is actually Admin
             Q(coordinator__person__user=request.user)
     ).filter(pk=pk):
@@ -507,12 +528,12 @@ def import_student_to_module(request, pk):
                             [student.name, student.full_id, module.name, module_ed.code, studying.study])
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
-                print(students_to_module[0][0].lower() == 'student_id')
-                print(students_to_module[0][1].lower() == 'name')
-                print(emailpattern.match(students_to_module[0][2].lower()))
-                print(startpattern.match(students_to_module[0][3].lower()))
-                print(students_to_module[0][4].lower() == 'study')
-                print(students_to_module[0][5].lower() == 'role')
+                # print(students_to_module[0][0].lower() == 'student_id')
+                # print(students_to_module[0][1].lower() == 'name')
+                # print(emailpattern.match(students_to_module[0][2].lower()))
+                # print(startpattern.match(students_to_module[0][3].lower()))
+                # print(students_to_module[0][4].lower() == 'study')
+                # print(students_to_module[0][5].lower() == 'role')
                 raise SuspiciousOperation("Incorrect xls-format")
         else:
             raise SuspiciousOperation('Bad POST')
