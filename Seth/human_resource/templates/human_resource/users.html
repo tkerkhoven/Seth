@@ -29,10 +29,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for key, value in persons.items %}
-                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:user' pk=key%}">
-                            <td> {{ value.full_id }} </td>
-                            <td> {{ value.name }} </td>
+                        {% for person in persons %}
+                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:user' pk=person.pk%}">
+{#                            <td> <a href="{% url 'human_resource:user' pk=person.pk %}"> {{ person.pk }}</a></td>#}
+                            <td> {{ person.university_number }} </td>
+                            <td> {{ person.name }} </td>
                         </tr>
                         {% endfor %}
                     </tbody>
