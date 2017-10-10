@@ -129,6 +129,25 @@ $(document).ready(function() {
             }
         }
     });
+
+    $("#label_role").hide();
+    $("#label_module_part").hide();
+    $("#id_role").hide();
+    $("#id_module_part").hide();
+    // Function that checks for a checked checkbox and changes a form
+    $("#id_create_teacher").change(function() {
+        if (this.checked) {
+            $("#id_role").show();
+            $("#label_role").show();
+            $("#id_module_part").show();
+            $("#label_module_part").show();
+        } else {
+            $("#id_role").hide();
+            $("#label_role").hide();
+            $("#id_module_part").hide();
+            $("#label_module_part").hide();
+        }
+    })
 });
 
 jQuery(document).ready(function($) {

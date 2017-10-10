@@ -2,7 +2,7 @@ from django.shortcuts import render
 from Grades.models import Person
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UserUpdateForm
+from .forms import UserUpdateForm, CreateUserForm
 
 # Create your views here.
 class PersonsView(generic.ListView):
@@ -76,3 +76,8 @@ class CreatePerson(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
+
+
+class CreatePersonNew(generic.FormView):
+    template_name = 'human_resource/person_form.html'
+    form_class = CreateUserForm

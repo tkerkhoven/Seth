@@ -1,5 +1,5 @@
 {% load widget_tweaks %}
-{% for field in form %}
+{% for field in form.visible_fields %}
     <div class="form-group">
         {{ field.errors }}
         {{ field.label_tag }}
@@ -15,6 +15,26 @@
             {{ field|add_class:"form-control-file" }}
         {% else %}
             {{ field|add_class:"form-control" }}
+        {% endif %}
+    </div>
+{% endfor %}
+{% for hidden in form.hidden_fields %}
+    <div class="form-group">
+        {{ hidden.errors }}
+        <label id="label_{{ hidden.name }}" style="display: none;" for="{{ hidden.name }}">{{ hidden.label }}</label>
+{#        {{ hidden.label_tag }}#}
+{#        {{ field|field_type }}#}
+{#        {% if hidden.field.required %}#}
+{#            *#}
+{#        {% endif %}#}
+        {% if hidden|field_type == "datefield" %}
+            <div class="input-group">
+                {{ hidden|add_class:"form-control date-picker" }}
+            </div>
+        {% elif hidden|field_type == "filefield" %}
+            {{ hidden|add_class:"form-control-file" }}
+        {% else %}
+            {{ hidden|add_class:"form-control" }}
         {% endif %}
     </div>
 {% endfor %}
