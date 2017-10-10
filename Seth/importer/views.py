@@ -34,19 +34,21 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        if ModuleEdition.objects.filter(coordinators__user=self.request.user):
+        person = Person.objects.filter(user=request.user).first()
+        if is_coordinator_or_assistant(person):
             return render(request, 'importer/mcindex.html', {
                 'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
                     'start')})
-        elif ModulePart.objects.filter(teacher__person__user=self.request.user):
+        elif is_teacher(person):
             return render(request, 'importer/teacherindex.html',
                           {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
                               'module_edition__start')})
 
-        raise PermissionDenied('Only module coordinators can view this page.')
+        raise PermissionDenied('Only module coordinators or teachers can view this page.')
 
-    def get_queryset(self):
-        return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')
+
+    # def get_queryset(self):
+    #     return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')
 
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
@@ -69,14 +71,14 @@ def import_module(request, pk):
     :return: A redirect to the Grades module's module view on success. Otherwise a 404 (module does not exist), 403
         (no permissions) or 400 (bad excel file or other import error)
     """
+    person = Person.objects.filter(user=request.user).first()
     if not ModuleEdition.objects.filter(pk=pk):
         raise Http404('Module does not exist.')
-    if not ModuleEdition.objects.filter(pk=pk).filter(coordinator__person__user=request.user):
+    if not is_coordinator_or_assistant(person):
         raise PermissionDenied('You are not the module coordinator for this course')
 
     if request.method == "POST":
         form = GradeUploadForm(request.POST, request.FILES)
-        print('valid form')
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -181,13 +183,14 @@ def import_test(request, pk):
     :return: A redirect to the Grades module's Test view on success. Otherwise a 404 (module does not exist), 403
         (no permissions) or 400 (bad excel file or other import error)
     """
+
     if not Test.objects.filter(pk=pk):
         raise Http404('Test does not exist.')
     # Check if user is either the module coordinator or teacher of this test.
-    if not Test.objects.filter(
-                    Q(module_part__teachers__user=request.user) |
-                    Q(module_part__module_edition__coordinator__person__user=request.user)
-    ).filter(pk=pk):
+    test = Test.objects.get(pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+
+    if not is_coordinator_or_teacher_of_test(person, test):
         raise PermissionDenied('You are not a module coordinator or teacher of this test. Please refer to the'
                                'module coordinator of this test if you think this is in error.')
 
@@ -232,7 +235,7 @@ def import_test(request, pk):
                             grades.append(make_grade(
                                 student=student,
                                 corrector=teacher,
-                                test=Test.objects.get(pk=pk),
+                                test=test,
                                 grade=row[grade_field],
                                 description=row[description_field]
                             ))
@@ -262,11 +265,18 @@ def export_module(request, pk):
     :param pk: Module ID
     :return: A file response containing an .xlsx file.
     """
+
+    if not ModuleEdition.objects.filter(pk=pk):
+        raise Http404('Module does not exist.')
+
+    person = Person.objects.filter(user=request.user).first()
+    module = ModuleEdition.objects.get(pk=pk)
+
     # Check if user is a module coordinator.
-    if not ModuleEdition.objects.filter(pk=pk).filter(coordinator__person__user=request.user):
+    if not is_coordinator_or_assistant_of_module(person, module):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
-    module = ModuleEdition.objects.get(pk=pk)
+
     students = Person.objects.filter(studying__module_edition=module)
     tests = Test.objects.filter(module_part__module_edition=module)
 
@@ -303,14 +313,17 @@ def export_test(request, pk):
     :param pk: Test ID
     :return: A file response containing an .xlsx file.
     """
+
+    if not Test.objects.filter(pk=pk):
+        raise Http404('Test does not exist.')
+
+    person = Person.objects.filter(user=request.user).first()
+    test = Test.objects.get(pk=pk)
+
     # Check if user is either the module coordinator or teacher of this test.
-    if not Test.objects.filter(
-                    Q(module_part__teachers__user=request.user) |
-                    Q(module_part__module_edition__coordinator__person__user=request.user)
-    ).filter(pk=pk):
+    if not is_coordinator_or_teacher_of_test(person, test):
         raise PermissionDenied('Not allowed to export test.')
 
-    test = Test.objects.get(pk=pk)
     students = Person.objects.filter(studying__module_edition__modulepart=test.module_part)
 
     # Insert padding
@@ -382,7 +395,9 @@ def save_grades(grades):
 @login_required
 @require_http_methods(["GET", "POST"])
 def import_student(request):
-    if not ModuleEdition.objects.filter(Q(coordinator__person__user=request.user)):
+    person = Person.objects.filter(user=request.user).first()
+
+    if not is_coordinator_or_assistant(person):
         raise PermissionDenied('Not allowed to add students if not a module coordinator')
 
     if request.method == "POST":
@@ -428,9 +443,10 @@ def workbook_student_to_module(request, pk):
         :param pk: Test ID
         :return: A file response containing an .xlsx file.
         """
-    print("foo")
     # Check if user is a module coordinator.
-    if not ModuleEdition.objects.filter(pk=pk).filter(coordinator__person__user=request.user):
+    module_edition = ModuleEdition.objects.filter(pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     # Insert column titles
@@ -444,9 +460,10 @@ def workbook_student_to_module(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def import_student_to_module(request, pk):
-    if not ModuleEdition.objects.filter(  # ToDo: Check if User is actually Admin
-            Q(coordinator__person__user=request.user)
-    ).filter(pk=pk):
+    # Check if user is a module coordinator.
+    module_edition = ModuleEdition.objects.filter(pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
         raise PermissionDenied('Not allowed to upload students to module.')
 
     if request.method == "POST":

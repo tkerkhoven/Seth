@@ -1,4 +1,4 @@
-from Grades.models import Coordinator, Teacher, Studying, Study
+from Grades.models import Coordinator, Teacher, Studying, Study, Test
 from django.db.models import Q
 import datetime
 
@@ -93,6 +93,19 @@ def is_coordinator_or_assistant(person):
 
 def is_coordinator_or_assistant_of_module(person, module_edition):
     return is_coordinator_of_module(person, module_edition) or is_coordinator_assistant_of_module(person, module_edition)
+
+
+# Test related queries
+# untested
+
+def is_coordinator_or_teacher_of_test(person, test):
+
+    if Test.objects.filter(
+        Q(module_part__teachers=person) |
+        Q(module_part__module_edition__coordinator__person=person)
+    ).filter(pk=test.pk):
+        return True
+    return False
 
 
 def now():
