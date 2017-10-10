@@ -47,8 +47,8 @@ class ImporterIndexView(LoginRequiredMixin, View):
         raise PermissionDenied('Only module coordinators or teachers can view this page.')
 
 
-    # def get_queryset(self):
-    #     return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')
+        # def get_queryset(self):
+        #     return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')
 
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
@@ -468,7 +468,7 @@ def import_student_to_module(request, pk):
             emailpattern = re.compile('email*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
                 1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
-                    students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
+                students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
                             students_to_module[0][5].lower() == 'role':
                 context = {}
                 context['created'] = []
