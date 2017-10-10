@@ -99,7 +99,8 @@ def is_coordinator_or_assistant_of_module(person, module_edition):
 # untested
 
 def is_coordinator_or_teacher_of_test(person, test):
-
+    """ Tests whether a person is coordinator (assistant) or teacher of a test.
+    """
     return Test.objects.filter(
         Q(module_part__teachers=person) |
         Q(module_part__module_edition__coordinator__person=person)

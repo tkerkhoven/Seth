@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
     Http404
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import generic, View
 from django.utils import timezone
@@ -183,11 +183,8 @@ def import_test(request, pk):
     :return: A redirect to the Grades module's Test view on success. Otherwise a 404 (module does not exist), 403
         (no permissions) or 400 (bad excel file or other import error)
     """
-
-    if not Test.objects.filter(pk=pk):
-        raise Http404('Test does not exist.')
     # Check if user is either the module coordinator or teacher of this test.
-    test = Test.objects.get(pk=pk)
+    test = get_object_or_404(Test, pk=pk)
     person = Person.objects.filter(user=request.user).first()
 
     if not is_coordinator_or_teacher_of_test(person, test):
@@ -266,19 +263,15 @@ def export_module(request, pk):
     :return: A file response containing an .xlsx file.
     """
 
-    if not ModuleEdition.objects.filter(pk=pk):
-        raise Http404('Module does not exist.')
-
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
     person = Person.objects.filter(user=request.user).first()
-    module = ModuleEdition.objects.get(pk=pk)
 
     # Check if user is a module coordinator.
-    if not is_coordinator_or_assistant_of_module(person, module):
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
-
-    students = Person.objects.filter(studying__module_edition=module)
-    tests = Test.objects.filter(module_part__module_edition=module)
+    students = Person.objects.filter(studying__module_edition=module_edition)
+    tests = Test.objects.filter(module_part__module_edition=module_edition)
 
     # Pre-fill first few columns.
     table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW - 2)]
@@ -297,9 +290,9 @@ def export_module(request, pk):
         table.append([student.university_number] + [None for _ in range(len(tests))])
 
     return excel.make_response_from_array(table,
-                                          file_name='Module Grades {} {}-{}.xlsx'.format(module.module.name,
-                                                                                         module.year,
-                                                                                         module.block),
+                                          file_name='Module Grades {} {}-{}.xlsx'.format(module_edition.module.name,
+                                                                                         module_edition.year,
+                                                                                         module_edition.block),
                                           file_type='xlsx')
 
 
@@ -314,11 +307,8 @@ def export_test(request, pk):
     :return: A file response containing an .xlsx file.
     """
 
-    if not Test.objects.filter(pk=pk):
-        raise Http404('Test does not exist.')
-
+    test = get_object_or_404(Test, pk=pk)
     person = Person.objects.filter(user=request.user).first()
-    test = Test.objects.get(pk=pk)
 
     # Check if user is either the module coordinator or teacher of this test.
     if not is_coordinator_or_teacher_of_test(person, test):
@@ -444,7 +434,7 @@ def workbook_student_to_module(request, pk):
         :return: A file response containing an .xlsx file.
         """
     # Check if user is a module coordinator.
-    module_edition = ModuleEdition.objects.filter(pk=pk)
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
     person = Person.objects.filter(user=request.user).first()
     if not is_coordinator_or_assistant_of_module(person, module_edition):
         raise PermissionDenied('You are not the module coordinator for this course.')
@@ -461,7 +451,7 @@ def workbook_student_to_module(request, pk):
 @require_http_methods(["GET", "POST"])
 def import_student_to_module(request, pk):
     # Check if user is a module coordinator.
-    module_edition = ModuleEdition.objects.filter(pk=pk)
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
     person = Person.objects.filter(user=request.user).first()
     if not is_coordinator_or_assistant_of_module(person, module_edition):
         raise PermissionDenied('Not allowed to upload students to module.')
