@@ -135,9 +135,14 @@ $(document).ready(function() {
     // $("#id_role").hide();
     // $("#id_module_part").hide();
     var $role_div = $("#form_role_teacher"),
-    $module_part_div = $("#form_module_part_teacher");
+    $module_part_div = $("#form_module_part_teacher"),
+    $create_teacher_checkbox = $("#id_create_teacher");
     // Function that checks for a checked checkbox and changes a form
-    $("#id_create_teacher").change(function() {
+    if ($create_teacher_checkbox.checked) {
+        $role_div.show();
+        $module_part_div.show();
+    }
+    $create_teacher_checkbox.change(function() {
         if (this.checked) {
             // $("#id_role").show();
             // $("#label_role").show();

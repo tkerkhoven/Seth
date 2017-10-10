@@ -1,25 +1,37 @@
 {% load widget_tweaks %}
 {% for field in form.visible_fields %}
+{#    {{ field|field_type }}#}
     {% if field.name == "role_teacher" or field.name == "module_part_teacher" %}
         <div id="form_{{ field.name }}" class="form-group" style="display:none">
     {% else %}
         <div id="form_{{ field.name }}" class="form-group">
     {% endif %}
-    {{ field.errors }}
-    {{ field.label_tag }}
-{#        {{ field|field_type }}#}
-    {% if field.field.required %}
-        *
-    {% endif %}
-    {% if field|field_type == "datefield" %}
-        <div class="input-group">
-            {{ field|add_class:"form-control date-picker" }}
+    {% if field|field_type == "booleanfield" %}
+        {{ field.errors }}
+        <div class="form-check">
+            <label class="form-check-label" for="{{ field.name }}">
+                {{ field|add_class:"form-check-input" }}
+                {{ field.label }}
+            </label>
         </div>
-    {% elif field|field_type == "filefield" %}
-        {{ field|add_class:"form-control-file" }}
+        </div>
     {% else %}
-        {{ field|add_class:"form-control" }}
+        {{ field.errors }}
+        {{ field.label_tag }}
+    {#        {{ field|field_type }}#}
+        {% if field.field.required %}
+            *
+        {% endif %}
+        {% if field|field_type == "datefield" %}
+            <div class="input-group">
+                {{ field|add_class:"form-control date-picker" }}
+            </div>
+        {% elif field|field_type == "filefield" %}
+            {{ field|add_class:"form-control-file" }}
+        {% else %}
+            {{ field|add_class:"form-control" }}
+        {% endif %}
+            </div>
     {% endif %}
-        </div>
 {% endfor %}
 <p><small class="text-muted">(Field with a * are required)</small></p>
