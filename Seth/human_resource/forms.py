@@ -18,5 +18,5 @@ class CreateUserForm(forms.Form):
     start_date = forms.DateField()
     end_date = forms.DateField()
     create_teacher = forms.BooleanField(required=False)
-    role = forms.ChoiceField(choices=Teacher.ROLES)
-    module_part = forms.ModelChoiceField(queryset=ModulePart.objects.all())
+    role_teacher = forms.ChoiceField(choices=Teacher.ROLES, label='Role')
+    module_part_teacher = forms.ModelChoiceField(queryset=ModulePart.objects.all(), label='Module part')
