@@ -5,39 +5,48 @@
 {% block content %}
     {% include 'navbar.html' with active_page="importer" %}
     <div class="container">
-        <div class="row">
+        <div class="row" style="margin-top: 16px;">
+            {% for mod in module_ed_list %}
             <div class="col-lg-12">
-                {% for mod in module_ed_list %}
                 <div class="card">
-                    <h5 class="card-header">
-                        {{ mod }}
-                        <a href="#" class="float-right">
-                            <i class="material-icons">file_upload</i>
-                        </a>
-                        <a href="#" class="float-right">
-                            <i class="material-icons">file_download</i>
-                        </a>
-                    </h5>
+{#                    <h5 class="card-header">#}
+{#                        {{ mod }}#}
+{#                        <a href="#" class="float-right">#}
+{#                            <i class="material-icons">file_upload</i>#}
+{#                        </a>#}
+{#                        <a href="#" class="float-right">#}
+{#                            <i class="material-icons">file_download</i>#}
+{#                        </a>#}
+{#                    </h5>#}
+                    <div class="card-header">
+                        <span class="display-5">{{ mod }}</span>
+                        <form style="margin-bottom: 0; margin-left: 10px;" action="{% url 'importer:import_module' mod.pk %}" class="float-right">
+                            <input class="btn btn-info pointer" type="submit" value="Upload Grades"/>
+                        </form>
+                        <form style="margin-bottom: 0;" action="{% url 'importer:import_student_to_module' mod.pk %}" class="float-right">
+                            <input class="btn btnt-info pointer" type="submit" value="Upload Students"/>
+                        </form>
+                    </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-sm-6">
-                                <ul>
-                                    {% for module_part in mod.modulepart_set.all %}
-                                        <li>{{ module_part.name }}</li>
-                                        <ul>
+                            {% for module_part in mod.modulepart_set.all %}
+                            <div class="col-md-6">
+                                    <div class="card card-margin">
+                                        <h6 class="card-header">{{ module_part.name }}</h6>
+                                        <ul class="list-group list-group-flush">
                                             {% for test in module_part.test_set.all %}
-                                                <li>{{ test.name }}</li>
+                                                <li class="list-group-item">{{ test.name }}</li>
                                             {% endfor %}
                                         </ul>
-                                    {% endfor %}
-                                </ul>
+                                    </div>
                             </div>
-                            <div class="col-sm-6">Test2</div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
-                {% endfor %}
+                <hr>
             </div>
+            {% endfor %}
         </div>
     </div>
 

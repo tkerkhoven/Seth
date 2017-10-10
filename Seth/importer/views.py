@@ -35,7 +35,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            return render(request, 'importer/mcindex.html', {
+            return render(request, 'importer/mcindex2.html', {
                 'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
                     'start')})
         elif ModulePart.objects.filter(teacher__person__user=self.request.user):
