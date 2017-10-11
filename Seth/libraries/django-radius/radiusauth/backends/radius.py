@@ -70,6 +70,10 @@ def utf8_encode_args(f):
             if isinstance(val, basestring):
                 val = val.encode('utf-8')
             nkwargs[key] = val
+        print(self)
+        print(nargs)
+        print(nkwargs)
+        print(f)
         return f(self, *nargs, **nkwargs)
     return encoded
 
@@ -119,7 +123,7 @@ class RADIUSBackend(object):
         return (
             settings.RADIUS_SERVER,
             settings.RADIUS_PORT,
-            settings.RADIUS_SECRET
+            settings.RADIUS_SECRET.encode('utf-8')
         )
 
     def _perform_radius_auth(self, client, packet):
@@ -171,21 +175,24 @@ class RADIUSBackend(object):
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             user = User(username=username)
-            user.save()
+            # user.save()
 
         # Password saving functionality disabled
         # if password is not None:
-            # user.set_password(password)
-            # user.save()
+        #     user.set_password(password)
+        #     user.save()
 
         return user
 
-    @utf8_encode_args
+    # @utf8_encode_args
     def authenticate(self, username, password):
         """
         Check credentials against RADIUS server and return a User object or
         None.
         """
+        username = username.encode('utf-8')
+        password = password.encode('utf-8')
+
         server = self._get_server_from_settings()
         result = self._radius_auth(server, username, password)
 
@@ -238,7 +245,7 @@ class RADIUSRealmBackend(RADIUSBackend):
         """
         return '%s@%s' % (username, realm)
 
-    @utf8_encode_args
+    # @utf8_encode_args
     def authenticate(self, username, password, realm):
         """
         Check credentials against the RADIUS server identified by `realm` and
@@ -246,6 +253,10 @@ class RADIUSRealmBackend(RADIUSBackend):
         skip this backend and try the next one (as a TypeError will be raised
         and caught).
         """
+
+        username = username.encode('utf-8')
+        password = password.encode('utf-8')
+
         server = self.get_server(realm)
 
         if not server:
