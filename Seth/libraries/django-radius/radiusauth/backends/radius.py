@@ -171,6 +171,7 @@ class RADIUSBackend(object):
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             user = User(username=username)
+            user.save()
 
         # Password saving functionality disabled
         # if password is not None:
