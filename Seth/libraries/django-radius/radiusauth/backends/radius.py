@@ -57,21 +57,21 @@ ATTRIBUTE   Framed-AppleTalk-Zone   39  string
 REALM_SEPARATOR = '@'
 
 
-# def utf8_encode_args(f):
-#     """Decorator to encode string arguments as UTF-8"""
-#     def encoded(self, *args, **kwargs):
-#         nargs = []
-#         for arg in args:
-#             if isinstance(arg, basestring):
-#                 arg = arg.encode('utf-8')
-#             nargs.append(arg)
-#         nkwargs = {}
-#         for key, val in list(kwargs.items()):
-#             if isinstance(val, basestring):
-#                 val = val.encode('utf-8')
-#             nkwargs[key] = val
-#         return f(self, *nargs, **nkwargs)
-#     return encoded
+def utf8_encode_args(f):
+    """Decorator to encode string arguments as UTF-8"""
+    def encoded(self, *args, **kwargs):
+        nargs = []
+        for arg in args:
+            if isinstance(arg, basestring):
+                arg = arg.encode('utf-8')
+            nargs.append(arg)
+        nkwargs = {}
+        for key, val in list(kwargs.items()):
+            if isinstance(val, basestring):
+                val = val.encode('utf-8')
+            nkwargs[key] = val
+        return f(self, *nargs, **nkwargs)
+    return encoded
 
 
 class RADIUSBackend(object):
@@ -179,6 +179,7 @@ class RADIUSBackend(object):
 
         return user
 
+    @utf8_encode_args
     def authenticate(self, username, password):
         """
         Check credentials against RADIUS server and return a User object or
@@ -236,6 +237,7 @@ class RADIUSRealmBackend(RADIUSBackend):
         """
         return '%s@%s' % (username, realm)
 
+    @utf8_encode_args
     def authenticate(self, username, password, realm):
         """
         Check credentials against the RADIUS server identified by `realm` and
