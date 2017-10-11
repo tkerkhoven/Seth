@@ -179,7 +179,6 @@ class RADIUSBackend(object):
 
         return user
 
-    @utf8_encode_args
     def authenticate(self, username, password):
         """
         Check credentials against RADIUS server and return a User object or
@@ -237,7 +236,6 @@ class RADIUSRealmBackend(RADIUSBackend):
         """
         return '%s@%s' % (username, realm)
 
-    @utf8_encode_args
     def authenticate(self, username, password, realm):
         """
         Check credentials against the RADIUS server identified by `realm` and
