@@ -2,24 +2,36 @@ from django.http import Http404
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
-from Grades.models import ModuleEdition, Studying
+from Grades.models import ModuleEdition, Studying, Person
 from Grades.models import ModuleEdition
 
 from django.contrib.auth.decorators import login_required
+import permission_utils as pu
 
 
 # @permission_required('grades.add_grade')
 @login_required
 def home(request):
-    context = {
-        'modules': get_modules(),
-        'time': get_current_date()
-    }
-    studying = Studying.objects.filter(person__user=request.user)
-    if studying:
+    person = Person.objects.get(user=request.user)
+    if pu.is_coordinator_or_assistant(person):
+        context = {
+            'modules': get_modules(),
+            'time': get_current_date()
+        }
+        return render(request, 'dashboard/index.html', context)
+    if pu.is_study_adviser(person):
+        # Todo: Add another dashboard, or create an extension
+        return
+    if pu.is_teacher(person):
+        # Todo: Add another dashboard, or create an extension
+        return
+    if pu.is_teaching_assistant(person):
+        # Todo: Add another dashboard, or create an extension
+        return
+    if pu.is_student(person):
+        # Todo: Add another dashboard, or create an extension
+        studying = Studying.objects.filter(person=person)
         return redirect('grades:student', studying.get(person__user=request.user).person.id)
-
-    return render(request, 'dashboard/index.html', context)
 
 
 @login_required
