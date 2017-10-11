@@ -298,6 +298,21 @@ def export_module(request, pk):
 
 @login_required()
 @require_http_methods(["GET"])
+def export_student_import_format(request):
+    """
+    Creates an excel sheet with appropriate headers (id, name, mail, start, study and role). In this sheet student
+    information can be added that is taken by def:import_student_to_module. The sheet is a default and is not altered
+    when called upon from within another module_edition.
+
+    :param request: Django request; not used in function
+    :return: .xlsx file response, named Import_students.xlsx
+    """
+    table = [['Student_id', 'name', 'E-mail', 'Start (yyyy-mm-dd)', 'study', 'role']]
+    return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
+
+
+@login_required()
+@require_http_methods(["GET"])
 def export_test(request, pk):
     """ Creates an excel sheet that contains all students that may take the test. This sheet is compatible with
     def:import_test. It contains a description row, which can be used to submit feedback through.
@@ -450,6 +465,19 @@ def workbook_student_to_module(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def import_student_to_module(request, pk):
+    """
+    Take .xlsx file, as produced by def:export_student_import_format and retrieve all students and metainformation from it.
+    Case 1 - Known User - Add the user to the active module edition with the right study and role by making a new Studying object
+    Case 2 - Unknown User - Add the student to the database by making a new Person object and proceed like Case 1
+    Case 3 - Already Added User - Ignore row
+    The function returns a view in which all newly added users, all users that are now added to the module edition and all users that were already in the module are shown.
+
+    :param request: Django request
+    :param pk: The module edition id
+    :return: /students-module-imported.html redirect in which all fails, successes and addeds are given
+    :raises: Permission denied if the user is not the Module Coordinator
+    :raises: SuspiciousOperation in case of faulty file input
+    """
     # Check if user is a module coordinator.
     module_edition = get_object_or_404(ModuleEdition, pk=pk)
     person = Person.objects.filter(user=request.user).first()
@@ -458,14 +486,13 @@ def import_student_to_module(request, pk):
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
-        print('hello')
         if student_form.is_valid():
             file = request.FILES['file']
             dict = file.get_book_dict()
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
             startpattern = re.compile('start*')
-            emailpattern = re.compile('email*')
+            emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
                 1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
                 students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
@@ -506,9 +533,14 @@ def import_student_to_module(request, pk):
                             [student.name, student.full_id, module.name, module_ed.code, studying.study])
                         context['studying'].append(
                             [student.name, student.full_id, module.name, module_ed.code, studying.study])
-                print(context)
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
+                # print(students_to_module[0][0].lower() == 'student_id')
+                # print(students_to_module[0][1].lower() == 'name')
+                # print(emailpattern.match(students_to_module[0][2].lower()))
+                # print(startpattern.match(students_to_module[0][3].lower()))
+                # print(students_to_module[0][4].lower() == 'study')
+                # print(students_to_module[0][5].lower() == 'role')
                 raise SuspiciousOperation("Incorrect xls-format")
         else:
             raise SuspiciousOperation('Bad POST')
