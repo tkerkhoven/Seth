@@ -7,11 +7,17 @@ from Grades.models import ModuleEdition
 
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
+from django.core.exceptions import PermissionDenied
 
 
-# @permission_required('grades.add_grade')
 @login_required
 def home(request):
+    """
+    Checks the type of logged in user and directs to an appropriate dashboard with relevant information.
+
+    :param request: Django request for authentication
+    :return: Redirect to appropriate dashboard (based on type of user)
+    """
     person = Person.objects.get(user=request.user)
     if pu.is_coordinator_or_assistant(person):
         context = {
@@ -36,13 +42,29 @@ def home(request):
 
 @login_required
 def modules(request):
-    context = {
-        'modules': get_modules()
-    }
-    return render(request, 'dashboard/modules.html', context)
+    """
+    Checks the type of logged in user and directs to view with relevant modules.
+
+    :param request: Django request for authentication
+    :return: Redirect to module (edition) overview
+    """
+    if pu.is_coordinator_or_assistant(Person.objects.get(user=request.user)):
+        context = {
+            'modules': get_modules()
+        }
+        return render(request, 'dashboard/modules.html', context)
+    else:
+        # Todo: Add other usertypes
+        return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
 
 
 def logged_out(request):
+    """
+    Logs the user out and directs to logged out portal
+
+    :param request: Django request for authentication
+    :return: Redirect to logged out portal
+    """
     return render(request, 'registration/success_logged_out.html')
 
 
