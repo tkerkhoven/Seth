@@ -18,8 +18,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
+OS_PATH = '/var/www/html/'
+
 # SECURITY WARNING: keep the secret key used in production secret!
-with open('../../secrets/django_secret') as f:
+with open('{}secrets/django_secret'.format(OS_PATH)) as f:
     SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -78,8 +80,8 @@ WSGI_APPLICATION = 'Seth.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-with open('../../secrets/postgres_host') as hfile:
-    with open('../../secrets/postgres_password') as pwfile:
+with open('{}secrets/postgres_host'.format(OS_PATH)) as hfile:
+    with open('{}secrets/postgres_password'.format(OS_PATH)) as pwfile:
 
         DATABASES = {
             'default': {
@@ -90,6 +92,20 @@ with open('../../secrets/postgres_host') as hfile:
                 'HOST': hfile.read().strip(),
             }
         }
+
+
+# Add radius authentication.
+with open('{}secrets/radius_host'.format(OS_PATH)) as radius_host:
+    with open('{}secrets/radius_secret'.format(OS_PATH)) as radius_secret:
+        AUTHENTICATION_BACKENDS = (
+            'radiusauth.backends.RADIUSBackend',
+            'django.contrib.auth.backends.ModelBackend',
+        )
+
+        RADIUS_SERVER = radius_host.read().strip()
+        RADIUS_PORT = 1812
+        RADIUS_SECRET = radius_secret.read().strip()
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
