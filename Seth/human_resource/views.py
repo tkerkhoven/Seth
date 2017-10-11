@@ -9,6 +9,16 @@ import permission_utils as pu
 
 
 def known_persons(person):
+    """
+    Returns all Person-objects that are considered to be related to a given user.
+    Case Coordinator/Coordinator-assistant: Return all students from all modules that are coordinated by that person
+    Case Teacher: Return all students from moduleparts that are taught by that person
+    Case Adviser: Return all students that are in all modules of all studies that have that person as adviser
+    Users can be part of multiple cases.
+
+    :param person: The person all other persons must be related to.
+    :return: All persons related to the given user.
+    """
     result = []
     if pu.is_coordinator_or_assistant(person):
         modules = ModuleEdition.objects.all().filter(coordinators=person).prefetch_related()
@@ -37,6 +47,9 @@ def known_persons(person):
 
 # Create your views here.
 class PersonsView(generic.ListView):
+    """
+    Gives a generic.ListView of all relevant Persons to the logged in user.
+    """
     template_name = 'human_resource/users.html'
     model = Person
     person = None
@@ -56,6 +69,9 @@ class PersonsView(generic.ListView):
 
 
 class PersonDetailView(generic.DetailView):
+    """
+    Gives a generic.DetailView of a specific Person relevant to the logged in user.
+    """
     template_name = 'human_resource/user.html'
     model = Person
 
@@ -78,6 +94,9 @@ class PersonDetailView(generic.DetailView):
 
 
 class UpdateUser(generic.UpdateView):
+    """
+    Gives a generic.UpdateView of a specific Person relevant to the logged in user.
+    """
     model = Person
     template_name = 'human_resource/person/update-user.html'
     # template_name_suffix = '/update-user'
@@ -107,6 +126,9 @@ class UpdateUser(generic.UpdateView):
 
 
 class DeleteUser(generic.DeleteView):
+    """
+    Gives a generic.Deleteview of a specific Person relevant to the logged in user.
+    """
     model = Person
     template_name = 'human_resource/person_confirm_delete.html'
     success_url = reverse_lazy('human_resource:users')
