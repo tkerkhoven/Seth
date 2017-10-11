@@ -60,7 +60,6 @@ REALM_SEPARATOR = '@'
 def utf8_encode_args(f):
     """Decorator to encode string arguments as UTF-8"""
     def encoded(self, *args, **kwargs):
-        # nargs = [arg.encode('utf-8') for arg in args]
         nargs = []
         for arg in args:
             if isinstance(arg, basestring):
