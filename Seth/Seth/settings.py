@@ -27,7 +27,7 @@ with open('{}secrets/django_secret'.format(OS_PATH)) as f:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['farm11.ewi.utwente.nl']
 
 # Application definition
 
