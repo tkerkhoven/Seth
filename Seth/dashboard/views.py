@@ -5,22 +5,15 @@ from django.utils import timezone
 from Grades.models import ModuleEdition, Studying
 from Grades.models import ModuleEdition
 
+from django.contrib.auth.decorators import login_required
+
 
 # @permission_required('grades.add_grade')
+@login_required
 def home(request):
     context = {
         'modules': get_modules(),
         'time': get_current_date()
-        # [
-        #     {
-        #         'name': 'Pearls of Computer Science',
-        #         'courses': [
-        #             {
-        #                 'name': 'Pearl 1',
-        #             }
-        #         ]
-        #     }
-        # ],
     }
     studying = Studying.objects.filter(person__user=request.user)
     if studying:
@@ -29,6 +22,7 @@ def home(request):
     return render(request, 'dashboard/index.html', context)
 
 
+@login_required
 def modules(request):
     context = {
         'modules': get_modules()
@@ -40,6 +34,7 @@ def logged_out(request):
     return render(request, 'registration/success_logged_out.html')
 
 
+@login_required
 def settings(request):
     raise Http404('Settings unimplemented')
 
@@ -61,7 +56,7 @@ def not_found(request):
 
 
 def permission_denied(request):
-    return render(request, 'errors/403.html', status=403,)
+    return render(request, 'errors/403.html', status=403, )
 
 
 def bad_request(request):

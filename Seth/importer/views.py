@@ -31,8 +31,6 @@ class ImporterIndexView(LoginRequiredMixin, View):
     download and upload an excel sheet that contains grades. This can be done per test individually.
     """
     model = ModuleEdition
-
-    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
             return render(request, 'importer/mcindex.html', {
