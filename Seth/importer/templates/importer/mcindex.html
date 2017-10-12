@@ -18,10 +18,12 @@ Importer
     <div class="row">
         <div class="col-lg-8">
             <li><a href="{% url 'importer:import_module' mod.pk %}">{{ mod }}</a> - <a
-                    href="{% url 'importer:export_module' mod.pk %}">
-{#                <i class="material-icons">view_list</i>#}
-                <i class="fa fa-file-excel-o" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" title="Download template"></i>
-            </a></li>
+                    href="{% url 'importer:export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
+            <br>
+                <a href="{% url 'importer:export_student_form' %}">
+                    <i class="material-icons">view_list
+                    </i>
+                </a>
             <ul>
                 {% for module_part in mod.modulepart_set.all %}
                 <li>{{ module_part.name }}</li>

@@ -8,25 +8,27 @@
                 <li class="nav-item {% if active_page == "dashboard" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'home' %}">Home<span class="sr-only">(current)</span></a>
                 </li>
+                {% if module_coordinator %}
                 <li class="nav-item {% if active_page == "modules" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'modules' %}">Modules</a>
                 </li>
-                {% if grades_installed %}
+                {% endif %}
+                {% if grades_installed and module_coordinator %}
                 <li class="nav-item {% if active_page == "gradebook" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'grades:modules' %}">Grades<span class="sr-only">(current)</span></a>
                 </li>
                 {% endif %}
-                {% if importer_installed %}
+                {% if importer_installed and module_coordinator %}
                 <li class="nav-item {% if active_page == "importer" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'importer:index' %}">Importer<span class="sr-only">(current)</span></a>
                 </li>
                 {% endif %}
-                {% if module_management_installed %}
+                {% if module_management_installed and module_coordinator %}
                 <li class="nav-item {% if active_page == "module_management" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'module_management:module_overview' %}">Module Management<span class="sr-only">(current)</span></a>
                 </li>
                 {% endif %}
-                {% if hr_installed %}
+                {% if hr_installed and module_coordinator %}
                 <li class="nav-item {% if active_page == "human_resource" %}active{% endif %}">
                     <a class="nav-link" href="{%  url 'human_resource:users' %}">Human Resources<span class="sr-only">(current)</span></a>
                 </li>
