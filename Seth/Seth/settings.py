@@ -97,17 +97,19 @@ with open('{}secrets/postgres_host'.format(OS_PATH)) as hfile:
 
 
 # Add radius authentication.
-with open('{}secrets/radius_host'.format(OS_PATH)) as radius_host:
-    with open('{}secrets/radius_secret'.format(OS_PATH)) as radius_secret:
-        AUTHENTICATION_BACKENDS = (
-            'radiusauth.backends.RADIUSBackend',
-            'django.contrib.auth.backends.ModelBackend',
-        )
+try:
+    with open('{}secrets/radius_host'.format(OS_PATH)) as radius_host:
+        with open('{}secrets/radius_secret'.format(OS_PATH)) as radius_secret:
+            AUTHENTICATION_BACKENDS = (
+                'radiusauth.backends.RADIUSBackend',
+                'django.contrib.auth.backends.ModelBackend',
+            )
 
-        RADIUS_SERVER = radius_host.read().strip()
-        RADIUS_PORT = 1812
-        RADIUS_SECRET = radius_secret.read().strip()
-
+            RADIUS_SERVER = radius_host.read().strip()
+            RADIUS_PORT = 1812
+            RADIUS_SECRET = radius_secret.read().strip()
+except FileNotFoundError as e:
+    pass
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
