@@ -37,7 +37,28 @@ $(document).ready(function() {
       edit.blur(BlurEdit)
     });
 
+    $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+        $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+    } );
+
     var table = $('#gradebook').DataTable({
+      "ordering": true,
+      "order": [[0, 'asc']],
+      "columnDefs": [{
+        orderable: false,
+        targets: "no-sort"
+      }],
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    var assignmenttable = $('#assignment_table').DataTable({
       "ordering": true,
       "order": [[0, 'asc']],
       "columnDefs": [{
@@ -87,6 +108,10 @@ $(document).ready(function() {
     });
 
     testtable.on('draw', function() {
+      updateColoring();
+    });
+
+    assignmenttable.on('draw', function() {
       updateColoring();
     });
 

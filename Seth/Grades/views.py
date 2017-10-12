@@ -99,7 +99,11 @@ class GradeView(generic.DetailView):
 
         # Gather all tests the user is allowed to see, ordered by the ID of their respective module part.
         tests = Test.objects \
-            .filter(module_part__in=module_parts) \
+            .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts) \
+            .order_by('module_part__id').distinct()
+
+        assignments = Test.objects \
+            .filter(type='A', module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
 
         # Gather all important information about students and their grades.
@@ -119,6 +123,8 @@ class GradeView(generic.DetailView):
         temp_dict = dict()
         testallreleased = dict()
         grade_dict = OrderedDict()
+        ep_span = dict()
+        a_span = dict()
 
         # Changing the queryset to something more easily usable.
         QuerySetChanger(dicts, students, temp_dict, testallreleased)
@@ -127,9 +133,16 @@ class GradeView(generic.DetailView):
         for key in sorted(temp_dict):
             grade_dict[key] = temp_dict[key]
 
+        for module_part in module_parts:
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
+            a_span[module_part] = module_part.test_set.filter(type='A').count()
+
         # Add everything to the context.
+        context['ep_span'] = ep_span
+        context['a_span'] = a_span
         context['mod_ed'] = mod_ed
         context['gradedict'] = grade_dict
+        context['assignments'] = assignments
         context['studentdict'] = students
         context['module_parts'] = module_parts
         context['testallreleased'] = testallreleased
