@@ -37,6 +37,10 @@ hr.remove-top-margin {
 
 .card.card-margin {
   margin-top: 10px; }
+.card .card-header.card-header-tabs {
+  margin: 0;
+  padding: 0;
+  border-bottom: 0; }
 
 .material-icons.md-18 {
   font-size: 18px; }

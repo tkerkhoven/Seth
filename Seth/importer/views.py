@@ -34,16 +34,32 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
+        context = dict()
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            return render(request, 'importer/mcindex2.html', {
-                'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
-                    'start')})
+            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('start')
+            context['module_coordinator'] = True
+            if ModulePart.objects.filter(teacher__person__user=self.request.user):
+                context['teacher'] = True
+                context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+                # context['module_part_list'] = ModuleEdition.objects.filter(modulepart__teacher__person__user=self.request.user).order_by('start')
+            else:
+                context['teacher'] = False
+            # return render(request, 'importer/mcindex2.html', {
+            #     'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
+            #         'start'),
+            #     'module_coordinator': True
+            # })
         elif ModulePart.objects.filter(teacher__person__user=self.request.user):
-            return render(request, 'importer/teacherindex.html',
-                          {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-                              'module_edition__start')})
+            context['module_coordinator'] = False
+            context['teacher'] = True
+            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+        else:
+            raise PermissionDenied('Only module coordinators or teachers can view this page.')
+        return render(request, 'importer/mcindex2.html', context)
+            # return render(request, 'importer/teacherindex.html',
+            #               {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
+            #                   'module_edition__start')})
 
-        raise PermissionDenied('Only module coordinators can view this page.')
 
     def get_queryset(self):
         return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')

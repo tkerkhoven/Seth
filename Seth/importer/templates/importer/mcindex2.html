@@ -5,48 +5,110 @@
 {% block content %}
     {% include 'navbar.html' with active_page="importer" %}
     <div class="container">
-        <div class="row" style="margin-top: 16px;">
-            {% for mod in module_ed_list %}
+        <div class="row">
             <div class="col-lg-12">
-                <div class="card">
-{#                    <h5 class="card-header">#}
-{#                        {{ mod }}#}
-{#                        <a href="#" class="float-right">#}
-{#                            <i class="material-icons">file_upload</i>#}
-{#                        </a>#}
-{#                        <a href="#" class="float-right">#}
-{#                            <i class="material-icons">file_download</i>#}
-{#                        </a>#}
-{#                    </h5>#}
-                    <div class="card-header">
-                        <span class="display-5">{{ mod }}</span>
-                        <form style="margin-bottom: 0; margin-left: 10px;" action="{% url 'importer:import_module' mod.pk %}" class="float-right">
-                            <input class="btn btn-info pointer" type="submit" value="Upload Grades"/>
-                        </form>
-                        <form style="margin-bottom: 0;" action="{% url 'importer:import_student_to_module' mod.pk %}" class="float-right">
-                            <input class="btn btnt-info pointer" type="submit" value="Upload Students"/>
-                        </form>
+                <div class="card card-margin">
+                    <div class="card-header card-header-tabs">
+                        <ul class="nav nav-tabs" id="card-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link
+                                    {% if module_coordinator %}active{% endif %}
+                                    {% if module_coordinator == False %} disabled {% endif %}"
+                                    id="module-coordinator-tab" data-toggle="tab" href="#module_coordinator" role="tab" aria-controls="module_coordinator" aria-expanded="true">As module coordinator</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link
+                                    {% if teacher == False %} disabled {% endif %}
+                                    {% if teacher and module_coordinator == False %} active {% endif %}"
+                                    id="teacher-tab" data-toggle="tab" href="#teacher" role="tab" aria-controls="teacher">As teacher</a>
+                            </li>
+                        </ul>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            {% for module_part in mod.modulepart_set.all %}
-                            <div class="col-md-6">
-                                    <div class="card card-margin">
-                                        <h6 class="card-header">{{ module_part.name }}</h6>
-                                        <ul class="list-group list-group-flush">
-                                            {% for test in module_part.test_set.all %}
-                                                <li class="list-group-item">{{ test.name }}</li>
-                                            {% endfor %}
-                                        </ul>
+                        <div class="tab-content" id="card-tab-content">
+                            <div class="tab-pane fade
+                                {% if module_coordinator %}show active{% endif %}" id="module_coordinator" role="tabpanel" aria-labelledby="home-tab">
+                                {% for mod in module_ed_list %}
+                                    <div class="col-lg-12">
+                                        <div class="card">
+                        {#                    <h5 class="card-header">#}
+                        {#                        {{ mod }}#}
+                        {#                        <a href="#" class="float-right">#}
+                        {#                            <i class="material-icons">file_upload</i>#}
+                        {#                        </a>#}
+                        {#                        <a href="#" class="float-right">#}
+                        {#                            <i class="material-icons">file_download</i>#}
+                        {#                        </a>#}
+                        {#                    </h5>#}
+                                            <div class="card-header">
+                                                <span class="display-5">{{ mod }}</span>
+                                                <form style="margin-bottom: 0; margin-left: 10px;" action="{% url 'importer:import_module' mod.pk %}" class="float-right">
+                                                    <input class="btn btn-info pointer" type="submit" value="Upload Module Grades"/>
+                                                </form>
+                                                <form style="margin-bottom: 0;" action="{% url 'importer:import_student_to_module' mod.pk %}" class="float-right">
+                                                    <input class="btn btn-primary pointer" type="submit" value="Upload Students"/>
+                                                </form>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    {% for module_part in mod.modulepart_set.all %}
+                                                        {% if forloop.first %}
+                                                            <div class="col-lg-6">
+                                                        {% endif %}
+                                                        {% if forloop.counter0 == forloop.revcounter or forloop.counter0 == forloop.revcounter0 %}
+                                                            </div>
+                                                            <div class="col-lg-6">
+                                                        {% endif %}
+                                                            <div class="card card-margin">
+                                                                <h6 class="card-header">{{ module_part.name }}</h6>
+                                                                <ul class="list-group list-group-flush">
+                                                                    {% for test in module_part.test_set.all %}
+                                                                        <li class="list-group-item">
+                                                                            {{ test.name }}
+                                                                            <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
+                                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="left" title="Download template sheet">file_download</i></a>
+                                                                        </li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            </div>
+                                                        {% if forloop.last %}
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
                                     </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                            <div class="tab-pane fade
+                                {% if module_coordinator == False and teacher %}show active{% endif %}" id="teacher" role="tabpanel" aria-labelledby="profile-tab">
+                                <div class="row">
+                                    {% for module_part in module_part_list %}
+                                        <div class="col-md-6">
+                                            <div class="card card-margin">
+                                                <h5 class="card-header">{{ module_part }}</h5>
+                                                <ul class="list-group list-group-flush">
+                                                    {% for test in module_part.test_set.all %}
+                                                        <li class="list-group-item">
+                                                            {{ test.name }}
+                                                            <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
+                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="left" title="Download template sheet">file_download</i></a>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <h5 class="display-5">Not teaching any module parts</h5>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <hr>
             </div>
-            {% endfor %}
         </div>
     </div>
 
