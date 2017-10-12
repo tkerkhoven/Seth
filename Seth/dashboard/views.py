@@ -22,7 +22,7 @@ def home(request):
     person = Person.objects.get(user=request.user)
     if pu.is_coordinator_or_assistant(person):
         context = {
-            'modules': get_modules(),
+            'modules': get_modules(person),
             'time': get_current_date()
         }
         return render(request, 'dashboard/index.html', context)
@@ -77,8 +77,9 @@ def settings(request):
     raise Http404('Settings unimplemented')
 
 
-def get_modules():
-    return ModuleEdition.objects.order_by('-start')
+def get_modules(person):
+    coordinator = Coordinator.objects.get(person=person)
+    return ModuleEdition.objects.filter(coordinator=coordinator).order_by('-start')
 
 
 def get_current_date():
