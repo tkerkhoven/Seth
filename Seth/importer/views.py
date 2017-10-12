@@ -529,8 +529,13 @@ def import_student_to_module(request, pk):
                     elif int(students_to_module[i][0]) > 0:
                         username = 's{}'.format(str(students_to_module[i][0]))
                     else:
-                        raise SuspiciousOperation('{} is not a student number.'.format(new_students[i][1]))
-                    user, created = User.objects.get_or_create(username=username)
+                        raise SuspiciousOperation('{} is not a student number.'.format(students_to_module[i][0]))
+                    user, created = User.objects.get_or_create(
+                        username=username,
+                        defaults={
+                            'email': students_to_module[i][2]
+                        }
+                    )
 
                     student, created = Person.objects.get_or_create(
                         university_number=str(students_to_module[i][0]),
