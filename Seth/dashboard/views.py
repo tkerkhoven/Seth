@@ -1,9 +1,10 @@
-from django.http import Http404
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.http import Http404, HttpResponseForbidden
 from django.utils import timezone
 
-from Grades.models import ModuleEdition, Studying, Person
-from Grades.models import ModuleEdition
+from Grades.models import ModuleEdition, Person, Coordinator, Studying
+
 
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
@@ -56,6 +57,9 @@ def modules(request):
     else:
         # Todo: Add other usertypes
         return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
+
+def student(request):
+    return render(request, 'dashboard/student_index.html')
 
 
 def logged_out(request):
