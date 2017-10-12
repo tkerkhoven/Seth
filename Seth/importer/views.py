@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
     Http404
@@ -32,17 +33,45 @@ class ImporterIndexView(LoginRequiredMixin, View):
     """
     model = ModuleEdition
     def get(self, request, *args, **kwargs):
-        person = Person.objects.filter(user=request.user).first()
-        if is_coordinator_or_assistant(person):
-            return render(request, 'importer/mcindex.html', {
-                'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
-                    'start')})
-        elif is_teacher(person):
-            return render(request, 'importer/teacherindex.html',
-                          {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-                              'module_edition__start')})
+        context = dict()
+        if ModuleEdition.objects.filter(coordinators__user=self.request.user):
+            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('start')
+            context['module_coordinator'] = True
+            if ModulePart.objects.filter(teacher__person__user=self.request.user):
+                context['teacher'] = True
+                context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+                # context['module_part_list'] = ModuleEdition.objects.filter(modulepart__teacher__person__user=self.request.user).order_by('start')
+            else:
+                context['teacher'] = False
+            # return render(request, 'importer/mcindex2.html', {
+            #     'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
+            #         'start'),
+            #     'module_coordinator': True
+            # })
+        elif ModulePart.objects.filter(teacher__person__user=self.request.user):
+            context['module_coordinator'] = False
+            context['teacher'] = True
+            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+        else:
+            raise PermissionDenied('Only module coordinators or teachers can view this page.')
+        return render(request, 'importer/mcindex2.html', context)
+            # return render(request, 'importer/teacherindex.html',
+            #               {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
+            #                   'module_edition__start')})
 
-        raise PermissionDenied('Only module coordinators or teachers can view this page.')
+# =======
+#         person = Person.objects.filter(user=request.user).first()
+#         if is_coordinator_or_assistant(person):
+#             return render(request, 'importer/mcindex.html', {
+#                 'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
+#                     'start')})
+#         elif is_teacher(person):
+#             return render(request, 'importer/teacherindex.html',
+#                           {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
+#                               'module_edition__start')})
+#
+#         raise PermissionDenied('Only module coordinators or teachers can view this page.')
+# >>>>>>> 71e09ed0f0df597504089a385fa9a49fd86acdee
 
 
         # def get_queryset(self):
@@ -414,9 +443,26 @@ def import_student(request):
             if new_students[0][0].lower() == 'name' and new_students[0][1].lower() == 's-number' and new_students[0][
                 2].lower() == 'starting date (dd/mm/yy)':
                 for i in range(1, len(new_students)):
-                    new_student = Person(name=new_students[i][0], university_number=new_students[i][1],
-                                         start=new_students[i][2])
-                    new_student.save()
+                    # Sanitize number input
+                    if str(new_students[i][1])[0] == 's' and int(str(new_students[i][1])[1:]) > 0:
+                        username = str(new_students[i][1])
+                    elif str(new_students[i][1])[0] == 'm' and int(str(new_students[i][1])[1:]) > 0:
+                        raise SuspiciousOperation('Trying to add an employee as a student to a module.')
+                    elif int(new_students[i][1]) > 0:
+                        username = 's{}'.format(str(new_students[i][1]))
+                    else:
+                        raise SuspiciousOperation('{} is not a student number.'.format(new_students[i][1]))
+                    user, created = User.objects.get_or_create(username=username)
+
+                    student, created = Person.objects.get_or_create(
+                        university_number=str(new_students[i][1]),
+                        defaults={
+                            'user': user,
+                            'name': new_students[i][0],
+                            'start': new_students[i][2],
+                        }
+                    )
+
                     string += "Student added:<br>"
                     string += "Name: %s<br>Number: %d<br>Start:%s<br>" % (
                         new_students[i][0], new_students[i][1], new_students[i][2])
@@ -501,9 +547,26 @@ def import_student_to_module(request, pk):
                 context['failed'] = []
 
                 for i in range(1, len(students_to_module)):
+                    # Sanitize number input
+                    if str(students_to_module[i][0])[0] == 's':
+                        username = str(students_to_module[i][0])
+                    elif str(students_to_module[i][0])[0] == 'm':
+                        raise SuspiciousOperation('Trying to add an employee as a student to a module.')
+                    elif int(students_to_module[i][0]) > 0:
+                        username = 's{}'.format(str(students_to_module[i][0]))
+                    else:
+                        raise SuspiciousOperation('{} is not a student number.'.format(students_to_module[i][0]))
+                    user, created = User.objects.get_or_create(
+                        username=username,
+                        defaults={
+                            'email': students_to_module[i][2]
+                        }
+                    )
+
                     student, created = Person.objects.get_or_create(
                         university_number=str(students_to_module[i][0]),
                         defaults={
+                            'user': user,
                             'name': students_to_module[i][1],
                             'email': students_to_module[i][2],
                             'start': students_to_module[i][3],

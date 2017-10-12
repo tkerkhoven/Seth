@@ -6,7 +6,37 @@ $(".btn").mouseup(function(){
     $(this).blur();
 });
 
+function BlurEdit() {
+    var text = $(this).val();
+    var viewableText = $("<a></a>");
+    viewableText.html(text);
+    viewableText.attr('id', $(this).attr('id'));
+    viewableText.attr('title', $(this).attr('title'));
+    $(this).replaceWith(viewableText);
+};
+
 $(document).ready(function() {
+    $(document).on('click', 'a[id^="grade_"]', function() {
+
+      var edit = $("<input type=number max=" + $(this).parent().closest('td').attr('data-grade-max') +
+        " min=" + $(this).parent().closest('td').attr('data-grade-min') +
+        " step=0.25/>");
+      edit.val($(this).html());
+      edit.attr('id', $(this).attr('id'));
+      edit.attr('title', $(this).attr('title'));
+
+      edit.keypress(function(event) {
+        if (event.keyCode == 13) {
+          event.preventDefault();
+          edit.blur();
+        }
+      });
+
+      $(this).replaceWith(edit);
+      edit.focus();
+      edit.blur(BlurEdit)
+    });
+
     var table = $('#gradebook').DataTable({
       "ordering": true,
       "order": [[0, 'asc']],
@@ -95,34 +125,33 @@ $(document).ready(function() {
       $('#parent').prop('checked',$('.child:checked').length == $('.child').length);
     });
 
-    $("#addUserLink").on('click', function() {
-        $("#addUser").submit();
-    });
-
-    $("#updateUserLink").on('click', function() {
-        $("#updateUser").submit();
-    });
-
-    $("#removeUserLink").on('click', function() {
-        $("#removeUser").submit();
-    });
-
     $(".clickable-row").click(function() {
         window.location = $(this).data("href");
     });
 
+    $(".date-picker").datepicker({
+        dateFormat: "yy-mm-dd",
+        changeMonth: true,
+        changeYear: true,
+        showAnim: "blind",
+        showOptions: {direction: "up"},
+        showOn: "button",
+        buttonText: "<i class='material-icons'>event</i>"
+    });
+
 
     $("#searchInput").on('keyup', function() {
-       var input, filter, table, tr, td, i;
+       var input, filter, table, tr, tdNumber, tdName, i;
         input = $("#searchInput")[0];
         filter = input.value.toLowerCase();
         table = $("#personTable")[0];
         tr = table.getElementsByTagName("tr");
 
         for (i=0; i < tr.length; i++) {
-            td = tr[i].getElementsByTagName("td")[2];
-            if (td) {
-                if (td.innerHTML.toLowerCase().indexOf(filter) > -1) {
+            tdNumber = tr[i].getElementsByTagName("td")[0];
+            tdName = tr[i].getElementsByTagName("td")[1];
+            if (tdNumber || tdName) {
+                if (tdNumber.innerHTML.toLowerCase().indexOf(filter) > -1 || tdName.innerHTML.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
                     tr[i].style.display = "none"
@@ -130,6 +159,36 @@ $(document).ready(function() {
             }
         }
     });
+
+    // $("#label_role").hide();
+    // $("#label_module_part").hide();
+    // $("#id_role").hide();
+    // $("#id_module_part").hide();
+    var $role_div = $("#form_role_teacher"),
+    $module_part_div = $("#form_module_part_teacher"),
+    $create_teacher_checkbox = $("#id_create_teacher");
+    // Function that checks for a checked checkbox and changes a form
+    if ($create_teacher_checkbox.checked) {
+        $role_div.show();
+        $module_part_div.show();
+    }
+    $create_teacher_checkbox.change(function() {
+        if (this.checked) {
+            // $("#id_role").show();
+            // $("#label_role").show();
+            // $("#id_module_part").show();
+            // $("#label_module_part").show();
+            $role_div.show();
+            $module_part_div.show();
+        } else {
+            // $("#id_role").hide();
+            // $("#label_role").hide();
+            // $("#id_module_part").hide();
+            // $("#label_module_part").hide();
+            $role_div.hide();
+            $module_part_div.hide();
+        }
+    })
 });
 
 jQuery(document).ready(function($) {

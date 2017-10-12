@@ -34,23 +34,9 @@
                 </li>
                 {% endif %}
             </ul>
-            {% if module_coordinator %}
-            <div class="btn-group">
-                  <button type="button" class="btn dropdown-toggle nav-button pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <i class="material-icons md-light md-36">add</i>
-                      {#                    <i class="fa fa-plus fa-light fa-24"></i>#}
-                  </button>
-                  <div class="dropdown-menu dropdown-menu-left">
-                      <a class="dropdown-item" href="#">Add module</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item" href="{% url 'importer:index' %}">Add grades</a>
-                  </div>
-            </div>
-            {% endif %}
            <div class="btn-group">
               <button type="button" class="btn dropdown-toggle nav-button pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="material-icons md-light md-36">account_circle</i> <!-- Probably add circle with initials when logged in, like in Trello -->
-{#                  <i class="fa fa-user-circle fa-light fa-24"></i>#}
+                <i class="material-icons md-light md-36">account_circle</i>
               </button>
               <div class="dropdown-menu dropdown-menu-left">
                   {% if user.is_authenticated %}

@@ -2,7 +2,8 @@ from django.shortcuts import render
 from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UserUpdateForm
+from .forms import UserUpdateForm, CreateUserForm
+from .forms import UserUpdateForm, CreateUserForm
 from django.core.exceptions import PermissionDenied
 
 import permission_utils as pu
@@ -64,6 +65,8 @@ class PersonsView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super(PersonsView, self).get_context_data(**kwargs)
+        # persons = Person.objects.all().order_by('name')
+        # context['persons'] = persons
         context['persons'] = known_persons(self.person)
         return context
 
@@ -149,3 +152,19 @@ class CreatePerson(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
+
+
+class CreatePersonNew(generic.FormView):
+    template_name = 'human_resource/person_form.html'
+    form_class = CreateUserForm
+
+    def form_invalid(self, form):
+        print("Wrong")
+
+    def form_valid(self, form):
+        if form.cleaned_data['create_teacher']:
+            print("Create teacher")
+        else:
+            print("Don't create teacher")
+        print("right")
+
