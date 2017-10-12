@@ -26,9 +26,9 @@
                             <div class="card-header" role="tab" id="heading{{ mod.pk }}">
                                 <h4 class="md-0 skin-text remove-margin">
                                     <a class="text-dark" data-toggle="collapse" href="#collapse{{ mod.pk }}" aria-expanded="true" aria-controls="collapse{{ mod.pk }}">
-                                        {{ mod.module.name}}{{ mod.module_code_extension }}
+                                        {{ mod.module.name}}{{ mod.block }}
                                     </a>
-                                    <a href="#"><i class="material-icons float-right">settings</i></a></h4>
+                                    <a href="{% url 'module_management:module_edition_update' mod.pk %}"><i class="material-icons float-right">settings</i></a></h4>
                             </div>
 
                             <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">
@@ -66,15 +66,15 @@
                             <div class="card-header" role="tab" id="heading{{ mod.pk }}">
                                 <h4 class="md-0 skin-text remove-margin">
                                     <a class="text-dark" data-toggle="collapse" href="#collapse{{ mod.pk }}" aria-expanded="true" aria-controls="collapse{{ mod.pk }}">
-                                        {{ mod.module.name}}{{ mod.module_code_extension }}
+                                        {{ mod.module.name}}{{ mod.block }}
                                     </a>
-                                    <a href="#"><i class="material-icons float-right">settings</i></a></h4>
+                                    <a href="{% url 'module_management:module_edition_update' mod.pk %}"><i class="material-icons float-right">settings</i></a></h4>
                             </div>
 
                             <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">
                                 <div class="card-body">
                                     <div id="accordion" role="tablist">
-                                        {% for course in mod.courses.all %}
+                                        {% for course in mod.modulepart_set.all %}
                                         <div class="card">
                                             <div class="card-header" role="tab" id="headingCourse{{ course.pk }}">
                                                 <h5 class="md-0 skin-text remove-margin">

@@ -55,6 +55,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'Seth.urls'
 
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -78,14 +79,18 @@ WSGI_APPLICATION = 'Seth.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'OPTIONS': {
-            'read_default_file': '../../secrets/database.cnf',
-        },
-    }
-}
+with open('../../secrets/postgres_host') as hfile:
+    with open('../../secrets/postgres_password') as pwfile:
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql_psycopg2',
+                'NAME': 'djangoseth',
+                'USER': 'djangoseth',
+                'PASSWORD': pwfile.read().strip(),
+                'HOST': hfile.read().strip(),
+            }
+        }
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -135,6 +140,9 @@ LOGOUT_REDIRECT_URL = '/successfully_logged_out/'
 FIXTURE_DIRS = (
     './fixtures/',
 )
+
+# Console mailing backend for development
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Django-excel requires these, used in importer.
 FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Importer
+{% endblock %}
+
+{% block content %}
+{% include 'navbar.html' with active_page="importer"%}
+<div class="container">
+    {% if course_list %}
+    <div class="row">
+        <div class="col-lg-12">
+            <h3 class="display-4">Choose module part</h3>
+            <hr>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <ul>
+                {% for course in course_list %}
+                <li>{{ course.name }}</li>
+                <ul>
+                    {% for test in course.test_set.all %}
+                    <li><a href="{% url 'importer:import_test' test.pk %}">{{ test.name }}</a> - <a
+                            href="{% url 'importer:export_test' test.pk %}"><i
+                            class="material-icons">view_list</i></a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="row">
+        <div class="col-lg-12">
+            <h3 class="display-2">No module parts available</h3>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+

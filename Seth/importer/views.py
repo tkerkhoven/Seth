@@ -1,91 +1,150 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse
-from django.shortcuts import render, redirect
-from django.views import generic
+from django.core.exceptions import PermissionDenied, SuspiciousOperation
+from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
+    Http404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views import generic, View
 from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
-from xlsxwriter.utility import xl_rowcol_to_cell
+from django.views.decorators.http import require_http_methods, require_GET
+from permission_utils import *
 
 import re
 
 from Grades.exceptions import GradeException
-from Grades.models import Module_ed, Grade, Test, Person, Course, Studying, Module
+from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module, Study
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule
 
 
 # Create your views here.
+class ImporterIndexView(LoginRequiredMixin, View):
+    """Index view of the importer module. Serves both Module Coordinators and Teachers.
+
+    Module coordinators are presented with an overview of the module editions they are a coordinator of, for which they
+    can perform administrative actions. They can add students to a module edition, and download and upload a form that
+    contains grades for the tests which are in the module. This can be done for the whole module, or per test individually.
+
+    Teachers receive a list of module parts that are a teacher of, with their tests. They can, like module coordinators,
+    download and upload an excel sheet that contains grades. This can be done per test individually.
+    """
+    model = ModuleEdition
+
+    @method_decorator(login_required)
+    def get(self, request, *args, **kwargs):
+        person = Person.objects.filter(user=request.user).first()
+        if is_coordinator_or_assistant(person):
+            return render(request, 'importer/mcindex.html', {
+                'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
+                    'start')})
+        elif is_teacher(person):
+            return render(request, 'importer/teacherindex.html',
+                          {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
+                              'module_edition__start')})
+
+        raise PermissionDenied('Only module coordinators or teachers can view this page.')
 
 
-class IndexView(LoginRequiredMixin, generic.ListView):
-    template_name = 'importer/index.html'
-    model = Module_ed
-
-    def get_queryset(self):
-        return Module_ed.objects.filter(module_coordinator__user=self.request.user).order_by('start')
+        # def get_queryset(self):
+        #     return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')
 
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
+
 @login_required
+@require_http_methods(["GET", "POST"])
 def import_module(request, pk):
-    if not Module_ed.objects.filter(pk=pk):
-        return HttpResponseNotFound('Module does not exist.')
-    if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
-        return HttpResponseForbidden('You are not the module coordinator for this course')
+    """Module import. Use an .xlsx file to submit grades to a module edition
+
+    On GET the user is presented with a file upload form.
+
+    On POST, the submitted .xlsx file is processed by the system, registering Grade object for each grade in the excel
+    file. It dynamically detects the tests that are submitted (by exact name match or database ID), and omits extra
+    columns silently. Also, lines that do not have a filled in student number are ignored. Students that are not
+    declared as part of the module (def:import_student_to_module) raise an import error.
+
+    :param request: Django request
+    :param pk: Module that grades should be submitted to
+    :return: A redirect to the Grades module's module view on success. Otherwise a 404 (module does not exist), 403
+        (no permissions) or 400 (bad excel file or other import error)
+    """
+    person = Person.objects.filter(user=request.user).first()
+    if not ModuleEdition.objects.filter(pk=pk):
+        raise Http404('Module does not exist.')
+    if not is_coordinator_or_assistant(person):
+        raise PermissionDenied('You are not the module coordinator for this course')
 
     if request.method == "POST":
         form = GradeUploadForm(request.POST, request.FILES)
-        print('valid form')
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
 
                 test_rows = dict()
 
+                university_number_field = None
+
+                # Detect university_number and test columns
                 for title_index in range(0, len(sheet[table][COLUMN_TITLE_ROW])):
+                    # Ignore empty column titles
                     if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
                         continue
+                    # This is the university number column
                     if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'student_id':
-                        student_id_field = title_index
+                        university_number_field = title_index
                     else:
-                        if Test.objects.filter(     # search by ID
+                        # Attempt to find a Test
+
+                        # search by ID
+                        if Test.objects.filter(
                                 pk=sheet[table][COLUMN_TITLE_ROW][title_index]
-                        ).filter(course_id__module_ed=pk):
-                            test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]
-                        elif Test.objects.filter(   # search by name
+                        ).filter(module_part__module_edition=pk):
+                            test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
+
+                        # search by name
+                        elif Test.objects.filter(
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
-                        ).filter(course_id__module_ed=pk):
+                        ).filter(module_part__module_edition=pk):
                             test_rows[title_index] = Test.objects.filter(
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
-                            ).filter(course_id__module_ed=pk)[0].pk
-                        else:
-                            pass  # Attempt to ignore test altogether.
-                            # return HttpResponseBadRequest(
-                            #     'Attempt to register grade for, amongst possible other tests, test: {} (interpreted from sheet coordinates {}), which is not part of this module. (Are you sure this test ID is correct and therefore part of your module?)'.format(
-                            #         sheet[table][COLUMN_TITLE_ROW][title_index], xl_rowcol_to_cell(COLUMN_TITLE_ROW, title_index)))
-                if student_id_field is None:
-                    return HttpResponseBadRequest('excel file misses required header: \"student_id\"')
+                            ).filter(module_part__module_edition=pk)[0].pk  # pk of Test
 
+                        # Attempt to ignore test altogether.
+                        else:
+                            pass
+
+                if university_number_field is None:
+                    raise SuspiciousOperation('excel file misses required header: \"student_id\"')
+
+                # The current user's Person is the corrector of the grades.
                 teacher = Person.objects.get(user=request.user)
 
                 grades = []
 
+                # Retrieve Test object beforehand to speed up Grade creation
                 tests = dict()
                 for test_column in test_rows.keys():
                     tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
 
-                # check for invalid students
-                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
-                    if not Person.objects.filter(person_id=row[student_id_field]):
-                        return HttpResponseBadRequest(
-                            'Student {} does not exist. Add this user first before retrying.'.format(
-                                row[student_id_field]))
+                # Check excel file for invalid students
+                invalid_students = []
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                    if not Studying.objects.filter(person__university_number=row[university_number_field]).filter(
+                            module_edition=pk):
+                        invalid_students.append(row[university_number_field])
+                # Check for invalid student numbers in the university_number column, but ignore empty fields.
+                if [student for student in invalid_students if student is not '']:
+                    raise SuspiciousOperation(
+                        'Students {} are not enrolled in this module. '
+                        'Enroll these students first before retrying.'.format(invalid_students))
 
-
-                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
-                    student = Person.objects.filter(person_id=row[student_id_field])[0]
+                # Make Grades
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:  # Walk horizontally over table
+                    student = Person.objects.filter(university_number=row[university_number_field])[0]
+                    # check if this is not an empty line, else continue.
                     if student:
                         for test_column in test_rows.keys():
                             try:
@@ -95,30 +154,42 @@ def import_module(request, pk):
                                     test=tests[test_column],
                                     grade=row[test_column]
                                 ))
-                            except GradeException as e:
+                            except GradeException as e:  # Called for either: bad grade, grade out of bounds
                                 return HttpResponseBadRequest(e)
-                save_grades(grades)
+                save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:gradebook', pk)
         else:
-            return HttpResponseBadRequest('Invalid file')
-    else:
-        if Module_ed.objects.filter(pk=pk):
-            form = GradeUploadForm()
-            return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
-
-        else:
-            return HttpResponseBadRequest('This module does not exist.')
+            raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel file. Are you'
+                                      'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+                                      'using that instead.')
+    else:  # GET request
+        form = GradeUploadForm()
+        return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
 
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def import_test(request, pk):
-    if not Test.objects.filter(pk=pk):
-        return HttpResponseNotFound('Test does not exist.')
-    if not Test.objects.filter(
-                    Q(course_id__teachers__user=request.user) | Q(
-                course_id__module_ed__module_coordinator__user=request.user)
-    ).filter(pk=pk):
-        return HttpResponseForbidden('Not allowed to alter test')
+    """ Test import. Use an .xlsx file to submit grades to a test
+
+    On GET the user is presented with a file upload form.
+
+    On POST, the submitted .xlsx file is processed by the system, registering Grade object for each grade in the excel
+    file. Lines that do not have a filled in student number are ignored. Students that are not declared as part of the
+    module (def:import_student_to_module) the test is in raise an import error.
+
+    :param request: Django request
+    :param pk: Test that grades should be submitted to
+    :return: A redirect to the Grades module's Test view on success. Otherwise a 404 (module does not exist), 403
+        (no permissions) or 400 (bad excel file or other import error)
+    """
+    # Check if user is either the module coordinator or teacher of this test.
+    test = get_object_or_404(Test, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+
+    if not is_coordinator_or_teacher_of_test(person, test):
+        raise PermissionDenied('You are not a module coordinator or teacher of this test. Please refer to the'
+                               'module coordinator of this test if you think this is in error.')
 
     if request.method == "POST":
         form = TestGradeUploadForm(request.POST, request.FILES)
@@ -127,34 +198,50 @@ def import_test(request, pk):
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
-
+                # Identify columns
                 try:
                     student_id_field = sheet[table][COLUMN_TITLE_ROW].index('student_id')
                     grade_field = sheet[table][COLUMN_TITLE_ROW].index('grade')
                     description_field = sheet[table][COLUMN_TITLE_ROW].index('description')
                 except ValueError:
-                    return HttpResponseBadRequest()
+                    raise SuspiciousOperation('One of the required fields [student_id, grade, description] could'
+                                              ' not be found.')
 
+                # The current user's Person is the corrector of the grades.
                 teacher = Person.objects.get(user=request.user)
 
+                # Check excel file for invalid students
+                invalid_students = []
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                    if not Studying.objects.filter(module_id__courses__test__exact=pk,
+                                                   student_id__person_id=row[student_id_field]):
+                        if not row[student_id_field] == '':
+                            invalid_students.append(row[student_id_field])
+                # Check for invalid student numbers in the university_number column, but ignore empty fields.
+                if [student for student in invalid_students if student is not '']:
+                    raise SuspiciousOperation(
+                        'Students {} are not enrolled in this module. '
+                        'Enroll these students first before retrying.'.format(invalid_students))
+
                 grades = []
-                for row in sheet[table][(COLUMN_TITLE_ROW+1):]:
-                    if not Person.objects.filter(person_id=row[student_id_field]):
-                        return HttpResponseBadRequest('Student {} does not exist. Add this user first before retrying.'.format(row[student_id_field]))
+                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
                     try:
-                        grades.append(make_grade(
-                            student=Person.objects.filter(person_id=row[student_id_field])[0],
-                            corrector=teacher,
-                            test=Test.objects.get(pk=pk),
-                            grade=row[grade_field],
-                            description=row[description_field]
-                        ))
-                    except GradeException as e:
+                        student = Person.objects.get(person_id=row[student_id_field])
+                        # check if this is not an empty line, else continue.
+                        if student:
+                            grades.append(make_grade(
+                                student=student,
+                                corrector=teacher,
+                                test=test,
+                                grade=row[grade_field],
+                                description=row[description_field]
+                            ))
+                    except GradeException as e:  # Called for either: bad grade, grade out of bounds
                         return HttpResponseBadRequest(e)
-                save_grades(grades)
+                save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:test', pk)
         else:
-            return HttpResponseBadRequest('Bad POST')
+            raise SuspiciousOperation('Bad POST')
     else:
         if Test.objects.filter(pk=pk):
             form = TestGradeUploadForm()
@@ -162,73 +249,132 @@ def import_test(request, pk):
                           {'test': Test.objects.get(pk=pk), 'form': form, 'pk': pk})
 
         else:
-            return HttpResponseBadRequest('Test does not exist')
+            raise SuspiciousOperation('Test does not exist')
 
 
 @login_required()
+@require_http_methods(["GET"])
 def export_module(request, pk):
+    """ Creates an excel sheet that contains all tests against all students in the module. This sheet is compatible with
+    def:import_module.
 
-    if not Module_ed.objects.filter(pk=pk).filter(module_coordinator__user=request.user):
-        return HttpResponseForbidden('You are not the module coordinator for this course.')
+    :param request: Django request
+    :param pk: Module ID
+    :return: A file response containing an .xlsx file.
+    """
 
-    module = Module_ed.objects.get(pk=pk)
-    students = Person.objects.filter(studying__module_id=module)
-    tests = Test.objects.filter(course_id__module_ed=module)
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
 
-    table = [['' for _ in range(len(tests)+1)] for _ in range(COLUMN_TITLE_ROW - 1)]
+    # Check if user is a module coordinator.
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
+        raise PermissionDenied('You are not the module coordinator for this course.')
 
+    students = Person.objects.filter(studying__module_edition=module_edition)
+    tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+    # Pre-fill first few columns.
+    table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW - 2)]
+
+    # Add the module part name and test name for each test if there is enough header room.
     if COLUMN_TITLE_ROW > 1:
-        table.append(['Module part >'] + [test.course_id.name for test in tests])
-
+        table.append(['Module part >'] + [test.module_part.name for test in tests])
     if COLUMN_TITLE_ROW > 0:
         table.append(['Test name >'] + [test.name for test in tests])
 
-    table.append(['student_id']+[test.pk for test in tests])
+    # Add machine-readable header row.
+    table.append(['student_id'] + [test.pk for test in tests])
 
+    # pre-fill student numbers
     for student in students:
-        table.append([student.person_id] + [None for _ in range(len(tests))])
+        table.append([student.university_number] + [None for _ in range(len(tests))])
 
-    return excel.make_response_from_array(table, 'xlsx')
+    return excel.make_response_from_array(table,
+                                          file_name='Module Grades {} {}-{}.xlsx'.format(module_edition.module.name,
+                                                                                         module_edition.year,
+                                                                                         module_edition.block),
+                                          file_type='xlsx')
 
 
 @login_required()
-def export_test(request, pk):
-    if not Test.objects.filter(
-                    Q(course_id__teachers__user=request.user) |
-                    Q(course_id__module_ed__module_coordinator__user=request.user)
-    ).filter(pk=pk):
-        return HttpResponseForbidden('Not allowed to export test.')
-    test = Test.objects.get(pk=pk)
-    students = Person.objects.filter(studying__module_id__courses=test.course_id)
+@require_http_methods(["GET"])
+def export_student_import_format(request):
+    """
+    Creates an excel sheet with appropriate headers (id, name, mail, start, study and role). In this sheet student
+    information can be added that is taken by def:import_student_to_module. The sheet is a default and is not altered
+    when called upon from within another module_edition.
 
+    :param request: Django request; not used in function
+    :return: .xlsx file response, named Import_students.xlsx
+    """
+    table = [['Student_id', 'name', 'E-mail', 'Start (yyyy-mm-dd)', 'study', 'role']]
+    return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
+
+
+@login_required()
+@require_http_methods(["GET"])
+def export_test(request, pk):
+    """ Creates an excel sheet that contains all students that may take the test. This sheet is compatible with
+    def:import_test. It contains a description row, which can be used to submit feedback through.
+
+    :param request: Django request
+    :param pk: Test ID
+    :return: A file response containing an .xlsx file.
+    """
+
+    test = get_object_or_404(Test, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+
+    # Check if user is either the module coordinator or teacher of this test.
+    if not is_coordinator_or_teacher_of_test(person, test):
+        raise PermissionDenied('Not allowed to export test.')
+
+    students = Person.objects.filter(studying__module_edition__modulepart=test.module_part)
+
+    # Insert padding
     table = [['', '', ''] for _ in range(COLUMN_TITLE_ROW)]
 
+    # Insert title row
     table.append(['student_id', 'grade', 'description'])
 
+    # Insert student numbers
     for student in students:
-        table.append([student.person_id, '', ''])
+        table.append([student.university_number, '', ''])
 
-    return excel.make_response_from_array(table, 'xlsx')
+    return excel.make_response_from_array(table, file_name='Test Grades {} {}-{}.xlsx'
+                                          .format(test.name,
+                                                  test.module_part.module_edition.year,
+                                                  test.module_part.module_edition.block),
+                                          file_type='xlsx')
 
 
-def make_grade(student: Person, corrector: Person, test: Test, grade: float, description: str = ''):
+def make_grade(student: Person, corrector: Person, test: Test, grade, description: str = ''):
+    """ Helper function that makes Grade objects so they can be inserted in bulk with def:save_grades.
+    :param student: Person object of the student.
+    :param corrector: Person object of the corrector.
+    :param test: Test object.
+    :param grade: A float that is the grade.
+    :param description: An optional description.
+    :return: A grade object, or None (:param grade is empty).
+    """
     if grade == '':
         return  # Field is empty, assume it does not need to be imported.
-
     try:
         float(grade)
     except ValueError:
         raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
                              .format(grade, student, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
-        raise GradeException('Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
-                             '({}-{}).'.format(student.name, student.id_prefix + student.person_id, test.name, grade, test.minimum_grade, test.maximum_grade))
+        raise GradeException(
+            'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
+            '({}-{}).'.format(student.name, student.university_number, test.name, grade, test.minimum_grade,
+                              test.maximum_grade))
 
     try:
         grade_obj = Grade(
-            student_id=student,
-            teacher_id=corrector,
-            test_id=test,
+            student=student,
+            teacher=corrector,
+            test=test,
             grade=grade,
             time=timezone.now(),
             description=description
@@ -239,17 +385,25 @@ def make_grade(student: Person, corrector: Person, test: Test, grade: float, des
 
 
 def save_grades(grades):
+    """ Helper function that saves all grades to the database.
+
+    :param grades: List of Grade objects, which may contain None values. These are ignored.
+    :return: Nothing.
+    :raises: GradeException if a grade object is malformed. No grades are saved when this happens.
+    """
     try:
         Grade.objects.bulk_create([grade for grade in grades if grade is not None])
-    except:
-        raise GradeException('Error when trying to save the grades to the database.')
+    except Exception as e:
+        raise GradeException('Error when saving grades to te database.')
+
 
 @login_required
+@require_http_methods(["GET", "POST"])
 def import_student(request):
-    # if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
-    #         Q(module_coordinator__user=request.user)
-    # ).filter(pk=pk):
-    #     return HttpResponseForbidden('Not allowed to alter test')
+    person = Person.objects.filter(user=request.user).first()
+
+    if not is_coordinator_or_assistant(person):
+        raise PermissionDenied('Not allowed to add students if not a module coordinator')
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
@@ -262,7 +416,7 @@ def import_student(request):
             if new_students[0][0].lower() == 'name' and new_students[0][1].lower() == 's-number' and new_students[0][
                 2].lower() == 'starting date (dd/mm/yy)':
                 for i in range(1, len(new_students)):
-                    new_student = Person(name=new_students[i][0], id_prefix='s', person_id=new_students[i][1],
+                    new_student = Person(name=new_students[i][0], university_number=new_students[i][1],
                                          start=new_students[i][2])
                     new_student.save()
                     string += "Student added:<br>"
@@ -271,11 +425,10 @@ def import_student(request):
                     string += "-----------------------------------------<br>"
                 return HttpResponse(string)
             else:
-                return HttpResponseBadRequest("Incorrect xls-format")
-
+                raise SuspiciousOperation("Incorrect xls-format")
 
         else:
-            return HttpResponseBadRequest('Bad POST')
+            raise SuspiciousOperation('Bad POST')
     else:
         # if Module_ed.objects.filter(pk=pk):
         student_form = ImportStudentForm()
@@ -287,25 +440,63 @@ def import_student(request):
 
 
 @login_required
+def workbook_student_to_module(request, pk):
+    """ Creates an excel sheet that may be filled in to register students to a module. This sheet is compatible with
+        def:import_student_to_module.
+
+        :param request: Django request
+        :param pk: Test ID
+        :return: A file response containing an .xlsx file.
+        """
+    # Check if user is a module coordinator.
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    # Insert column titles
+    table = [['student_id', 'name', 'email', 'start date', 'study', 'role']]
+
+    print("foo")
+
+    return excel.make_response_from_array(table, file_name='Module import Sheet.xlsx', file_type='xlsx')
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
 def import_student_to_module(request, pk):
-    # if not Module_ed.objects.filter(              # ToDo: Check if User is actually Admin
-    #         Q(module_coordinator__user=request.user)
-    # ).filter(pk=pk):
-    #     return HttpResponseForbidden('Not allowed to alter test')
+    """
+    Take .xlsx file, as produced by def:export_student_import_format and retrieve all students and metainformation from it.
+    Case 1 - Known User - Add the user to the active module edition with the right study and role by making a new Studying object
+    Case 2 - Unknown User - Add the student to the database by making a new Person object and proceed like Case 1
+    Case 3 - Already Added User - Ignore row
+    The function returns a view in which all newly added users, all users that are now added to the module edition and all users that were already in the module are shown.
+
+    :param request: Django request
+    :param pk: The module edition id
+    :return: /students-module-imported.html redirect in which all fails, successes and addeds are given
+    :raises: Permission denied if the user is not the Module Coordinator
+    :raises: SuspiciousOperation in case of faulty file input
+    """
+    # Check if user is a module coordinator.
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
+        raise PermissionDenied('Not allowed to upload students to module.')
 
     if request.method == "POST":
         student_form = ImportStudentForm(request.POST, request.FILES)
-        print('hello')
         if student_form.is_valid():
             file = request.FILES['file']
             dict = file.get_book_dict()
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
             startpattern = re.compile('start*')
-            if students_to_module[0][0].lower() == 's-number' and students_to_module[0][1].lower() == 'name' and \
-                    startpattern.match(students_to_module[0][
-                                           2].lower()) and students_to_module[0][3].lower() == 'study' and \
-                            students_to_module[0][4].lower() == 'role':
+            emailpattern = re.compile('e[-]?mail*')
+            if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
+                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
+                students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
+                            students_to_module[0][5].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
@@ -313,41 +504,46 @@ def import_student_to_module(request, pk):
 
                 for i in range(1, len(students_to_module)):
                     student, created = Person.objects.get_or_create(
-                        id_prefix='s',
-                        person_id=str(students_to_module[i][0]),
+                        university_number=str(students_to_module[i][0]),
                         defaults={
                             'name': students_to_module[i][1],
-                            'start': students_to_module[i][2],
+                            'email': students_to_module[i][2],
+                            'start': students_to_module[i][3],
                         }
                     )
                     if created:
                         context['created'].append([student.name, student.full_id])
                     studying, created = Studying.objects.get_or_create(
-                        student_id=student,
-                        module_id_id=pk,
-                        study_id=students_to_module[i][3],
+                        person=student,
+                        module_edition=ModuleEdition.objects.get(pk=pk),
+                        study=Study.objects.get(abbreviation=students_to_module[i][4]),
                         defaults={
-                            'role': students_to_module[i][4],
+                            'role': students_to_module[i][5],
                         }
                     )
                     if created:
-                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
-                        module = Module.objects.get(module_code=module_ed.module_id)
+                        module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
+                        module = Module.objects.get(moduleedition=module_ed)
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
                     else:
-                        module_ed = Module_ed.objects.get(id=studying.module_id.pk)
-                        module = Module.objects.get(module_code=module_ed.module_id)
+                        module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
+                        module = Module.objects.get(moduleedition=module_ed)
                         context['failed'].append(
-                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.module_code, studying.study])
-                print(context)
+                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
-                return HttpResponseBadRequest("Incorrect xls-format")
+                # print(students_to_module[0][0].lower() == 'student_id')
+                # print(students_to_module[0][1].lower() == 'name')
+                # print(emailpattern.match(students_to_module[0][2].lower()))
+                # print(startpattern.match(students_to_module[0][3].lower()))
+                # print(students_to_module[0][4].lower() == 'study')
+                # print(students_to_module[0][5].lower() == 'role')
+                raise SuspiciousOperation("Incorrect xls-format")
         else:
-            return HttpResponseBadRequest('Bad POST')
+            raise SuspiciousOperation('Bad POST')
 
     else:  # if Module_ed.objects.filter(pk=pk):
         student_form = ImportStudentModule()

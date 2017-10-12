@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden
 from django.utils import timezone
-from Grades.models import Module_ed, Person, Coordinator
+from Grades.models import ModuleEdition, Person, Coordinator
 
 
 # @permission_required('grades.add_grade')
@@ -18,6 +18,10 @@ def home(request):
         'modules': get_modules(),
         'time': get_current_date()
     }
+    studying = Studying.objects.filter(person__user=request.user)
+    if studying:
+        return redirect('grades:student', studying.get(person__user=request.user).person.id)
+
     return render(request, 'dashboard/index.html', context)
 
 
@@ -40,7 +44,7 @@ def settings(request):
 
 
 def get_modules():
-    return Module_ed.objects.order_by('-start')
+    return ModuleEdition.objects.order_by('-start')
 
 
 def get_current_date():
@@ -48,16 +52,16 @@ def get_current_date():
 
 
 def server_error(request):
-    return render(request, 'errors/500.html')
+    return render(request, 'errors/500.html', status=500)
 
 
 def not_found(request):
-    return render(request, 'errors/404.html')
+    return render(request, 'errors/404.html', status=404)
 
 
 def permission_denied(request):
-    return render(request, 'errors/403.html')
+    return render(request, 'errors/403.html', status=403,)
 
 
 def bad_request(request):
-    return render(request, 'errors/400.html')
+    return render(request, 'errors/400.html', status=400)

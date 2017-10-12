@@ -15,43 +15,44 @@
                     </h1>
                     <hr>
 
-                    {% for mod in coursedict.keys %}
+                    {% for mod_ed in modules %}
                     <div class="card">
                         <div class="card-header" role="tab" id="headingActive{{ mod.module.pk }}">
                             <h4 class="md-0">
-                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.module.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.module.pk }}">
-                                    {{ mod.module.name}}
+                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod_ed.id }}" aria-expanded="true" aria-controls="collapseActive{{ mod_ed.id }}">
+                                    {{ mod_ed.module.name}}
                                 </a>
                             </h4>
                         </div>
-                        <div id="collapseActive{{ mod.module.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.module.pk }}" data-parent="#accordion">
+                        <div id="collapseActive{{ mod_ed.id }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod_ed.id }}" data-parent="#accordion">
                             <div class="card-body">
-                                <table id="gradebook" class="table table-striped table-bordered table-responsive">
-                                <tr>
-                                    {% for course in coursedict|key:mod %}
-                                        <th colspan="{{ testdict|key:course|length }}"> {{ course }} </th>
-                                    {% endfor %}
-                                </tr>
-
-                                <tr>
-                                    {% for course in coursedict|key:mod %}
-                                    {% for test in testdict|key:course %}
-                                        <td><a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}"> {{ test.name }} </a></td>
-                                    {% endfor %}
-                                    {% endfor %}
-                                </tr>
-                                <tr>
-                                    {% for course in coursedict|key:mod %}
-                                    {% for test in testdict|key:course %}
-                                    {% with grade=gradedict|key:test|last %}
-                                        <td id="gradeid_{{ grade.id }}" data-grade="{{ grade|grade_od }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                            <font data-toggle="tooltip" title="{{ grade|grade_od_no_round }}">{{ grade|grade_od }}</font>
-                                        </td>
-                                    {% endwith %}
-                                    {% endfor %}
-                                    {% endfor %}
-                                </tr>
-                                </table>
+                                <div class="table-overflow">
+                                    <table id="studentbook" class="table table-striped table-bordered table-responsive">
+                                    <thead>
+                                    <tr>
+                                        {% for module_part in module_parts|key:mod_ed %}
+                                            <th colspan="{{ module_part.test_set.count }}"> {{ module_part }} </th>
+                                        {% endfor %}
+                                    </tr>
+                                    <tr>
+                                        {% for test in tests|key:mod_ed %}
+                                            <td><a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}"> {{ test.name }} </a></td>
+                                        {% endfor %}
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        {% for test in tests|key:mod_ed %}
+                                        {% with grade=gradedict|key:test.id %}
+                                            <td id="gradeid_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                                <a data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}</a>
+                                            </td>
+                                        {% endwith %}
+                                        {% endfor %}
+                                    </tr>
+                                    </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

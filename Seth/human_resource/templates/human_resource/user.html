@@ -24,11 +24,16 @@
                 {#                Name: {{ person.name }} <br>#}
                 Id: {{ person.id }} <br>
                 Start: {{ person.start }} <br>
-                Stop: {{ person.stop }} <br>
-                {% for study in person.studies.all %}
-                    Studies: {{ study }} <br>
+                End: {{ person.end }} <br>
+                University number: {{ person.university_number }} <br>
+                Studies:
+                <ul>
+                {% for study in studies %}
+                    <li>{{ study }}</li>
+                {% empty %}
+                    <li> <i>Empty</i> </li>
                 {% endfor %}
-                Full ID: {{ person.full_id }}
+                </ul>
                 <br><br>
                 <!--<a href="/grades/update-user">Edit:</a>-->
             </div>
