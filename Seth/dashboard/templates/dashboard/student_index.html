@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block content %}
+
+    {% include 'navbar.html' with active_page="dashboard"%}
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-1"></div>
+            <div class="col-lg-10">
+                <h1 class="display-2">Dashboard</h1>
+                <hr>
+            </div>
+            <div class="col-lg-1"></div>
+        </div>
+        <div class="row">
+            <div class="col-lg-1"></div>
+            <div class="col-lg-6">
+                <p> You are not participating in any modules at this moment. If you believe this is in error, please contact your module coordinator. </p>
+            </div>
+        <div class="col-lg-1"></div>
+{#        <div class="col-lg-4">#}
+{#            <h1 class="display-4">All modules</h1>#}
+{#            <hr>#}
+{#            {% for mod in modules %}#}
+{#                <div class="card">#}
+{#                    <div class="card-header" role="tab" id="heading{{ mod.pk }}">#}
+{#                        <h4 class="md-0 skin-text remove-margin">#}
+{#                            <a class="text-dark" data-toggle="collapse" href="#collapse{{ mod.pk }}" aria-expanded="true" aria-controls="collapse{{ mod.pk }}">#}
+{#                                {{ mod.module.name}}{{ mod.module_code_extension }}#}
+{#                            </a>#}
+{#                            <a href="#"><i class="material-icons float-right">settings</i></a></h4>#}
+{#                    </div>#}
+{##}
+{#                    <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">#}
+{#                        <div class="card-body">#}
+{#                            <div id="accordion" role="tablist">#}
+{#                                {% for course in mod.courses.all %}#}
+{#                                <div class="card">#}
+{#                                    <div class="card-header" role="tab" id="headingCourse{{ course.pk }}">#}
+{#                                        <h5 class="md-0 skin-text remove-margin">#}
+{#                                            <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ course.pk }}">#}
+{#                                                {{ course.name }}#}
+{#                                            </a>#}
+{#                                            <a href="#"><i class="material-icons float-right md-20">settings</i></a>#}
+{#                                        </h5>#}
+{#                                    </div>#}
+{#                                    <div id="collapseCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ course.pk }}" data-parent="#accordion">#}
+{#                                        <div class="card-body">#}
+{#                                            <ul class="list-group">#}
+{#                                                {% for test in course.test_set.all %}#}
+{#                                                    <li class="list-group-item"><a href="#" class="text-dark">{{ test.name }}</a></li>#}
+{#                                                {% endfor %}#}
+{#                                            </ul>#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                                {% endfor %}#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <hr>#}
+{#            {% endfor %}#}
+{#        </div>#}
+        </div>
+    </div>
+{% endblock %}
