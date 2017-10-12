@@ -58,7 +58,7 @@
                         <thead>
                         <tr>
                             {% for module_part in module_parts %}
-                                <th colspan="{{ module_part.test_set.count }}"> {{ module_part }} </th>
+                                <th colspan="{{ module_part.test_set.count }}"> {{ module_part.name }} </th>
                             {% endfor %}
                         </tr>
 
