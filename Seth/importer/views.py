@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
     Http404
@@ -416,9 +417,26 @@ def import_student(request):
             if new_students[0][0].lower() == 'name' and new_students[0][1].lower() == 's-number' and new_students[0][
                 2].lower() == 'starting date (dd/mm/yy)':
                 for i in range(1, len(new_students)):
-                    new_student = Person(name=new_students[i][0], university_number=new_students[i][1],
-                                         start=new_students[i][2])
-                    new_student.save()
+                    # Sanitize number input
+                    if str(new_students[i][1])[0] == 's' and int(str(new_students[i][1])[1:]) > 0:
+                        username = str(new_students[i][1])
+                    elif str(new_students[i][1])[0] == 'm' and int(str(new_students[i][1])[1:]) > 0:
+                        raise SuspiciousOperation('Trying to add an employee as a student to a module.')
+                    elif int(new_students[i][1]) > 0:
+                        username = 's{}'.format(str(new_students[i][1]))
+                    else:
+                        raise SuspiciousOperation('{} is not a student number.'.format(new_students[i][1]))
+                    user, created = User.objects.get_or_create(username=username)
+
+                    student, created = Person.objects.get_or_create(
+                        university_number=str(new_students[i][1]),
+                        defaults={
+                            'user': user,
+                            'name': new_students[i][0],
+                            'start': new_students[i][2],
+                        }
+                    )
+
                     string += "Student added:<br>"
                     string += "Name: %s<br>Number: %d<br>Start:%s<br>" % (
                         new_students[i][0], new_students[i][1], new_students[i][2])
@@ -503,9 +521,21 @@ def import_student_to_module(request, pk):
                 context['failed'] = []
 
                 for i in range(1, len(students_to_module)):
+                    # Sanitize number input
+                    if str(students_to_module[i][0])[0] == 's':
+                        username = str(students_to_module[i][0])
+                    elif str(students_to_module[i][0])[0] == 'm':
+                        raise SuspiciousOperation('Trying to add an employee as a student to a module.')
+                    elif int(students_to_module[i][0]) > 0:
+                        username = 's{}'.format(str(students_to_module[i][0]))
+                    else:
+                        raise SuspiciousOperation('{} is not a student number.'.format(new_students[i][1]))
+                    user, created = User.objects.get_or_create(username=username)
+
                     student, created = Person.objects.get_or_create(
                         university_number=str(students_to_module[i][0]),
                         defaults={
+                            'user': user,
                             'name': students_to_module[i][1],
                             'email': students_to_module[i][2],
                             'start': students_to_module[i][3],
