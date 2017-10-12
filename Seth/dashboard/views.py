@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden
 from django.utils import timezone
-from Grades.models import ModuleEdition, Person, Coordinator
+from Grades.models import ModuleEdition, Person, Coordinator, Studying
 
 
 # @permission_required('grades.add_grade')
@@ -12,7 +12,7 @@ def home(request):
         return redirect('dashboard_student')
 
     if not Coordinator.objects.filter(person__user=request.user):
-        return redirect('grades:student', Person.objects.filter(user=request.user).filter(id_prefix='s')[0].pk)
+        return redirect('grades:student', Person.objects.filter(user=request.user).filter(university_number__startswith='s')[0].pk)
 
     context = {
         'modules': get_modules(),
