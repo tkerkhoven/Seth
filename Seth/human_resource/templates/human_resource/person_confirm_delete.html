@@ -6,11 +6,29 @@
     {% include 'navbar.html' with active_page="human_resource" %}
 
     <div class="container">
+{#        <div class="row">#}
+{#            <div class="col-lg-12">#}
+{#                <form action="" method="post">{% csrf_token %}#}
+{#                    <p class="display-5">Are you sure you want to delete "{{ object }}"?</p>#}
+{#                    <hr>#}
+{#                    <input class="btn btn-danger pointer" type="submit" value="Confirm" />#}
+{#                    <input onclick="history.back()" class="btn btn-secondary pointer" type="button" value="Cancel" />#}
+{#                </form>#}
+{#            </div>#}
+{#        </div>#}
         <div class="row">
             <div class="col-lg-12">
+                <h3 class="display-5">
+                    Are you sure you want to delete "{{ object }}"?
+                </h3>
+            </div>
+        </div>
+        <hr>
+        <div class="row justify-content-center">
+            <div class="col-lg-4">
                 <form action="" method="post">{% csrf_token %}
-                    <p class="display-5">Are you sure you want to delete "{{ object }}"?</p>
-                    <hr>
+{#                    <p class="display-5">Are you sure you want to delete "{{ object }}"?</p>#}
+{#                    <hr>#}
                     <input class="btn btn-danger pointer" type="submit" value="Confirm" />
                     <input onclick="history.back()" class="btn btn-secondary pointer" type="button" value="Cancel" />
                 </form>

@@ -42,7 +42,7 @@
                                                 <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ modulepart.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ modulepart.pk }}">
                                                     {{ modulepart.name }}
                                                 </a>
-                                                <a href="{% url 'module_management:module_part_detail' pk=course.pk %}"><i class="material-icons float-right md-20">settings</i></a>
+                                                <a href="{% url 'module_management:module_part_detail' pk=module_part.pk %}"><i class="material-icons float-right md-20">settings</i></a>
                                             </h5>
                                         </div>
                                         <div id="collapseActiveCourse{{ modulepart.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ modulepart.pk }}" data-parent="#accordion">
@@ -91,6 +91,7 @@
 {#                                            <a href="#"><i class="material-icons float-right md-20">settings</i></a>#}
 {#                                        </h5>#}
 {#                                    </div>#}
+
 {#                                    <div id="collapseCourse{{ modulepart.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ modulepart.pk }}" data-parent="#accordion">#}
 {#                                        <div class="card-body">#}
 {#                                            <ul class="list-group">#}
