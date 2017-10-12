@@ -1,10 +1,12 @@
 from django.shortcuts import render
-from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module
+from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
 from django.views import generic
 from django.urls import reverse_lazy
 from .forms import UserUpdateForm, CreateUserForm
 from .forms import UserUpdateForm, CreateUserForm
 from django.core.exceptions import PermissionDenied
+from django.db.models import prefetch_related_objects
+from django.db.models.query import EmptyQuerySet
 
 import permission_utils as pu
 
@@ -22,26 +24,52 @@ def known_persons(person):
     """
     result = []
     if pu.is_coordinator_or_assistant(person):
-        modules = ModuleEdition.objects.all().filter(coordinators=person).prefetch_related()
-        studyings = Studying.objects.all().filter(module_edition__in=modules).prefetch_related()
-        persons = Person.objects.all().filter(studying__in=studyings).distinct()
-        result.extend(persons)
-        # Todo: Add study adviser, teachers, teaching assistants and other coordinators
-    if pu.is_teacher(person):
-        module_parts = ModulePart.objects.filter(teacher=person).prefetch_related()
-        modules = ModuleEdition.objects.filter(module_edition__in=module_parts).prefetch_related()
-        studyings = Studying.objects.all().filter(module_edition__in=modules).prefetch_related()
-        persons = Person.objects.all().filter(studying__in=studyings).distinct()
-        result.extend(persons)
-        # Todo: add other teachers, teaching assistants and module coordinators (and advisers?)
-    if pu.is_study_adviser(person):
-        studies = Study.objects.filter(adviser=person).prefetch_related()
-        modules = Module.objects.filter(module__in=studies).prefetch_related()
-        module_eds = ModuleEdition.filter(module__in=modules).prefetch.related()
+        # Add Students
+        module_eds = ModuleEdition.objects.all().filter(coordinators=person).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
-        persons = Person.objects.all().filter(studying__in=studyings).distinct()
-        result.extend(persons)
-        # Todo: add coordinators, teachers, teaching assistants and other advisers
+        students = Person.objects.all().filter(studying__in=studyings).distinct()
+        result.extend(students)
+        # Todo: Add study adviser, teachers, teaching assistants and other coordinators
+        # Add Study Advisers
+        modules = Module.objects.filter(moduleedition__in=module_eds)
+        studies = Study.objects.none()
+        for mod in modules:
+            modset = mod.study_set.all()
+            print(mod)
+            print(modset)
+            studies.union(Study.objects.filter(modules__in=[mod for mod in modset]))
+
+        # print(modules)
+        # studies.union(Study.objects.filter(modules_set__in=modules))  # Todo: Test!!
+
+        # print(studies)
+        advisers = Person.objects.filter(study__in=studies)
+        result.extend(advisers)
+        # Add Teachers and Teaching Assistants
+        module_parts = ModulePart.objects.all().filter(module_edition__in=module_eds)
+        teachers_obj = Teacher.objects.filter(module_part__in=module_parts)
+        teachers = Person.objects.filter(teacher__in=teachers_obj)
+        result.extend(teachers)
+        # Add other coordinators
+        coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
+        coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
+        result.extend(coordinators)
+
+    # if pu.is_teacher(person):
+    #     module_parts = ModulePart.objects.filter(teacher=person).prefetch_related()
+    #     modules = ModuleEdition.objects.filter(module_edition__in=module_parts).prefetch_related()
+    #     studyings = Studying.objects.all().filter(module_edition__in=modules).prefetch_related()
+    #     persons = Person.objects.all().filter(studying__in=studyings).distinct()
+    #     result.extend(persons)
+    #     # Todo: add other teachers, teaching assistants and module coordinators (and advisers?)
+    # if pu.is_study_adviser(person):
+    #     studies = Study.objects.filter(adviser=person).prefetch_related()
+    #     modules = Module.objects.filter(module__in=studies).prefetch_related()
+    #     module_eds = ModuleEdition.filter(module__in=modules).prefetch.related()
+    #     studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
+    #     persons = Person.objects.all().filter(studying__in=studyings).distinct()
+    #     result.extend(persons)
+    #     # Todo: add coordinators, teachers, teaching assistants and other advisers
 
     return result
 
@@ -65,8 +93,6 @@ class PersonsView(generic.ListView):
 
     def get_context_data(self, **kwargs):
         context = super(PersonsView, self).get_context_data(**kwargs)
-        # persons = Person.objects.all().order_by('name')
-        # context['persons'] = persons
         context['persons'] = known_persons(self.person)
         return context
 
@@ -152,19 +178,3 @@ class CreatePerson(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
-
-
-class CreatePersonNew(generic.FormView):
-    template_name = 'human_resource/person_form.html'
-    form_class = CreateUserForm
-
-    def form_invalid(self, form):
-        print("Wrong")
-
-    def form_valid(self, form):
-        if form.cleaned_data['create_teacher']:
-            print("Create teacher")
-        else:
-            print("Don't create teacher")
-        print("right")
-
