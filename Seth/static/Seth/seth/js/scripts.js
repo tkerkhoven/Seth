@@ -6,7 +6,37 @@ $(".btn").mouseup(function(){
     $(this).blur();
 });
 
+function BlurEdit() {
+    var text = $(this).val();
+    var viewableText = $("<a></a>");
+    viewableText.html(text);
+    viewableText.attr('id', $(this).attr('id'));
+    viewableText.attr('title', $(this).attr('title'));
+    $(this).replaceWith(viewableText);
+};
+
 $(document).ready(function() {
+    $(document).on('click', 'a[id^="grade_"]', function() {
+
+      var edit = $("<input type=number max=" + $(this).parent().closest('td').attr('data-grade-max') +
+        " min=" + $(this).parent().closest('td').attr('data-grade-min') +
+        " step=0.25/>");
+      edit.val($(this).html());
+      edit.attr('id', $(this).attr('id'));
+      edit.attr('title', $(this).attr('title'));
+
+      edit.keypress(function(event) {
+        if (event.keyCode == 13) {
+          event.preventDefault();
+          edit.blur();
+        }
+      });
+
+      $(this).replaceWith(edit);
+      edit.focus();
+      edit.blur(BlurEdit)
+    });
+
     var table = $('#gradebook').DataTable({
       "ordering": true,
       "order": [[0, 'asc']],
