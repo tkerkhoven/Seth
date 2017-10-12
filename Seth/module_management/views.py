@@ -276,8 +276,7 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
         user = request.user
 
-        if not ModulePart.objects.filter(
-                        Q(pk=pk) & (Q(module_edition__coordinators__user=user) | Q(teachers__user=user))):
+        if not ModulePart.objects.filter(Q(pk=pk) & Q(module_edition__coordinators__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -438,7 +437,7 @@ class TestDetailView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         user = request.user
-        if not Test.objects.filter(Q(pk=pk) & (Q(module_part__module_edition__coordinators__user=user) | Q(module_part__teachers__user=user))):
+        if not Test.objects.filter(Q(pk=pk) & Q(module_part__module_edition__coordinators__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -459,7 +458,7 @@ class TestUpdateView(generic.UpdateView):
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         user = request.user
-        if not Test.objects.filter(Q(pk=pk) & (Q(module_part__module_edition__coordinators__user=user) | Q(module_part__teachers__user=user))):
+        if not Test.objects.filter(Q(pk=pk) & Q(module_part__module_edition__coordinators__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,

@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^dashboard/modules/$', views.modules, name='modules'),
     url(r'settings/$', views.settings, name='settings'),
     url(r'^successfully_logged_out/$', views.logged_out, name='logged_out'),
+    url(r'^student/$', views.student, name='dashboard_student')
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -17,52 +17,10 @@
             </div>
             <div class="col-lg-1"></div>
         </div>
-        <div class="row justify-content-center">
-            <div class="col-lg-4">
-                <h1 class="display-4">Active modules</h1>
-                <hr>
-                {% for mod in modules %}
-                    {% if mod.start < time and mod.stop > time %}
-                    <div class="card">
-                        <div class="card-header" role="tab" id="headingActive{{ mod.pk }}">
-                            <h4 class="md-0 skin-text remove-margin">
-                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.pk }}">
-                                    {{ mod.module.name}}
-                                </a>
-                                <a href="{% url 'module_management:module_edition_detail' pk=mod.pk %}"><i class="material-icons float-right">settings</i></a>
-                            </h4>
-                        </div>
-                        <div id="collapseActive{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.pk }}" data-parent="#accordion">
-                            <div class="card-body">
-                                <div id="accordion" role="tablist">
-                                    {% for course in mod.courses.all %}
-                                    <div class="card">
-                                        <div class="card-header" role="tab" id="headingActiveCourse{{ course.pk }}">
-                                            <h5 class="md-0 skin-text remove-margin">
-                                                <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ course.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ course.pk }}">
-                                                    {{ course.name }}
-                                                </a>
-                                                <a href="{% url 'module_management:module_part_detail' pk=course.pk %}"><i class="material-icons float-right md-20">settings</i></a>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseActiveCourse{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ course.pk }}" data-parent="#accordion">
-                                            <div class="card-body">
-                                                <ul class="list-group">
-                                                    {% for test in course.test_set.all %}
-                                                        <li class="list-group-item"><a href="{% url 'module_management:test_detail' pk=test.pk %}" class="text-dark">{{ test.name }}</a></li>
-                                                    {% endfor %}
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                        <hr>
-                    {% endif %}
-                {% endfor %}
+        <div class="row">
+            <div class="col-lg-1"></div>
+            <div class="col-lg-6">
+                <p> You are not participating in any modules at this moment. If you believe this is in error, please contact your module coordinator. </p>
             </div>
         <div class="col-lg-1"></div>
 {#        <div class="col-lg-4">#}
@@ -110,8 +68,5 @@
 {#            {% endfor %}#}
 {#        </div>#}
         </div>
-
-        {{ coordinator }}
-
     </div>
 {% endblock %}
