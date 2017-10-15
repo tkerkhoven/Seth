@@ -169,13 +169,24 @@
                                             {% for assignment in assignments %}
                                             {% with grade=grades|key:assignment.id|key:0 %}
                                             <td id="gradeid_{{ student }}_{{ assignment.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ assignment.minimum_grade }}" data-grade-max="{{ assignment.maximum_grade }}">
-                                                <a id="grade_{{ student }}_{{ assignment.id }}" title="{{ grade }}">{{ grade|round }}</a>
 
                                                 {% if grades|key:assignment.id != 'N/A' %}
                                                     {% if grades|key:assignment.id|key:1 %}
-                                                    <i class="material-icons float-right" title="Grade has been released">done</i>
+                                                    <i class="material-icons" title="Grade has been released">
+                                                        {% if grade == 1 %}
+                                                            done
+                                                        {% else %}
+                                                            clear
+                                                        {% endif %}
+                                                    </i>
                                                     {% else %}
-                                                    <i class="material-icons float-right" title="Grade has not been released">clear</i>
+                                                    <i class="material-icons" title="Grade has not been released">
+                                                        {% if grade == 1 %}
+                                                            done
+                                                        {% else %}
+                                                            clear
+                                                        {% endif %}
+                                                    </i>
                                                     {% endif %}
                                                 {% endif %}
                                             </td>
