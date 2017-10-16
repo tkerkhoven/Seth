@@ -112,6 +112,177 @@ def set_up_base_data():
     coordinator1.save()
 
 
+def set_up_large_independent_data():
+    for i in range(1000, 1100):
+        # Define Users
+        student_user0 = User(username='studentx' + str(i), password='secure_password')
+        student_user1 = User(username='studenty' + str(i), password='secure_password')
+        teaching_assistant_user = User(username='teaching_assistant' + str(i), password='secure_password')
+        teacher_user = User(username='teacher' + str(i), password='secure_password')
+        study_adviser_user = User(username='study_adviser' + str(i), password='secure_password')
+        coordinator_user = User(username='coordinator' + str(i), password='secure_password')
+        student_user0.save()
+        student_user1.save()
+        teaching_assistant_user.save()
+        teacher_user.save()
+        study_adviser_user.save()
+        coordinator_user.save()
+
+        # Define Persons
+        student_person0 = Person(university_number='sx' + str(i), name='Studentx ' + str(i), user=student_user0)
+        student_person1 = Person(university_number='sy' + str(i), name='Studenty ' + str(i), user=student_user1)
+        teaching_assistant_person = Person(university_number='sz' + str(i), name='Teaching Assistant ' + str(i), user=teaching_assistant_user)
+        teacher_person = Person(university_number='mx' + str(i), name='Teacher ' + str(i), user=teacher_user)
+        study_adviser_person = Person(university_number='my' + str(i), name='Study Adviser ' + str(i), user=study_adviser_user)
+        coordinator_person = Person(university_number='mz' + str(i), name='Coordinator ' + str(i), user=coordinator_user)
+        student_person0.save()
+        student_person1.save()
+        teaching_assistant_person.save()
+        teacher_person.save()
+        study_adviser_person.save()
+        coordinator_person.save()
+
+        # Define Modules
+        module0 = Module(code='x' + str(i), name='Module x' + str(i))
+        module0.save()
+
+        module1 = Module(code='y' + str(i), name='Module y' + str(i))
+        module1.save()
+
+        # Define Study
+        study = Study(abbreviation='STU' + str(i), name='Study ' + str(i))
+        study.save()
+        study.advisers.add(study_adviser_person)
+        study.modules.add(module0)
+
+        # Define Module Editions
+        module_ed0 = ModuleEdition(module=module0, block='1A', year=timezone.now().year)
+        module_ed0.save()
+
+        module_ed1 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 2)
+        module_ed1.save()
+
+        module_ed2 = ModuleEdition(module=module1, block='1B', year=timezone.now().year)
+        module_ed2.save()
+
+        module_ed3 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 1)
+        module_ed3.save()
+
+        # Define Module Parts
+        module_part0 = ModulePart(name='module_partx' + str(i), module_edition=module_ed0)
+        module_part0.save()
+
+        module_part1 = ModulePart(name='module_party' + str(i), module_edition=module_ed1)
+        module_part1.save()
+
+        module_part2 = ModulePart(name='module_partz' + str(i), module_edition=module_ed0)
+        module_part2.save()
+
+        # Define Studying
+        studying = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
+        studying.save()
+
+        # Define Tests
+        test0 = Test(module_part=module_part0, name='testx' + str(i), type='E')
+        test0.save()
+
+        test1 = Test(module_part=module_part1, name='testy' + str(i), type='P')
+        test1.save()
+
+        test2 = Test(module_part=module_part2, name='testz' + str(i), type='A')
+        test2.save()
+
+        # Define Grades
+        grade0 = Grade(test=test0, teacher=teacher_person, student=student_person0, description='gradex' + str(i), grade=6)
+        grade1 = Grade(test=test0, teacher=teacher_person, student=student_person1, description='gradey' + str(i), grade=9)
+        grade0.save()
+        grade1.save()
+
+        # Define Teachers
+        teacher0 = Teacher(module_part=module_part0, person=teacher_person, role='T')
+        teaching_assistant0 = Teacher(module_part=module_part0, person=teaching_assistant_person, role='A')
+        teacher0.save()
+        teaching_assistant0.save()
+
+        # Define Coordinators
+        coordinator0 = Coordinator(person=coordinator_person, module_edition=module_ed0, is_assistant=False)
+        coordinator0.save()
+
+        coordinator1 = Coordinator(person=coordinator_person, module_edition=module_ed3, is_assistant=False)
+        coordinator1.save()
+
+
+def set_up_large_dependent_data():
+    old_module = Module.objects.get(code='001')
+    old_module_edition = ModuleEdition.objects.get(module=old_module.pk, block='1A', year=timezone.now().year)
+    old_module_part = ModulePart.objects.get(module_edition=old_module_edition.pk, name='module_part0')
+    old_test = Test.objects.get(module_part=old_module_part.pk, name='test0', type='E')
+    old_study = Study.objects.get(abbreviation='STU', name='Study')
+
+    for i in range(100):
+        # Define Users
+        student_user0 = User(username='studentq' + str(i), password='secure_password')
+        teaching_assistant_user = User(username='teaching_assistantq' + str(i), password='secure_password')
+        teacher_user = User(username='teacherq' + str(i), password='secure_password')
+        study_adviser_user = User(username='study_adviserq' + str(i), password='secure_password')
+        coordinator_user = User(username='coordinatorq' + str(i), password='secure_password')
+        student_user0.save()
+        teaching_assistant_user.save()
+        teacher_user.save()
+        study_adviser_user.save()
+        coordinator_user.save()
+
+        # Define Persons
+        student_person0 = Person(university_number='sxq' + str(i), name='Student q' + str(i), user=student_user0)
+        teaching_assistant_person = Person(university_number='szq' + str(i), name='Teaching Assistant q' + str(i), user=teaching_assistant_user)
+        teacher_person = Person(university_number='mxq' + str(i), name='Teacher q' + str(i), user=teacher_user)
+        study_adviser_person = Person(university_number='myq' + str(i), name='Study Adviser q' + str(i), user=study_adviser_user)
+        coordinator_person = Person(university_number='mzq' + str(i), name='Coordinator q' + str(i), user=coordinator_user)
+        student_person0.save()
+        teaching_assistant_person.save()
+        teacher_person.save()
+        study_adviser_person.save()
+        coordinator_person.save()
+
+        # Define Modules
+        module0 = Module(code='xq' + str(i), name='Module xq' + str(i))
+        module0.save()
+
+        # Fill old_study
+        old_study.advisers.add(study_adviser_person)
+        old_study.modules.add(module0)
+
+        # Define Module Editions / Fill old_module
+        module_ed0 = ModuleEdition(module=old_module, block='1A', year=i)
+        module_ed0.save()
+
+        # Define Module Parts / Fill old_module_edition
+        module_part0 = ModulePart(name='module_partxq' + str(i), module_edition=old_module_edition)
+        module_part0.save()
+
+        # Define Studying / Fill old_module_ed, old_study
+        studying = Studying(person=student_person0, study=old_study, module_edition=old_module_edition, role='student')
+        studying.save()
+
+        # Define Tests / Fill old_module_part
+        test0 = Test(module_part=old_module_part, name='testxq' + str(i), type='E')
+        test0.save()
+
+        # Define Grades / Fill old_test
+        grade0 = Grade(test=old_test, teacher=teacher_person, student=student_person0, description='gradexq' + str(i), grade=6)
+        grade0.save()
+
+        # Define Teachers / Fill old_module_part
+        teacher0 = Teacher(module_part=old_module_part, person=teacher_person, role='T')
+        teaching_assistant0 = Teacher(module_part=old_module_part, person=teaching_assistant_person, role='A')
+        teacher0.save()
+        teaching_assistant0.save()
+
+        # Define Coordinators
+        coordinator0 = Coordinator(person=coordinator_person, module_edition=old_module_edition, is_assistant=False)
+        coordinator0.save()
+
+
 def get_list_from_queryset(queryset):
     return [repr(r) for r in queryset]
 
@@ -182,7 +353,44 @@ class ModuleManagementModuleListTests(TestCase):
         self.assertNotContains(response, 'Module 2')
         self.assertNotContains(response, '{}-{}-{}'.format(timezone.now().year, '002', '1B'))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        user = User.objects.get(username='coordinator0')
+        url_1 = reverse('module_management:module_overview')
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        user = User.objects.get(username='coordinator0')
+        url_1 = reverse('module_management:module_overview')
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        user = User.objects.get(username='coordinator0')
+        url_1 = reverse('module_management:module_overview')
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
         url_1 = reverse('module_management:module_overview')
 
@@ -266,7 +474,47 @@ class ModuleManagementModuleDetailTests(TestCase):
         self.assertEqual(response.context['module'], Module.objects.get(pk=pk))
         self.assertQuerysetEqual(response.context['module_editions'], get_list_from_queryset(ModuleEdition.objects.filter(coordinators__user=user)))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        user = User.objects.get(username='coordinator0')
+        pk_1 = Module.objects.get(name='Module 1').pk
+        url_1 = reverse('module_management:module_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        user = User.objects.get(username='coordinator0')
+        pk_1 = Module.objects.get(name='Module 1').pk
+        url_1 = reverse('module_management:module_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        user = User.objects.get(username='coordinator0')
+        pk_1 = Module.objects.get(name='Module 1').pk
+        url_1 = reverse('module_management:module_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(7):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
         pk_1 = Module.objects.get(name='Module 1').pk
         url_1 = reverse('module_management:module_detail', kwargs={'pk': pk_1})
@@ -351,7 +599,47 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.assertQuerysetEqual(response.context['module_parts'], get_list_from_queryset(ModulePart.objects.filter(module_edition=module_edition)))
         self.assertQuerysetEqual(response.context['coordinators'], get_list_from_queryset(Coordinator.objects.filter(module_edition=module_edition)))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        user = User.objects.get(username='coordinator0')
+        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(12):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        user = User.objects.get(username='coordinator0')
+        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(12):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        user = User.objects.get(username='coordinator0')
+        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(12):
+            self.client.get(url_1, follow=True)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
         pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
         url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
@@ -550,7 +838,44 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         self.assertFalse(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
         self.assertTrue(ModuleEdition.objects.filter(year=2020))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(6):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(6):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(6):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -660,7 +985,44 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.assertEqual(2, len(ModulePart.objects.filter(module_edition=new_object.pk)))
         self.assertEqual(2, len(Test.objects.filter(module_part__module_edition=new_object.pk)))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(11):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(30):
+            self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(11):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(30):
+            self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(11):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(30):
+            self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -751,7 +1113,35 @@ class ModuleManagementModulePartDetailTests(TestCase):
         self.assertQuerysetEqual(response.context['studying'], get_list_from_queryset(
             Studying.objects.filter(module_edition=ModulePart.objects.get(pk=self.pk_1).module_edition.pk)))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(16):
+            self.client.get(self.url_1)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(16):
+            self.client.get(self.url_1)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(16):
+            self.client.get(self.url_1)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -895,7 +1285,44 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         self.assertTrue(Teacher.objects.filter(role='A', person=self.person1, module_part=self.pk_3))
         self.assertTrue(Teacher.objects.filter(role='T', person=self.person2, module_part=self.pk_3))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(9):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(9):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(9):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -1003,7 +1430,44 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.assertTrue(Teacher.objects.filter(role='A', person=self.person1, module_part=new_object.pk))
         self.assertTrue(Teacher.objects.filter(role='T', person=self.person2, module_part=new_object.pk))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(7):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(16):
+            self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(7):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(16):
+            self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(7):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(16):
+            self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -1110,7 +1574,44 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         self.assertRedirects(response, self.redirect_url)
         self.assertFalse(Test.objects.filter(pk=self.pk_3))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -1199,7 +1700,35 @@ class ModuleManagementTestDetailTests(TestCase):
 
         self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_1, follow=True)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_1, follow=True)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_1, follow=True)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -1384,7 +1913,47 @@ class ModuleManagementTestUpdateTests(TestCase):
         self.assertTrue(Test.objects.filter(name='test0_new'))
         self.assertEquals('P', Test.objects.get(pk=self.pk_1).type)
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(5):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1,
+                             {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(5):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1,
+                             {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(5):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1,
+                             {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -1493,7 +2062,47 @@ class ModuleManagementTestCreateTests(TestCase):
         self.assertEquals(42, float(new_object.minimum_grade))
         self.assertEquals(133.7, float(new_object.maximum_grade))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(15):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(9):
+            self.client.post(self.url_1,
+                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(15):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(9):
+            self.client.post(self.url_1,
+                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(15):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(9):
+            self.client.post(self.url_1,
+                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
@@ -1601,7 +2210,44 @@ class ModuleManagementTestDeleteTests(TestCase):
         self.assertRedirects(response, self.redirect_url)
         self.assertFalse(Test.objects.filter(pk=self.pk_3))
 
-    def test_queries(self):
+    def test_queries_base(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(6):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(7):
+            self.client.post(self.url_3)
+
+    def test_queries_independent(self):
+        set_up_large_independent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(6):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(7):
+            self.client.post(self.url_3)
+
+    def test_queries_dependent(self):
+        set_up_large_dependent_data()
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(6):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(7):
+            self.client.post(self.url_3)
+
+    def test_queries_all(self):
+        set_up_large_dependent_data()
+        set_up_large_independent_data()
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
