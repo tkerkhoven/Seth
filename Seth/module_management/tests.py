@@ -187,7 +187,7 @@ class ModuleManagementModuleListTests(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             self.client.get(url_1, follow=True)
 
 
@@ -272,7 +272,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(7):
             self.client.get(url_1, follow=True)
 
 
@@ -357,7 +357,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             self.client.get(url_1, follow=True)
 
 
@@ -552,7 +552,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(5):
@@ -724,7 +724,7 @@ class ModuleManagementModulePartDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(15):
+        with self.assertNumQueries(16):
             self.client.get(self.url_1)
 
 
@@ -868,7 +868,7 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(8):
+        with self.assertNumQueries(9):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(10):
@@ -1056,7 +1056,7 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             self.client.get(self.url_3)
 
         with self.assertNumQueries(10):
@@ -1145,7 +1145,7 @@ class ModuleManagementTestDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(8):
             self.client.get(self.url_1, follow=True)
 
 
@@ -1330,7 +1330,7 @@ class ModuleManagementTestUpdateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(4):
+        with self.assertNumQueries(5):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(5):
@@ -1519,7 +1519,7 @@ class ModuleManagementTestDeleteTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(6):
             self.client.get(self.url_3)
 
         with self.assertNumQueries(7):
