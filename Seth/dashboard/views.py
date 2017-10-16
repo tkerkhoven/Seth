@@ -5,7 +5,6 @@ from django.utils import timezone
 
 from Grades.models import ModuleEdition, Person, Coordinator, Studying
 
-
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
 from django.core.exceptions import PermissionDenied
@@ -49,14 +48,16 @@ def modules(request):
     :param request: Django request for authentication
     :return: Redirect to module (edition) overview
     """
+    person = Person.objects.get(user=request.user)
     if pu.is_coordinator_or_assistant(Person.objects.get(user=request.user)):
         context = {
-            'modules': get_modules()
+            'modules': get_modules(person)
         }
         return render(request, 'dashboard/modules.html', context)
     else:
         # Todo: Add other usertypes
         return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
+
 
 def student(request):
     return render(request, 'dashboard/student_index.html')

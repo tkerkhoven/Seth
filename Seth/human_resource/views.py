@@ -34,15 +34,8 @@ def known_persons(person):
         modules = Module.objects.filter(moduleedition__in=module_eds)
         studies = Study.objects.none()
         for mod in modules:
-            modset = mod.study_set.all()
-            print(mod)
-            print(modset)
-            studies.union(Study.objects.filter(modules__in=[mod for mod in modset]))
-
-        # print(modules)
-        # studies.union(Study.objects.filter(modules_set__in=modules))  # Todo: Test!!
-
-        # print(studies)
+            study_set = Study.objects.filter(modules=mod)
+            studies = (studies | study_set).distinct()
         advisers = Person.objects.filter(study__in=studies)
         result.extend(advisers)
         # Add Teachers and Teaching Assistants
