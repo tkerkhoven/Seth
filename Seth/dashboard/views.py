@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden
 from django.utils import timezone
 
-from Grades.models import ModuleEdition, Person, Coordinator, Studying
+from Grades.models import ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart
 
 
 from django.contrib.auth.decorators import login_required
@@ -22,7 +22,7 @@ def home(request):
     person = Person.objects.get(user=request.user)
     if pu.is_coordinator_or_assistant(person):
         context = {
-            'modules': get_modules(person),
+            'modules': ModuleEdition.objects.filter(coordinator__person=person),
             'time': get_current_date()
         }
         return render(request, 'dashboard/index.html', context)
@@ -49,14 +49,16 @@ def modules(request):
     :param request: Django request for authentication
     :return: Redirect to module (edition) overview
     """
-    if pu.is_coordinator_or_assistant(Person.objects.get(user=request.user)):
+    person = Person.objects.get(user=request.user)
+    if pu.is_coordinator_or_assistant(person):
         context = {
-            'modules': get_modules()
+            'modules': ModuleEdition.objects.filter(coordinator__person=person)
         }
         return render(request, 'dashboard/modules.html', context)
     else:
         # Todo: Add other usertypes
         return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
+
 
 def student(request):
     return render(request, 'dashboard/student_index.html')
@@ -86,6 +88,7 @@ def get_current_date():
     return timezone.localdate()
 
 
+# View renders for the error pages
 def server_error(request):
     return render(request, 'errors/500.html', status=500)
 
