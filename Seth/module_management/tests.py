@@ -1,7 +1,10 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from pytz import UTC
 
 from Grades.models import Module, Person, Study, ModuleEdition, ModulePart, Studying, Test, Grade, Teacher, Coordinator
 from Seth.settings import LOGIN_URL
@@ -559,7 +562,6 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
 
 
-# WIP
 class ModuleManagementModuleEditionCreateTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -638,6 +640,36 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.assertTemplateUsed(response, self.template)
 
         self.assertEqual(response.context['form'].__class__, self.form_cls)
+
+    def test_creation(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        self.assertFalse(self.model_cls.objects.filter(year=1337, block='2B', module=self.pk_1))
+        self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
+        self.assertTrue(self.model_cls.objects.filter(year=1337, block='2B', module=self.pk_1))
+
+        new_object = self.model_cls.objects.get(year=1337, block='2B', module=self.pk_1)
+        self.assertEquals(self.pk_1, new_object.module.pk)
+        self.assertEquals(1337, new_object.year)
+        self.assertEquals('2B', new_object.block)
+        self.assertEquals(datetime.date(1337, 4, 20), new_object.start)
+        self.assertEquals(datetime.date(1337, 6, 9), new_object.end)
+
+        self.assertEqual(2, len(ModulePart.objects.filter(module_edition=new_object.pk)))
+        self.assertEqual(2, len(Test.objects.filter(module_part__module_edition=new_object.pk)))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(11):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(30):
+            self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
 
 
 class ModuleManagementModulePartDetailTests(TestCase):
@@ -875,7 +907,6 @@ class ModuleManagementModulePartUpdateTests(TestCase):
             self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
 
 
-# WIP
 class ModuleManagementModulePartCreateTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -891,6 +922,8 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.user = User.objects.get(username='coordinator0')
+        self.person1 = Person.objects.get(university_number='s1').pk
+        self.person2 = Person.objects.get(university_number='m2').pk
 
     def test_no_login(self):
         self.client.logout()
@@ -954,6 +987,32 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.assertTemplateUsed(response, self.template)
 
         self.assertEqual(response.context['form'].__class__, self.form_cls)
+
+    def test_creation(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        self.assertFalse(self.model_cls.objects.filter(name='new_object'))
+        self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
+        self.assertTrue(self.model_cls.objects.filter(name='new_object'))
+
+        new_object = self.model_cls.objects.get(name='new_object')
+        self.assertEquals(self.pk_1, new_object.module_edition.pk)
+        self.assertEquals('new_object', new_object.name)
+        self.assertTrue(Teacher.objects.filter(role='A', person=self.person1, module_part=new_object.pk))
+        self.assertTrue(Teacher.objects.filter(role='T', person=self.person2, module_part=new_object.pk))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(7):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(16):
+            self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
 
 
 class ModuleManagementModulePartDeleteTests(TestCase):
@@ -1338,7 +1397,6 @@ class ModuleManagementTestUpdateTests(TestCase):
                              {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
 
 
-# WIP
 class ModuleManagementTestCreateTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -1417,6 +1475,35 @@ class ModuleManagementTestCreateTests(TestCase):
         self.assertTemplateUsed(response, self.template)
 
         self.assertEqual(response.context['form'].__class__, self.form_cls)
+
+    def test_creation(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        self.assertFalse(self.model_cls.objects.filter(name='new_object'))
+        self.client.post(self.url_1, {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+        self.assertTrue(self.model_cls.objects.filter(name='new_object'))
+
+        new_object = self.model_cls.objects.get(name='new_object')
+        self.assertEquals(self.pk_1, new_object.module_part.pk)
+        self.assertEquals('new_object', new_object.name)
+        self.assertEquals('A', new_object.type)
+        self.assertEquals(datetime.datetime(2017, 10, 11, 13, 37, tzinfo=UTC), new_object.time)
+        self.assertEquals(42, float(new_object.minimum_grade))
+        self.assertEquals(133.7, float(new_object.maximum_grade))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(15):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(9):
+            self.client.post(self.url_1,
+                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
 
 class ModuleManagementTestDeleteTests(TestCase):
