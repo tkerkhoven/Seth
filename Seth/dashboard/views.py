@@ -1,10 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.http import Http404, HttpResponseForbidden
+from django.http import Http404, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
 
 from Grades.models import ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart
-
 
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
@@ -28,13 +27,13 @@ def home(request):
         return render(request, 'dashboard/index.html', context)
     if pu.is_study_adviser(person):
         # Todo: Add another dashboard, or create an extension
-        return
+        return HttpResponse("You are a study adviser, but your dashboard is yet to be implemented")
     if pu.is_teacher(person):
         # Todo: Add another dashboard, or create an extension
-        return
+        return HttpResponse("You are a teacher, but your dashboard is yet to be implemented")
     if pu.is_teaching_assistant(person):
         # Todo: Add another dashboard, or create an extension
-        return
+        return HttpResponse("You are a teaching assistant, but your dashboard is yet to be implemented")
     if pu.is_student(person):
         # Todo: Add another dashboard, or create an extension
         studying = Studying.objects.filter(person=person)
