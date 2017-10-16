@@ -24,7 +24,7 @@ def make_mail_grade_released(person, coordinator, grade=None, test=None):
         body=render_to_string('Grades/mailing_grade_released.txt', {
             'person': person,
             'test': test,
-            'domain': 'example.com',
+            'domain': 'farm11.ewi.utwente.nl',
             'gradebook_path': reverse('grades:student', kwargs={'pk':person.id}),
             'module_coordinator': module_edition.coordinators.get(user=coordinator)
         })

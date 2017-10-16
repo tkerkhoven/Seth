@@ -11,14 +11,14 @@ from pyexcel import Sheet
 
 from Grades.exceptions import GradeException
 from Grades.models import *
-from importer.forms import GradeUploadForm
+from importer.forms import GradeUploadForm, TestGradeUploadForm
 from importer.views import make_grade, COLUMN_TITLE_ROW
 from django.contrib.auth.models import User
 
 import django_excel as excel
 from django.urls import reverse
 
-@unittest.skip("skip because of time constraints. Comment out for test.")
+@unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
 class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
@@ -124,6 +124,29 @@ class ImporterTest(TestCase):
         response = self.client.post('/importer/module/{}'.format(module.pk), {'title': 'test.xlsx', 'file': file})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module.pk))
 
+    def test_test_import(self):
+        module = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij')[0]
+
+        test = Test.objects.filter(module_part__module_edition=module)[0]
+        students = Person.objects.filter(studying__module_edition=module)
+
+        table = [['' for _ in range(3)] for _ in range(COLUMN_TITLE_ROW)] + \
+                [['student_id', 'grade', 'description']]
+
+        for student in students:
+            table.append([student.university_number, 6, ''])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = TestGradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
+
 
 class ImporterPermissionsTest(TestCase):
     def setUp(self):
@@ -204,6 +227,10 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
     def test_importer_views_as_module_coordinator(self):
         module = ModuleEdition.objects.all()[0]
 
@@ -215,7 +242,7 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        self.assertTemplateUsed(response, 'importer/mcindex.html')
+        self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
         response = self.client.get(reverse('importer:import_module', args=[module.pk]))
 
@@ -241,6 +268,10 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
     def test_importer_views_as_teacher(self):
         module = ModuleEdition.objects.all()[0]
 
@@ -255,7 +286,7 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        self.assertTemplateUsed(response, 'importer/teacherindex.html')
+        self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
         response = self.client.get(reverse('importer:import_module', args=[module.pk]))
 
@@ -286,6 +317,10 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -323,6 +358,10 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
 
         self.assertEqual(response.status_code, 403)
 
