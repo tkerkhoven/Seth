@@ -77,8 +77,10 @@
                                             {% for test in tests %}
                                                 <th  class="no-sort">
                                                     <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
-                                                    {% if testallreleased|key:test.id %}
-                                                    <i class="material-icons float-right" title="All grades in this test have been released">done</i>
+                                                    {% if test.released %}
+                                                    <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>
+                                                    {% else %}
+                                                    <i class="material-icons float-right text-danger" title="The grades in this test have not been released">cancel</i>
                                                     {% endif %}
                                                 </th>
                                             {% endfor %}
@@ -95,14 +97,6 @@
                                                 {% with grade=grades|key:test.id|key:0 %}
                                                     <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
                                                         <a title="{{ grade }}">{{ grade|round }}</a>
-
-                                                        {% if grades|key:test.id != 'N/A' %}
-                                                            {% if grades|key:test.id|key:1 %}
-                                                            <i class="material-icons float-right" title="Grade has been released">done</i>
-                                                            {% else %}
-                                                            <i class="material-icons float-right" title="Grade has not been released">clear</i>
-                                                            {% endif %}
-                                                        {% endif %}
                                                     </td>
                                                 {% endwith %}
                                                 {% endfor %}
@@ -121,6 +115,11 @@
                                             {% for assignment in assignments %}
                                             <td class="no-sort">
                                                 <a href="{% url 'grades:test' pk=assignment.id %}">{{ assignment.name }}</a>
+                                                {% if assignment.released %}
+                                                <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>
+                                                {% else %}
+                                                <i class="material-icons float-right text-danger" title="The grades in this test have not been released">cancel</i>
+                                                {% endif %}
                                             </td>
                                             {% endfor %}
                                         </tr>
@@ -138,13 +137,7 @@
                                             <td id="gradeid_{{ student }}_{{ assignment.id }}" data-always-color="True" data-grade="{{ grade }}" data-grade-min="{{ assignment.minimum_grade }}" data-grade-max="{{ assignment.maximum_grade }}">
 
                                                 <!-- <input id="grade_input_{{ student }}_{{ assignment.id }}" type="checkbox" -->
-                                                <i class="material-icons"
-                                                    {% if grades|key:assignment.id|key:1 %}
-                                                        title="Grade has been released"
-                                                    {% else %}
-                                                        title="Grade has not been released"
-                                                    {% endif %}
-                                                >
+                                                <i class="material-icons">
                                                     {% if grade == 1 %}
                                                         done
                                                     {% elif grades|key:assignment.id != 'N/A' %}

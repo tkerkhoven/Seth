@@ -201,10 +201,10 @@ class StudentView(generic.DetailView):
         # For each of these modules, gather the module parts and tests.
         for module_edition in modules:
             module_parts = ModulePart.objects \
-                .filter(module_edition=module_edition, test__grade__released=True, test__grade__student=person) \
+                .filter(module_edition=module_edition, test__released=True, test__grade__student=person) \
                 .order_by('id').distinct()
             tests = Test.objects \
-                .filter(module_part__module_edition=module_edition, grade__released=True, grade__student=person) \
+                .filter(module_part__module_edition=module_edition, released=True, grade__student=person) \
                 .order_by('module_part__id').distinct()
 
             module_parts_dict[module_edition] = module_parts
@@ -543,43 +543,33 @@ def release(request, *args, **kwargs):
     user = request.user
 
     # Check whether the user is able to release/retract grades.
-    if not ModuleEdition.objects.filter(coordinators__user=user, id=kwargs['pk']):
+    test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user, id=kwargs['pk'])
+    if not test:
         raise PermissionDenied()
-
-    # Get the action ('release'/'retract')
-    action = request.POST['action']
 
     mail_list = []
 
-    # Loop over every key in the POST
-    for key in request.POST:
-        # Check whether the current key is a grade checkbox.
-        key_search = re.search('check([0-9]+)', key)
-        if key_search:
-            # Extract the grade.
-            grade_id = int(key_search.group(1))
-            grade = Grade.objects.get(id=grade_id)
+    if request.POST['rel'] == "False":
+        test.released = True
+        test.save()
 
-            if action == 'release':
-                # Release the grade.
-                grade.released = True
-                grade.save()
-                # Add the connected person to the mail list.
+        if 'sendcheck' in request.POST:
+            for grade in test.grade_set.order_by('student_id', 'time').distinct('student_id').all():
                 mail_list.append(make_mail_grade_released(grade.student, user, grade))
-                # Set the change variable to 1 to signify that releases were done.
-                request.session['change'] = 1
-            elif action == 'retract':
-                # Retract the grade.
-                grade.released = False
-                grade.save()
-                # Add the connected person to the mail list.
-                mail_list.append(make_mail_grade_retracted(grade.student, user, grade))
-                # Set the change variable to 2 to signify that retractions were done.
-                request.session['change'] = 2
+        request.session['change'] = 1
+    else:
+        test.released = False
+        test.save()
 
-    # Get a connection and send the mails.
-    connection = mail.get_connection()
-    connection.send_messages(mail_list)
+        if 'sendcheck' in request.POST:
+            for grade in test.grade_set.order_by('student_id', 'time').distinct('student_id').all():
+                mail_list.append(make_mail_grade_retracted(grade.student, user, grade))
+        request.session['change'] = 2
+
+    if 'sendcheck' in request.POST:
+        # Get a connection and send the mails.
+        connection = mail.get_connection()
+        connection.send_messages(mail_list)
 
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
