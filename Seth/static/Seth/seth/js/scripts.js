@@ -89,6 +89,20 @@ $(document).ready(function() {
       }
     });
 
+    var studenttable = $('#studentbook_assignments').DataTable({
+      "ordering": false,
+      "paging": false,
+      "searching": false,
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
     var testtable = $('#testbook').DataTable({
       "paging": false,
       "ordering": true,

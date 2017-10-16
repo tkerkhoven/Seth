@@ -31,6 +31,10 @@
         position: relative;
         vertical-align: -8px;
     }
+
+    .nowrap {
+        white-space: nowrap;
+    }
     </style>
 
     <div class="container">
@@ -99,7 +103,7 @@
                                         <tr>
                                             <td></td>
                                             {% for test in tests %}
-                                            <td class="no-sort">
+                                            <td class="no-sort no-wrap">
                                                 <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
                                                 {% if test.released %}
                                                 <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>

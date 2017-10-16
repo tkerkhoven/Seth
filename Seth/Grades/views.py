@@ -186,6 +186,7 @@ class StudentView(generic.DetailView):
 
         module_parts_dict = dict()
         test_dict = dict()
+        assign_dict = dict()
 
         # Gather all connected grade objects to the person.
         dicts = Grade.objects \
@@ -204,14 +205,21 @@ class StudentView(generic.DetailView):
                 .filter(module_edition=module_edition, test__released=True, test__grade__student=person) \
                 .order_by('id').distinct()
             tests = Test.objects \
-                .filter(module_part__module_edition=module_edition, released=True, grade__student=person) \
+                .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts, released=True) \
+                .order_by('module_part__id').distinct()
+
+            assignments = Test.objects \
+                .filter(type='A', module_part__in=module_parts, released=True) \
                 .order_by('module_part__id').distinct()
 
             module_parts_dict[module_edition] = module_parts
             test_dict[module_edition] = tests
+            assign_dict[module_edition] = assignments
 
         temp_dict = dict()
         context_dict = OrderedDict()
+        ep_span = dict()
+        a_span = dict()
 
         # Changing the queryset to something more useable.
         # Makes a dictionary of grades (temp_dict[TEST] = [GRADE])
@@ -223,11 +231,18 @@ class StudentView(generic.DetailView):
         for key in sorted(temp_dict):
             context_dict[key] = temp_dict[key]
 
+        for module_part in module_parts:
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), grade__student=person, released=True).count()
+            a_span[module_part] = module_part.test_set.filter(type='A', grade__student=person, released=True)
+
         # Add everything to the context
+        context['ep_span'] = ep_span
+        context['a_span'] = a_span
         context['student'] = person
         context['modules'] = modules
         context['module_parts'] = module_parts_dict
         context['tests'] = test_dict
+        context['assignments'] = assign_dict
         context['gradedict'] = context_dict
 
         return context
