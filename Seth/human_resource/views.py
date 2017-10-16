@@ -48,12 +48,33 @@ def known_persons(person):
         coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
         result.extend(coordinators)
 
-    # if pu.is_teacher(person):
-    #     module_parts = ModulePart.objects.filter(teacher=person).prefetch_related()
-    #     modules = ModuleEdition.objects.filter(module_edition__in=module_parts).prefetch_related()
-    #     studyings = Studying.objects.all().filter(module_edition__in=modules).prefetch_related()
-    #     persons = Person.objects.all().filter(studying__in=studyings).distinct()
-    #     result.extend(persons)
+    if pu.is_teacher(person):
+        # Add Students and teaching assistants
+        teacher = Teacher.objects.get(person=person)
+        module_parts = ModulePart.objects.filter(teacher=teacher).prefetch_related()
+        module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
+        studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
+        persons = Person.objects.all().filter(studying__in=studyings).distinct()
+        result.extend(persons)
+        # Add Teachers
+        known_module_parts = ModulePart.objects.filter(module_edition__in=module_eds)
+        teachers_obj = Teacher.objects.filter(module_part__in=known_module_parts)
+        teachers = Person.objects.filter(teacher__in=teachers_obj)
+        result.extend(teachers)
+        # Add Module Coordinators
+        coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
+        coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
+        result.extend(coordinators)
+        # Add Advisers
+        modules = Module.objects.filter(moduleedition__in=module_eds)
+        studies = Study.objects.none()
+        for mod in modules:
+            study_set = Study.objects.filter(modules=mod)
+            studies = (studies | study_set).distinct()
+        advisers = Person.objects.filter(study__in=studies)
+        result.extend(advisers)
+
+
     #     # Todo: add other teachers, teaching assistants and module coordinators (and advisers?)
     # if pu.is_study_adviser(person):
     #     studies = Study.objects.filter(adviser=person).prefetch_related()
