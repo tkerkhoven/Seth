@@ -31,6 +31,10 @@ $dark-inactive: rgba(0,0,0,0.26);
       color: $light-inactive;
     }
   }
+  &.title-bar {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
 }
 
 .fa {

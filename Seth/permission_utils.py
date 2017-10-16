@@ -1,4 +1,4 @@
-from Grades.models import Coordinator, Teacher, Studying, Study
+from Grades.models import Coordinator, Teacher, Studying, Study, Test
 from django.db.models import Q
 import datetime
 
@@ -69,7 +69,8 @@ def is_study_adviser(person):
 
 def is_study_adviser_of_study(person, study):
     today = now()
-    return Study.objects.filter(advisers=person).filter(Q(advisers__end=None) | Q(advisers__end__lte=today)).filter(pk=study.pk).count() > 0
+    return Study.objects.filter(advisers=person).filter(Q(advisers__end=None) | Q(advisers__end__lte=today)).filter(
+        pk=study.pk).count() > 0
 
 
 def is_coordinator_assistant(person):
@@ -92,6 +93,18 @@ def is_coordinator_or_assistant(person):
 def is_coordinator_or_assistant_of_module(person, module_edition):
     return is_coordinator_of_module(person, module_edition) or is_coordinator_assistant_of_module(person,
                                                                                                   module_edition)
+
+
+# Test related queries
+# untested
+
+def is_coordinator_or_teacher_of_test(person, test):
+    """ Tests whether a person is coordinator (assistant) or teacher of a test.
+    """
+    return Test.objects.filter(
+        Q(module_part__teachers=person) |
+        Q(module_part__module_edition__coordinator__person=person)
+    ).filter(pk=test.pk).count() > 0
 
 
 def now():

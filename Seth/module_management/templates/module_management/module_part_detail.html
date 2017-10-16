@@ -15,9 +15,12 @@
 
                     <ul class="navbar-nav mr-auto"></ul>
 
+                    <a href="{% url 'grades:module_part' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
+                        <i class="material-icons md-36">spellcheck</i>
+                    </a>
                     <a href="{% url 'module_management:module_part_update' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom"
                        title="Edit module part">
-                        <i class="material-icons md-36">settings</i>
+                        <i class="material-icons md-36">mode_edit</i>
                     </a>
                     <a href="{% url 'module_management:module_part_delete' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom"
                        title="Delete module part">
@@ -29,30 +32,46 @@
         <hr class="remove-top-margin">
         <div class="row">
             <div class="col-lg-5">
-                <ul>
-                    <li>Module Edition Code: <a
-                            href="{% url 'module_management:module_edition_detail' modulepart.module_edition.pk %}">{{ modulepart.module_edition_code }}</a>
-                    </li>
-                    <li>Name: {{ modulepart.name }}</li>
-                    <li><a href="{% url 'grades:module_part' modulepart.pk %}">Grades</a></li>
-                </ul>
+                <div class="card">
+                    <h5 class="card-header">
+                        Info
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Module Edition Code: <a
+                                href="{% url 'module_management:module_edition_detail' modulepart.module_edition.pk %}">{{ modulepart.module_edition_code }}</a>
+                        </li>
+                        <li class="list-group-item">Name: <span class="font-italic">{{ modulepart.name }}</span></li>
+                    </ul>
+                </div>
+{#                <ul class="list-group">#}
+{#                    <li class="list-group-item">Module Edition Code: <a#}
+{#                            href="{% url 'module_management:module_edition_detail' modulepart.module_edition.pk %}">{{ modulepart.module_edition_code }}</a>#}
+{#                    </li>#}
+{#                    <li class="list-group-item">Name: {{ modulepart.name }}</li>#}
+{#                </ul>#}
             </div>
             <div class="col-lg-1"></div>
             <div class="col-lg-6">
                 <div class="card">
-                    <div class="card-header">
+                    <h5 class="card-header">
                         Tests
                         <a href="{% url 'module_management:test_create' modulepart.pk %}">
                             <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Create new test">add_circle</i>
                         </a>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group">
+                    </h5>
+{#                    <div class="card-header">#}
+{#                        Tests#}
+{#                        <a href="{% url 'module_management:test_create' modulepart.pk %}">#}
+{#                            <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Create new test">add_circle</i>#}
+{#                        </a>#}
+{#                    </div>#}
+{#                    <div class="card-body">#}
+                        <ul class="list-group list-group-flush">
                             {% for test in modulepart.test_set.all %}
                                 <li class="list-group-item"><a href="{% url 'module_management:test_detail' test.pk %}">{{ test.name }}</a></li>
                             {% endfor %}
                         </ul>
-                    </div>
+{#                    </div>#}
                 </div>
             </div>
         </div>
