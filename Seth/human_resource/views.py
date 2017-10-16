@@ -29,7 +29,6 @@ def known_persons(person):
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         students = Person.objects.all().filter(studying__in=studyings).distinct()
         result.extend(students)
-        # Todo: Add study adviser, teachers, teaching assistants and other coordinators
         # Add Study Advisers
         modules = Module.objects.filter(moduleedition__in=module_eds)
         studies = Study.objects.none()
@@ -74,15 +73,26 @@ def known_persons(person):
         advisers = Person.objects.filter(study__in=studies)
         result.extend(advisers)
 
-
-    #     # Todo: add other teachers, teaching assistants and module coordinators (and advisers?)
-    # if pu.is_study_adviser(person):
-    #     studies = Study.objects.filter(adviser=person).prefetch_related()
-    #     modules = Module.objects.filter(module__in=studies).prefetch_related()
-    #     module_eds = ModuleEdition.filter(module__in=modules).prefetch.related()
-    #     studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
-    #     persons = Person.objects.all().filter(studying__in=studyings).distinct()
-    #     result.extend(persons)
+    if pu.is_study_adviser(person):
+        # Add students
+        studies = Study.objects.filter(advisers=person).prefetch_related()
+        modules = Module.objects.filter(study__in=studies).prefetch_related()
+        module_eds = ModuleEdition.objects.filter(module__in=modules).prefetch_related()
+        studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
+        persons = Person.objects.all().filter(studying__in=studyings).distinct()
+        result.extend(persons)
+        # Add coordinators
+        coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
+        coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
+        result.extend(coordinators)
+        # Add teachers
+        module_parts = ModulePart.objects.filter(module_edition__in=module_eds)
+        teacher_obj = Teacher.objects.filter(module_part__in=module_parts)
+        teachers = Person.objects.filter(teacher__in=teacher_obj)
+        result.extend(teachers)
+        # Add advisers
+        advisers = Person.objects.filter(study__in=studies)
+        result.extend(advisers)
     #     # Todo: add coordinators, teachers, teaching assistants and other advisers
 
     return result
