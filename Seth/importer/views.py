@@ -35,7 +35,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         context = dict()
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('start')
+            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('-start')
             context['module_coordinator'] = True
             if ModulePart.objects.filter(teacher__person__user=self.request.user):
                 context['teacher'] = True
