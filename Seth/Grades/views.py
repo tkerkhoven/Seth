@@ -590,6 +590,13 @@ def release(request, *args, **kwargs):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
+def signoff(request, *args, **kwargs):
+    print(request.POST)
+
+    # Return to the page the user came from.
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
 def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
     """ Change a queryset to something more useable.
     :param dicts: The queryset to be changed.

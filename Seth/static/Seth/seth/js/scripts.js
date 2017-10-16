@@ -1,6 +1,7 @@
 var oldto = 5.5;
 var oldfrom = 5;
 var searchString = "";
+var changed = [];
 
 $(".btn").mouseup(function(){
     $(this).blur();
@@ -16,6 +17,37 @@ function BlurEdit() {
 };
 
 $(document).ready(function() {
+    $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
+      var i = $(this).find("i");
+      if(i.html().trim() == "done") {
+        $(this).attr("data-grade", 0.0);
+        i.html("clear");
+      }
+      else {
+        $(this).attr("data-grade", 1.0);
+        i.html("done");
+      }
+
+      var ids = $(this).attr('id').split('_');
+      var removed = false;
+
+      if(changed.length > 0) {
+        for( i=changed.length-1; i>=0; i--) {
+          if( changed[i].sid == ids[1] && changed[i].assign == ids[2]) {
+            changed.splice(i,1);
+            removed = true;
+            break;
+          }
+        }
+      }
+
+      if(!removed)
+        changed.push({sid: ids[1], assign: ids[2]});
+
+      $("#assign_hidden").val("bla");
+      updateColoring();
+    });
+
     $(document).on('click', 'a[id^="grade_"]', function() {
 
       var edit = $("<input type=number max=" + $(this).parent().closest('td').attr('data-grade-max') +
