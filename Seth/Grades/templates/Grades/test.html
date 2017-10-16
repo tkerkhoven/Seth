@@ -38,6 +38,19 @@
                     </form>
                     {% endif %}
 
+                    {% if can_release %}
+                    <form action="{% url 'grades:release' pk=test.id %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" id="rel" name="rel" value="{{ test.released }}" />
+                        <input type="checkbox" id="sendcheck" name="sendcheck" value="Send Mails" />
+                        Send Mails
+                        <input class="btn btn-secondary" type="submit" value="
+                        {% if test.released %}Retract grades
+                        {% else %}Release grades
+                        {% endif %}"/>
+                    </form>
+                    {% endif %}
+
                     {% if change %}
                       <div class="alert alert-warning alert-dismissible fade show" role="alert">
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -71,24 +84,9 @@
                     </div>
                     <br>
 
-                    {% if can_release %}
-                    <form action="{% url 'grades:release' test.module_part.module_edition.id %}" method="POST">
-                    {% csrf_token %}
-
-                    <select name="action">
-                        <option value="-----">-----</option>
-                        <option value="release">Release Grades</option>
-                        <option value="retract">Retract Grades</option>
-                    </select>
-                    <input class="btn btn-secondary" type="submit" value="Go" />
-
-                    {% endif %}
-                    <table id="testbook" data-skip-to-row="0" class="table table-striped table-bordered table-responsive">
+                    <table id="gradebook" data-skip-to-row="0" class="table table-striped table-bordered table-responsive">
                         <thead>
                         <tr>
-                            {% if can_release %}
-                            <th class="no-sort"><input type="checkbox" name="global" id="parent" /></th>
-                            {% endif %}
                             <th>Student</th>
                             <th class="no-sort">Grade</th>
                         </tr>
@@ -97,23 +95,12 @@
                         {% for student,grades in gradedict.items %}
                             <tr>
                                 {% with grade=grades|key:test.id|key:0 %}
-                                {% if can_release %}
-                                <td> <input type="checkbox" class="child" name="check{{ grades|key:test.id|key:2 }}" /> </td>
-                                {% endif %}
                                 <td>
                                     <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
                                     <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
                                 </td>
                                 <td id="gradeid_{{ student }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
                                     <font title="{{ grade }}">{{ grade|round }}</font>
-
-                                    {% if grades|key:test.id != 'N/A' %}
-                                        {% if grades|key:test.id|key:1 %}
-                                        <i class="material-icons float-right" title="Grade has been released">done</i>
-                                        {% else %}
-                                        <i class="material-icons float-right" title="Grade has not been released">clear</i>
-                                        {% endif %}
-                                    {% endif %}
                                 </td>
                                 {% endwith %}
                             </tr>

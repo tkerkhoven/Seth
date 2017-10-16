@@ -99,7 +99,11 @@ class GradeView(generic.DetailView):
 
         # Gather all tests the user is allowed to see, ordered by the ID of their respective module part.
         tests = Test.objects \
-            .filter(module_part__in=module_parts) \
+            .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts) \
+            .order_by('module_part__id').distinct()
+
+        assignments = Test.objects \
+            .filter(type='A', module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
 
         # Gather all important information about students and their grades.
@@ -119,6 +123,8 @@ class GradeView(generic.DetailView):
         temp_dict = dict()
         testallreleased = dict()
         grade_dict = OrderedDict()
+        ep_span = dict()
+        a_span = dict()
 
         # Changing the queryset to something more easily usable.
         QuerySetChanger(dicts, students, temp_dict, testallreleased)
@@ -127,9 +133,16 @@ class GradeView(generic.DetailView):
         for key in sorted(temp_dict):
             grade_dict[key] = temp_dict[key]
 
+        for module_part in module_parts:
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
+            a_span[module_part] = module_part.test_set.filter(type='A').count()
+
         # Add everything to the context.
+        context['ep_span'] = ep_span
+        context['a_span'] = a_span
         context['mod_ed'] = mod_ed
         context['gradedict'] = grade_dict
+        context['assignments'] = assignments
         context['studentdict'] = students
         context['module_parts'] = module_parts
         context['testallreleased'] = testallreleased
@@ -173,6 +186,7 @@ class StudentView(generic.DetailView):
 
         module_parts_dict = dict()
         test_dict = dict()
+        assign_dict = dict()
 
         # Gather all connected grade objects to the person.
         dicts = Grade.objects \
@@ -188,17 +202,24 @@ class StudentView(generic.DetailView):
         # For each of these modules, gather the module parts and tests.
         for module_edition in modules:
             module_parts = ModulePart.objects \
-                .filter(module_edition=module_edition, test__grade__released=True, test__grade__student=person) \
+                .filter(module_edition=module_edition, test__released=True, test__grade__student=person) \
                 .order_by('id').distinct()
             tests = Test.objects \
-                .filter(module_part__module_edition=module_edition, grade__released=True, grade__student=person) \
+                .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts, released=True) \
+                .order_by('module_part__id').distinct()
+
+            assignments = Test.objects \
+                .filter(type='A', module_part__in=module_parts, released=True) \
                 .order_by('module_part__id').distinct()
 
             module_parts_dict[module_edition] = module_parts
             test_dict[module_edition] = tests
+            assign_dict[module_edition] = assignments
 
         temp_dict = dict()
         context_dict = OrderedDict()
+        ep_span = dict()
+        a_span = dict()
 
         # Changing the queryset to something more useable.
         # Makes a dictionary of grades (temp_dict[TEST] = [GRADE])
@@ -210,11 +231,18 @@ class StudentView(generic.DetailView):
         for key in sorted(temp_dict):
             context_dict[key] = temp_dict[key]
 
+        for module_part in module_parts:
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), grade__student=person, released=True).count()
+            a_span[module_part] = module_part.test_set.filter(type='A', grade__student=person, released=True)
+
         # Add everything to the context
+        context['ep_span'] = ep_span
+        context['a_span'] = a_span
         context['student'] = person
         context['modules'] = modules
         context['module_parts'] = module_parts_dict
         context['tests'] = test_dict
+        context['assignments'] = assign_dict
         context['gradedict'] = context_dict
 
         return context
@@ -265,8 +293,11 @@ class ModuleStudentView(generic.DetailView):
 
         # Gather the test connected to the module parts.
         tests = Test.objects \
-            .filter(Q(module_part__module_edition__coordinators__user=self.request.user) |
-                    Q(module_part__teachers__user=self.request.user), Q(module_part__in=module_parts)) \
+            .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts) \
+            .order_by('module_part__id').distinct()
+
+        assignments = Test.objects \
+            .filter(type='A', module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
 
         # Gather all grade objects connected to the person and the module edition.
@@ -279,6 +310,8 @@ class ModuleStudentView(generic.DetailView):
 
         temp_dict = dict()
         context_dict = OrderedDict()
+        ep_span = dict()
+        a_span = dict()
 
         # Changing the queryset to something more useable.
         # Creates a dictionary of grades (temp_dict[TEST] = (GRADE, RELEASED)
@@ -289,10 +322,17 @@ class ModuleStudentView(generic.DetailView):
         for key in sorted(temp_dict):
             context_dict[key] = temp_dict[key]
 
+        for module_part in module_parts:
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
+            a_span[module_part] = module_part.test_set.filter(type='A').count()
+
         # Add everything to the context.
+        context['ep_span'] = ep_span
+        context['a_span'] = a_span
         context['student'] = student
         context['module_parts'] = module_parts
         context['tests'] = tests
+        context['assignments'] = assignments
         context['gradedict'] = context_dict
 
         return context
@@ -344,8 +384,12 @@ class ModulePartView(generic.DetailView):
 
         # Gather all tests in the module part, ordered by the date of examination.
         tests = Test.objects \
-            .filter(module_part=module_part) \
-            .order_by('time')
+            .filter(Q(type='E') | Q(type='P'), module_part=module_part) \
+            .order_by('module_part__id').distinct()
+
+        assignments = Test.objects \
+            .filter(type='A', module_part=module_part) \
+            .order_by('module_part__id').distinct()
 
         students = dict()
         temp_dict = dict()
@@ -365,6 +409,7 @@ class ModulePartView(generic.DetailView):
         context['module_part'] = module_part
         context['testallreleased'] = testallreleased
         context['tests'] = tests
+        context['assignments'] = assignments
         return context
 
 
@@ -513,43 +558,33 @@ def release(request, *args, **kwargs):
     user = request.user
 
     # Check whether the user is able to release/retract grades.
-    if not ModuleEdition.objects.filter(coordinators__user=user, id=kwargs['pk']):
+    test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user, id=kwargs['pk'])
+    if not test:
         raise PermissionDenied()
-
-    # Get the action ('release'/'retract')
-    action = request.POST['action']
 
     mail_list = []
 
-    # Loop over every key in the POST
-    for key in request.POST:
-        # Check whether the current key is a grade checkbox.
-        key_search = re.search('check([0-9]+)', key)
-        if key_search:
-            # Extract the grade.
-            grade_id = int(key_search.group(1))
-            grade = Grade.objects.get(id=grade_id)
+    if request.POST['rel'] == "False":
+        test.released = True
+        test.save()
 
-            if action == 'release':
-                # Release the grade.
-                grade.released = True
-                grade.save()
-                # Add the connected person to the mail list.
+        if 'sendcheck' in request.POST:
+            for grade in test.grade_set.order_by('student_id', 'time').distinct('student_id').all():
                 mail_list.append(make_mail_grade_released(grade.student, user, grade))
-                # Set the change variable to 1 to signify that releases were done.
-                request.session['change'] = 1
-            elif action == 'retract':
-                # Retract the grade.
-                grade.released = False
-                grade.save()
-                # Add the connected person to the mail list.
-                mail_list.append(make_mail_grade_retracted(grade.student, user, grade))
-                # Set the change variable to 2 to signify that retractions were done.
-                request.session['change'] = 2
+        request.session['change'] = 1
+    else:
+        test.released = False
+        test.save()
 
-    # Get a connection and send the mails.
-    connection = mail.get_connection()
-    connection.send_messages(mail_list)
+        if 'sendcheck' in request.POST:
+            for grade in test.grade_set.order_by('student_id', 'time').distinct('student_id').all():
+                mail_list.append(make_mail_grade_retracted(grade.student, user, grade))
+        request.session['change'] = 2
+
+    if 'sendcheck' in request.POST:
+        # Get a connection and send the mails.
+        connection = mail.get_connection()
+        connection.send_messages(mail_list)
 
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
