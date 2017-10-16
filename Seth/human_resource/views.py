@@ -1,25 +1,140 @@
 from django.shortcuts import render
-from Grades.models import Person
+from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UserUpdateForm
+from .forms import UserUpdateForm, CreateUserForm
+from .forms import UserUpdateForm, CreateUserForm
+from django.core.exceptions import PermissionDenied
+from django.db.models import prefetch_related_objects
+from django.db.models.query import EmptyQuerySet
+
+import permission_utils as pu
+
+
+def known_persons(person):
+    """
+    Returns all Person-objects that are considered to be related to a given user.
+    Case Coordinator/Coordinator-assistant: Return all students from all modules that are coordinated by that person
+    Case Teacher: Return all students from moduleparts that are taught by that person
+    Case Adviser: Return all students that are in all modules of all studies that have that person as adviser
+    Users can be part of multiple cases.
+
+    :param person: The person all other persons must be related to.
+    :return: All persons related to the given user.
+    """
+    queryset = Person.objects.none()
+    if pu.is_coordinator_or_assistant(person):
+        # Add Students
+        module_eds = ModuleEdition.objects.all().filter(coordinators=person).prefetch_related()
+        studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
+        students = Person.objects.all().filter(studying__in=studyings).distinct()
+        queryset = queryset.union(queryset, students)
+        # Add Study Advisers
+        modules = Module.objects.filter(moduleedition__in=module_eds)
+        studies = Study.objects.none()
+        for mod in modules:
+            study_set = Study.objects.filter(modules=mod)
+            studies = (studies | study_set).distinct()
+        advisers = Person.objects.filter(study__in=studies)
+        queryset = queryset.union(queryset, advisers)
+        # Add Teachers and Teaching Assistants
+        module_parts = ModulePart.objects.all().filter(module_edition__in=module_eds)
+        teachers_obj = Teacher.objects.filter(module_part__in=module_parts)
+        teachers = Person.objects.filter(teacher__in=teachers_obj)
+        queryset = queryset.union(queryset, teachers)
+        # Add other coordinators
+        coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
+        coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
+        queryset = queryset.union(queryset, coordinators)
+
+    if pu.is_teacher(person):
+        # Add Students and teaching assistants
+        teacher = Teacher.objects.get(person=person)
+        module_parts = ModulePart.objects.filter(teacher=teacher).prefetch_related()
+        module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
+        studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
+        persons = Person.objects.all().filter(studying__in=studyings).distinct()
+        queryset = queryset.union(queryset, persons)
+        # Add Teachers
+        known_module_parts = ModulePart.objects.filter(module_edition__in=module_eds)
+        teachers_obj = Teacher.objects.filter(module_part__in=known_module_parts)
+        teachers = Person.objects.filter(teacher__in=teachers_obj)
+        queryset = queryset.union(queryset, teachers)
+        # Add Module Coordinators
+        coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
+        coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
+        queryset = queryset.union(queryset, coordinators)
+        # Add Advisers
+        modules = Module.objects.filter(moduleedition__in=module_eds)
+        studies = Study.objects.none()
+        for mod in modules:
+            study_set = Study.objects.filter(modules=mod)
+            studies = (studies | study_set).distinct()
+        advisers = Person.objects.filter(study__in=studies)
+        queryset = queryset.union(queryset, advisers)
+
+    if pu.is_study_adviser(person):
+        # Add students
+        studies = Study.objects.filter(advisers=person).prefetch_related()
+        modules = Module.objects.filter(study__in=studies).prefetch_related()
+        module_eds = ModuleEdition.objects.filter(module__in=modules).prefetch_related()
+        studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
+        persons = Person.objects.all().filter(studying__in=studyings).distinct()
+        queryset = queryset.union(queryset, persons)
+        # Add coordinators
+        coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
+        coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
+        queryset = queryset.union(queryset, coordinators)
+        # queryset = (queryset | coordinators)
+        # Add teachers
+        module_parts = ModulePart.objects.filter(module_edition__in=module_eds)
+        teacher_obj = Teacher.objects.filter(module_part__in=module_parts)
+        teachers = Person.objects.filter(teacher__in=teacher_obj)
+        queryset = queryset.union(queryset, teachers)
+        # Add advisers
+        advisers = Person.objects.filter(study__in=studies)
+        queryset = queryset.union(queryset, advisers)
+    result = queryset.distinct()
+    return result
+
 
 # Create your views here.
 class PersonsView(generic.ListView):
+    """
+    Gives a generic.ListView of all relevant Persons to the logged in user.
+    """
     template_name = 'human_resource/users.html'
     model = Person
+    person = None
+
+    def dispatch(self, request, *args, **kwargs):
+        self.person = Person.objects.filter(user=request.user)
+        if pu.is_coordinator_or_assistant(self.person) or pu.is_teacher(self.person) or pu.is_study_adviser(
+                self.person):
+            return super(PersonsView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not a module coordinator')
 
     def get_context_data(self, **kwargs):
         context = super(PersonsView, self).get_context_data(**kwargs)
-
-        persons = Person.objects.all().order_by('name')
-        context['persons'] = persons
+        context['persons'] = known_persons(self.person)
         return context
 
 
 class PersonDetailView(generic.DetailView):
+    """
+    Gives a generic.DetailView of a specific Person relevant to the logged in user.
+    """
     template_name = 'human_resource/user.html'
     model = Person
+
+    def dispatch(self, request, *args, **kwargs):
+        user = Person.objects.filter(user=request.user)
+        person = Person.objects.get(id=self.kwargs['pk'])
+        if person in known_persons(user):
+            return super(PersonDetailView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not allowed to access the details of this user')
 
     def get_context_data(self, **kwargs):
         context = super(PersonDetailView, self).get_context_data(**kwargs)
@@ -32,10 +147,21 @@ class PersonDetailView(generic.DetailView):
 
 
 class UpdateUser(generic.UpdateView):
+    """
+    Gives a generic.UpdateView of a specific Person relevant to the logged in user.
+    """
     model = Person
     template_name = 'human_resource/person/update-user.html'
     # template_name_suffix = '/update-user'
     form_class = UserUpdateForm
+
+    def dispatch(self, request, *args, **kwargs):
+        user = Person.objects.filter(user=request.user)
+        person = Person.objects.get(id=self.kwargs['pk'])
+        if person in known_persons(user):
+            return super(UpdateUser, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not allowed to access the details of this user')
 
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
@@ -53,9 +179,20 @@ class UpdateUser(generic.UpdateView):
 
 
 class DeleteUser(generic.DeleteView):
+    """
+    Gives a generic.Deleteview of a specific Person relevant to the logged in user.
+    """
     model = Person
     template_name = 'human_resource/person_confirm_delete.html'
     success_url = reverse_lazy('human_resource:users')
+
+    def dispatch(self, request, *args, **kwargs):
+        user = Person.objects.filter(user=request.user)
+        person = Person.objects.get(id=self.kwargs['pk'])
+        if person in known_persons(user):
+            return super(PersonDetailView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not allowed to access the details of this user')
 
 
 class CreatePerson(generic.CreateView):

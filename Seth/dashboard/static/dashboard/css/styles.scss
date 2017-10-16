@@ -51,6 +51,19 @@ hr {
   }
 }
 
+.card {
+  &.card-margin {
+    margin-top: 10px;
+  }
+  .card-header {
+    &.card-header-tabs {
+      margin: 0;
+      padding: 0;
+      border-bottom: 0;
+    }
+  }
+}
+
   @import '../../../../static/Seth/seth/css/_icons';
 
   @import '../../../../static/Seth/seth/css/_navbar-menus';

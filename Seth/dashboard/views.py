@@ -1,51 +1,86 @@
-from django.http import Http404
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
+from django.http import Http404, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
 
-from Grades.models import ModuleEdition, Studying
-from Grades.models import ModuleEdition
+from Grades.models import ModuleEdition, Person, Coordinator, Studying
+
+from django.contrib.auth.decorators import login_required
+import permission_utils as pu
+from django.core.exceptions import PermissionDenied
 
 
-# @permission_required('grades.add_grade')
+@login_required
 def home(request):
-    context = {
-        'modules': get_modules(),
-        'time': get_current_date()
-        # [
-        #     {
-        #         'name': 'Pearls of Computer Science',
-        #         'courses': [
-        #             {
-        #                 'name': 'Pearl 1',
-        #             }
-        #         ]
-        #     }
-        # ],
-    }
-    studying = Studying.objects.filter(person__user=request.user)
-    if studying:
+    """
+    Checks the type of logged in user and directs to an appropriate dashboard with relevant information.
+
+    :param request: Django request for authentication
+    :return: Redirect to appropriate dashboard (based on type of user)
+    """
+    person = Person.objects.get(user=request.user)
+    if pu.is_coordinator_or_assistant(person):
+        context = {
+            'modules': get_modules(person),
+            'time': get_current_date()
+        }
+        return render(request, 'dashboard/index.html', context)
+    if pu.is_study_adviser(person):
+        # Todo: Add another dashboard, or create an extension
+        return HttpResponse("You are a study adviser, but your dashboard is yet to be implemented")
+    if pu.is_teacher(person):
+        # Todo: Add another dashboard, or create an extension
+        return HttpResponse("You are a teacher, but your dashboard is yet to be implemented")
+    if pu.is_teaching_assistant(person):
+        # Todo: Add another dashboard, or create an extension
+        return HttpResponse("You are a teaching assistant, but your dashboard is yet to be implemented")
+    if pu.is_student(person):
+        # Todo: Add another dashboard, or create an extension
+        studying = Studying.objects.filter(person=person)
         return redirect('grades:student', studying.get(person__user=request.user).person.id)
 
-    return render(request, 'dashboard/index.html', context)
 
-
+@login_required
 def modules(request):
-    context = {
-        'modules': get_modules()
-    }
-    return render(request, 'dashboard/modules.html', context)
+    """
+    Checks the type of logged in user and directs to view with relevant modules.
+
+    :param request: Django request for authentication
+    :return: Redirect to module (edition) overview
+    """
+    person = Person.objects.get(user=request.user)
+    if pu.is_coordinator_or_assistant(Person.objects.get(user=request.user)):
+        context = {
+            'modules': get_modules(person)
+        }
+        return render(request, 'dashboard/modules.html', context)
+    else:
+        # Todo: Add other usertypes
+        return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
+
+
+def student(request):
+    return render(request, 'dashboard/student_index.html')
 
 
 def logged_out(request):
+    """
+    Logs the user out and directs to logged out portal
+
+    :param request: Django request for authentication
+    :return: Redirect to logged out portal
+    """
     return render(request, 'registration/success_logged_out.html')
 
 
+@login_required
 def settings(request):
     raise Http404('Settings unimplemented')
 
 
-def get_modules():
-    return ModuleEdition.objects.order_by('-start')
+def get_modules(person):
+    coordinator = Coordinator.objects.get(person=person)
+    return ModuleEdition.objects.filter(coordinator=coordinator).order_by('-start')
 
 
 def get_current_date():
@@ -61,7 +96,7 @@ def not_found(request):
 
 
 def permission_denied(request):
-    return render(request, 'errors/403.html', status=403,)
+    return render(request, 'errors/403.html', status=403, )
 
 
 def bad_request(request):
