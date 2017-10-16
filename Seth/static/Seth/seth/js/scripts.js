@@ -37,6 +37,10 @@ $(document).ready(function() {
       edit.blur(BlurEdit)
     });
 
+    $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+        $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+    } );
+
     var table = $('#gradebook').DataTable({
       "ordering": true,
       "order": [[0, 'asc']],
@@ -54,7 +58,38 @@ $(document).ready(function() {
       }
     });
 
+    var assignmenttable = $('#assignment_table').DataTable({
+      "ordering": true,
+      "order": [[0, 'asc']],
+      "columnDefs": [{
+        orderable: false,
+        targets: "no-sort"
+      }],
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
     var studenttable = $('#studentbook').DataTable({
+      "ordering": false,
+      "paging": false,
+      "searching": false,
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    var studenttable = $('#studentbook_assignments').DataTable({
       "ordering": false,
       "paging": false,
       "searching": false,
@@ -90,6 +125,10 @@ $(document).ready(function() {
       updateColoring();
     });
 
+    assignmenttable.on('draw', function() {
+      updateColoring();
+    });
+
     table.on('draw', function() {
       updateColoring();
     });
@@ -103,7 +142,7 @@ $(document).ready(function() {
         oldfrom = $("#upperNum").val();
         oldto = $(this).val();
       }
-      updateColoring()
+      updateColoring();
     });
 
     $("#upperNum").bind('keyup mouseup', function () {
@@ -115,7 +154,7 @@ $(document).ready(function() {
         oldto = $("#lowerNum").val();
         oldfrom = $(this).val();
       }
-      updateColoring()
+      updateColoring();
     });
 
     $('#parent').on('change',function(){
@@ -154,7 +193,7 @@ $(document).ready(function() {
                 if (tdNumber.innerHTML.toLowerCase().indexOf(filter) > -1 || tdName.innerHTML.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
-                    tr[i].style.display = "none"
+                    tr[i].style.display = "none";
                 }
             }
         }
@@ -196,20 +235,25 @@ jQuery(document).ready(function($) {
 
   if($('#colortoggle').hasClass("coloron")) {
     $('[id^="gradeid_"]').each(function(index) {
-      var grade = $(this).attr("data-grade")
-      var mult = $(this).attr("data-grade-max")/10
+      var grade = $(this).attr("data-grade");
+      var mult = $(this).attr("data-grade-max")/10;
+      var color = $(this).attr("data-always-color");
 
       if(+grade > ((+data.to)*mult)) {
-        $(this).removeClass("success warning error")
-        $(this).addClass("success")
+        $(this).removeClass("success warning error");
+        $(this).addClass("success");
       }
       else if(+grade >= ((+data.from)*mult)){
-        $(this).removeClass("success warning error")
-        $(this).addClass("warning")
+        $(this).removeClass("success warning error");
+        $(this).addClass("warning");
       }
       else if(+grade < ((+data.from)*mult)) {
-        $(this).removeClass("success warning error")
-        $(this).addClass("error")
+        $(this).removeClass("success warning error");
+        $(this).addClass("error");
+      }
+      else if(grade = 'N' && color == 'True') {
+        $(this).removeClass("success warning error");
+        $(this).addClass("error");
       }
     });
   }
@@ -217,38 +261,42 @@ jQuery(document).ready(function($) {
 
 $('#colortoggle').click(function() {
   if($(this).hasClass("coloron")) {
-    $(this).removeClass("coloron")
-    $(this).addClass("coloroff")
-    $('#coloricon').html("invert_colors")
+    $(this).removeClass("coloron");
+    $(this).addClass("coloroff");
+    $('#coloricon').html("invert_colors");
 
     $('[id^="gradeid_"]').each(function(index) {
-      $(this).removeClass("success warning error")
+      $(this).removeClass("success warning error");
     });
   }
   else {
-    $(this).removeClass("coloroff")
-    $(this).addClass("coloron")
-    $('#coloricon').html("invert_colors_off")
+    $(this).removeClass("coloroff");
+    $(this).addClass("coloron");
+    $('#coloricon').html("invert_colors_off");
 
-    updateColoring()
+    updateColoring();
   }
 });
 
 function updateColoring() {
   if($("#colortoggle").hasClass("coloron")) {
     $('[id^="gradeid_"]').each(function(index) {
-      $(this).removeClass("success warning error")
-      var grade = $(this).attr("data-grade")
-      var mult = $(this).attr("data-grade-max")/10
+      $(this).removeClass("success warning error");
+      var color = $(this).attr('data-always-color');
+      var grade = $(this).attr("data-grade");
+      var mult = $(this).attr("data-grade-max")/10;
 
       if(+grade > ((+oldto)*mult)) {
-        $(this).addClass("success")
+        $(this).addClass("success");
       }
       else if(+grade >= ((+oldfrom)*mult)){
-        $(this).addClass("warning")
+        $(this).addClass("warning");
       }
       else if(+grade < ((+oldfrom)*mult)) {
-        $(this).addClass("error")
+        $(this).addClass("error");
+      }
+      else if(grade = 'N' && color == 'True') {
+        $(this).addClass("error");
       }
     });
   }
