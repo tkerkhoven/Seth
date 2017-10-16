@@ -240,20 +240,24 @@ def import_test(request, pk):
                 # Check excel file for invalid students
                 invalid_students = []
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
-                    if not Studying.objects.filter(module_id__courses__test__exact=pk,
-                                                   student_id__person_id=row[student_id_field]):
-                        if not row[student_id_field] == '':
-                            invalid_students.append(row[student_id_field])
+                    if not Studying.objects.filter(person__university_number=row[0]).filter(
+                            module_edition=pk):
+                        invalid_students.append(row[0])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
                 if [student for student in invalid_students if student is not '']:
                     raise SuspiciousOperation(
                         'Students {} are not enrolled in this module. '
                         'Enroll these students first before retrying.'.format(invalid_students))
+                elif invalid_students:
+                    raise SuspiciousOperation(
+                        'There are grades or description fields in this excel sheet that do not have a student number '
+                        'filled in. Please check the contents of your excel file for stale values in rows.'
+                    )
 
                 grades = []
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
                     try:
-                        student = Person.objects.get(person_id=row[student_id_field])
+                        student = Person.objects.get(university_number=row[student_id_field])
                         # check if this is not an empty line, else continue.
                         if student:
                             grades.append(make_grade(
