@@ -22,13 +22,13 @@ def known_persons(person):
     :param person: The person all other persons must be related to.
     :return: All persons related to the given user.
     """
-    result = []
+    queryset = Person.objects.none()
     if pu.is_coordinator_or_assistant(person):
         # Add Students
         module_eds = ModuleEdition.objects.all().filter(coordinators=person).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         students = Person.objects.all().filter(studying__in=studyings).distinct()
-        result.extend(students)
+        queryset = queryset.union(queryset, students)
         # Add Study Advisers
         modules = Module.objects.filter(moduleedition__in=module_eds)
         studies = Study.objects.none()
@@ -36,16 +36,16 @@ def known_persons(person):
             study_set = Study.objects.filter(modules=mod)
             studies = (studies | study_set).distinct()
         advisers = Person.objects.filter(study__in=studies)
-        result.extend(advisers)
+        queryset = queryset.union(queryset, advisers)
         # Add Teachers and Teaching Assistants
         module_parts = ModulePart.objects.all().filter(module_edition__in=module_eds)
         teachers_obj = Teacher.objects.filter(module_part__in=module_parts)
         teachers = Person.objects.filter(teacher__in=teachers_obj)
-        result.extend(teachers)
+        queryset = queryset.union(queryset, teachers)
         # Add other coordinators
         coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
         coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
-        result.extend(coordinators)
+        queryset = queryset.union(queryset, coordinators)
 
     if pu.is_teacher(person):
         # Add Students and teaching assistants
@@ -54,16 +54,16 @@ def known_persons(person):
         module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         persons = Person.objects.all().filter(studying__in=studyings).distinct()
-        result.extend(persons)
+        queryset = queryset.union(queryset, persons)
         # Add Teachers
         known_module_parts = ModulePart.objects.filter(module_edition__in=module_eds)
         teachers_obj = Teacher.objects.filter(module_part__in=known_module_parts)
         teachers = Person.objects.filter(teacher__in=teachers_obj)
-        result.extend(teachers)
+        queryset = queryset.union(queryset, teachers)
         # Add Module Coordinators
         coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
         coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
-        result.extend(coordinators)
+        queryset = queryset.union(queryset, coordinators)
         # Add Advisers
         modules = Module.objects.filter(moduleedition__in=module_eds)
         studies = Study.objects.none()
@@ -71,7 +71,7 @@ def known_persons(person):
             study_set = Study.objects.filter(modules=mod)
             studies = (studies | study_set).distinct()
         advisers = Person.objects.filter(study__in=studies)
-        result.extend(advisers)
+        queryset = queryset.union(queryset, advisers)
 
     if pu.is_study_adviser(person):
         # Add students
@@ -80,21 +80,21 @@ def known_persons(person):
         module_eds = ModuleEdition.objects.filter(module__in=modules).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         persons = Person.objects.all().filter(studying__in=studyings).distinct()
-        result.extend(persons)
+        queryset = queryset.union(queryset, persons)
         # Add coordinators
         coordinator_obj = Coordinator.objects.filter(module_edition__in=module_eds)
         coordinators = Person.objects.filter(coordinator__in=coordinator_obj)
-        result.extend(coordinators)
+        queryset = queryset.union(queryset, coordinators)
+        # queryset = (queryset | coordinators)
         # Add teachers
         module_parts = ModulePart.objects.filter(module_edition__in=module_eds)
         teacher_obj = Teacher.objects.filter(module_part__in=module_parts)
         teachers = Person.objects.filter(teacher__in=teacher_obj)
-        result.extend(teachers)
+        queryset = queryset.union(queryset, teachers)
         # Add advisers
         advisers = Person.objects.filter(study__in=studies)
-        result.extend(advisers)
-    #     # Todo: add coordinators, teachers, teaching assistants and other advisers
-
+        queryset = queryset.union(queryset, advisers)
+    result = queryset.distinct()
     return result
 
 
