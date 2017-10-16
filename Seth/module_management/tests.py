@@ -1014,7 +1014,7 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(5):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(30):
@@ -1027,7 +1027,7 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(5):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(30):
