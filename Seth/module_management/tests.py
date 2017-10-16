@@ -361,7 +361,106 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
             self.client.get(url_1, follow=True)
 
 
-# WIP
+class ModuleManagementModuleEditionUpdateFormTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_edition_update'
+        self.model_cls = ModuleEdition
+        self.pk_1 = self.model_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_fields_required(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {})
+        self.assertFormError(response, 'form', 'year', 'This field is required.')
+        self.assertFormError(response, 'form', 'block', 'This field is required.')
+        self.assertFormError(response, 'form', 'start', 'This field is required.')
+        self.assertFormError(response, 'form', 'end', 'This field is required.')
+
+    def test_protected_fields(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        self.client.post(self.url_1,
+                         {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11', 'module': Module.objects.get(code='002').pk})
+        self.assertEqual('001', ModuleEdition.objects.get(year=2020).module.code)
+
+    def test_invalid_input_year(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {'year': 'a', 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'year', 'Enter a whole number.')
+        response = self.client.post(self.url_1, {'year': 2017.2, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'year', 'Enter a whole number.')
+
+    def test_invalid_input_block(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1C', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1C is not one of the available choices.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1 is not one of the available choices.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': 1, 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1 is not one of the available choices.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': 'Block 1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'block', 'Select a valid choice. Block 1A is not one of the available choices.')
+
+    def test_invalid_input_start(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-13-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-0-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-0', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-32', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-02-29', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017--1-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': 'a-10-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017 10 11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-20-11', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11 10:10:10', 'end': '2017-10-11'})
+        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
+
+    def test_invalid_input_end(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-13-11', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-0-11', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-10-0', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-10-32', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-02-29', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017--1-11', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': 'a-10-11', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017 10 11', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-20-11', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-10-11 10:10:10', 'start': '2017-10-11'})
+        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
+
+
 class ModuleManagementModuleEditionUpdateTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -439,6 +538,15 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
 
         self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
 
+    def test_update(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        self.assertTrue(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
+        self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.assertFalse(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
+        self.assertTrue(ModuleEdition.objects.filter(year=2020))
+
     def test_queries(self):
         # Login as coordinator
         self.client.logout()
@@ -446,6 +554,9 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
 
         with self.assertNumQueries(5):
             self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
 
 
 # WIP
@@ -516,8 +627,19 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         response = self.client.get(self.url_1)
         self.assertEqual(response.status_code, 200)
 
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
 
-# WIP
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context['form'].__class__, self.form_cls)
+
+
 class ModuleManagementModulePartDetailTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -583,8 +705,72 @@ class ModuleManagementModulePartDetailTests(TestCase):
         response = self.client.get(self.url_1)
         self.assertEqual(response.status_code, 200)
 
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
 
-# WIP
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
+        self.assertQuerysetEqual(response.context['studying'], get_list_from_queryset(
+            Studying.objects.filter(module_edition=ModulePart.objects.get(pk=self.pk_1).module_edition.pk)))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(15):
+            self.client.get(self.url_1)
+
+
+class ModuleManagementModulePartUpdateFormTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:module_part_update'
+        self.model_cls = ModulePart
+        self.pk_1 = self.model_cls.objects.get(name='module_part0').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_fields_required(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {})
+        self.assertFormError(response, 'form', 'name', 'This field is required.')
+        self.assertFormError(response, 'form', 'teachers', 'This field is required.')
+
+    def test_protected_fields(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        self.client.post(self.url_1,
+                         {'name': 'newname', 'teachers': {}, 'module_edition': ModuleEdition.objects.get(year=timezone.now().year - 2).pk})
+        self.assertEqual(ModuleEdition.objects.get(year=timezone.now().year, block='1A').pk, ModulePart.objects.get(pk=self.pk_1).module_edition.pk)
+
+    def test_invalid_input_name(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        s = ''
+        for i in range(256):
+            s = s + str(i)
+        response = self.client.post(self.url_1, {'name': s, 'teachers': {}})
+        self.assertFormError(response, 'form', 'name', 'Ensure this value has at most 255 characters (it has 658).')
+
+    def test_invalid_input_teachers(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {'name': 'newname', 'teachers': {12345}})
+        self.assertFormError(response, 'form', 'teachers', 'Select a valid choice. 12345 is not one of the available choices.')
+
+
 class ModuleManagementModulePartUpdateTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -595,9 +781,13 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         self.model_name = 'modulepart'
         self.pk_1 = self.model_cls.objects.get(name='module_part0').pk
         self.pk_2 = self.model_cls.objects.get(name='module_part1').pk
+        self.pk_3 = self.model_cls.objects.get(name='module_part2').pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
+        self.url_3 = reverse(self.base_url, kwargs={'pk': self.pk_3})
         self.user = User.objects.get(username='coordinator0')
+        self.person1 = Person.objects.get(university_number='s1').pk
+        self.person2 = Person.objects.get(university_number='m2').pk
 
     def test_no_login(self):
         self.client.logout()
@@ -649,6 +839,40 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         self.client.force_login(user=User.objects.get(username='coordinator0'))
         response = self.client.get(self.url_1)
         self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
+
+    def test_update(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        self.assertTrue(ModulePart.objects.filter(name='module_part2'))
+        self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
+        self.assertFalse(ModulePart.objects.filter(name='module_part2'))
+        self.assertTrue(ModulePart.objects.filter(name='module_part2_new'))
+        self.assertTrue(Teacher.objects.filter(role='A', person=self.person1, module_part=self.pk_3))
+        self.assertTrue(Teacher.objects.filter(role='T', person=self.person2, module_part=self.pk_3))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(8):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
 
 
 # WIP
@@ -719,8 +943,19 @@ class ModuleManagementModulePartCreateTests(TestCase):
         response = self.client.get(self.url_1)
         self.assertEqual(response.status_code, 200)
 
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
 
-# WIP
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context['form'].__class__, self.form_cls)
+
+
 class ModuleManagementModulePartDeleteTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -728,13 +963,14 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         self.template = 'module_management/module_part_delete.html'
         self.view_cls = ModulePartDeleteView
         self.model_cls = ModulePart
-        self.model_name = 'moduleedition'
+        self.model_name = 'modulepart'
         self.pk_1 = self.model_cls.objects.get(name='module_part0').pk
         self.pk_2 = self.model_cls.objects.get(name='module_part1').pk
         self.pk_3 = self.model_cls.objects.get(name='module_part2').pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.url_3 = reverse(self.base_url, kwargs={'pk': self.pk_3})
+        self.redirect_url = reverse('module_management:module_overview')
         self.user = User.objects.get(username='coordinator0')
 
     def test_no_login(self):
@@ -794,6 +1030,37 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         self.client.force_login(user=User.objects.get(username='coordinator0'))
         response = self.client.get(self.url_3)
         self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_3, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_3))
+
+    def test_deletion(self):
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_3, follow=True)
+
+        self.assertRedirects(response, self.redirect_url)
+        self.assertFalse(Test.objects.filter(pk=self.pk_3))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(7):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(10):
+            self.client.post(self.url_3)
 
 
 class ModuleManagementTestDetailTests(TestCase):
@@ -882,7 +1149,95 @@ class ModuleManagementTestDetailTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
 
-# WIP
+class ModuleManagementTestUpdateFormTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:test_update'
+        self.model_cls = Test
+        self.pk_1 = self.model_cls.objects.get(name='test0').pk
+        self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_fields_required(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1, {})
+        self.assertFormError(response, 'form', 'type', 'This field is required.')
+        self.assertFormError(response, 'form', 'time', 'This field is required.')
+        self.assertFormError(response, 'form', 'maximum_grade', 'This field is required.')
+        self.assertFormError(response, 'form', 'minimum_grade', 'This field is required.')
+
+    def test_protected_fields(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        self.client.post(self.url_1,
+                         {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00',
+                          'module_part': ModulePart.objects.get(name='module_part1').pk})
+        self.assertEqual(Test.objects.get(pk=self.pk_1).module_part.pk, ModulePart.objects.get(name='module_part0').pk)
+
+    def test_invalid_input_name(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        s = ''
+        for i in range(256):
+            s = s + str(i)
+        response = self.client.post(self.url_1, {'name': s, 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'name', 'Ensure this value has at most 255 characters (it has 658).')
+
+    def test_invalid_input_type(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'Exam', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'type', 'Select a valid choice. Exam is not one of the available choices.')
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'X', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'type', 'Select a valid choice. X is not one of the available choices.')
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 0, 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'type', 'Select a valid choice. 0 is not one of the available choices.')
+
+    def test_invalid_input_time(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 25:37:00'})
+        self.assertFormError(response, 'form', 'time', 'Enter a valid date/time.')
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-eleven 13:37:00'})
+        self.assertFormError(response, 'form', 'time', 'Enter a valid date/time.')
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-13-11 13:37:00'})
+        self.assertFormError(response, 'form', 'time', 'Enter a valid date/time.')
+
+    def test_invalid_input_maximum_grade(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 100000, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'maximum_grade', 'Ensure that there are no more than 4 digits in total.')
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 'Ten', 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'maximum_grade', 'Enter a number.')
+
+    def test_invalid_input_minimum_grade(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'minimum_grade': 100000, 'maximum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'minimum_grade', 'Ensure that there are no more than 4 digits in total.')
+        response = self.client.post(self.url_1,
+                                    {'name': 'newname', 'type': 'E', 'minimum_grade': 'Ten', 'maximum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        self.assertFormError(response, 'form', 'minimum_grade', 'Enter a number.')
+
+
 class ModuleManagementTestUpdateTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -947,6 +1302,40 @@ class ModuleManagementTestUpdateTests(TestCase):
         self.client.force_login(user=User.objects.get(username='coordinator0'))
         response = self.client.get(self.url_1)
         self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
+
+    def test_update(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        self.assertTrue(Test.objects.filter(name='test0'))
+        self.client.post(self.url_1, {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
+        self.assertFalse(Test.objects.filter(name='test0'))
+        self.assertTrue(Test.objects.filter(name='test0_new'))
+        self.assertEquals('P', Test.objects.get(pk=self.pk_1).type)
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(4):
+            self.client.get(self.url_1, follow=True)
+
+        with self.assertNumQueries(5):
+            self.client.post(self.url_1,
+                             {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
 
 
 # WIP
@@ -1017,8 +1406,19 @@ class ModuleManagementTestCreateTests(TestCase):
         response = self.client.get(self.url_1)
         self.assertEqual(response.status_code, 200)
 
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_1, follow=True)
 
-# WIP
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context['form'].__class__, self.form_cls)
+
+
 class ModuleManagementTestDeleteTests(TestCase):
     def setUp(self):
         set_up_base_data()
@@ -1033,6 +1433,7 @@ class ModuleManagementTestDeleteTests(TestCase):
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.url_3 = reverse(self.base_url, kwargs={'pk': self.pk_3})
+        self.redirect_url = reverse('module_management:module_overview')
         self.user = User.objects.get(username='coordinator0')
 
     def test_no_login(self):
@@ -1092,3 +1493,34 @@ class ModuleManagementTestDeleteTests(TestCase):
         self.client.force_login(user=User.objects.get(username='coordinator0'))
         response = self.client.get(self.url_3)
         self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.get(self.url_3, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_3))
+
+    def test_deletion(self):
+        self.client.logout()
+        self.client.force_login(user=self.user)
+        response = self.client.post(self.url_3, follow=True)
+
+        self.assertRedirects(response, self.redirect_url)
+        self.assertFalse(Test.objects.filter(pk=self.pk_3))
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(5):
+            self.client.get(self.url_3)
+
+        with self.assertNumQueries(7):
+            self.client.post(self.url_3)
