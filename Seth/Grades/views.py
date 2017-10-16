@@ -278,8 +278,11 @@ class ModuleStudentView(generic.DetailView):
 
         # Gather the test connected to the module parts.
         tests = Test.objects \
-            .filter(Q(module_part__module_edition__coordinators__user=self.request.user) |
-                    Q(module_part__teachers__user=self.request.user), Q(module_part__in=module_parts)) \
+            .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts) \
+            .order_by('module_part__id').distinct()
+
+        assignments = Test.objects \
+            .filter(type='A', module_part__in=module_parts) \
             .order_by('module_part__id').distinct()
 
         # Gather all grade objects connected to the person and the module edition.
@@ -292,6 +295,8 @@ class ModuleStudentView(generic.DetailView):
 
         temp_dict = dict()
         context_dict = OrderedDict()
+        ep_span = dict()
+        a_span = dict()
 
         # Changing the queryset to something more useable.
         # Creates a dictionary of grades (temp_dict[TEST] = (GRADE, RELEASED)
@@ -302,10 +307,17 @@ class ModuleStudentView(generic.DetailView):
         for key in sorted(temp_dict):
             context_dict[key] = temp_dict[key]
 
+        for module_part in module_parts:
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
+            a_span[module_part] = module_part.test_set.filter(type='A').count()
+
         # Add everything to the context.
+        context['ep_span'] = ep_span
+        context['a_span'] = a_span
         context['student'] = student
         context['module_parts'] = module_parts
         context['tests'] = tests
+        context['assignments'] = assignments
         context['gradedict'] = context_dict
 
         return context
@@ -357,8 +369,12 @@ class ModulePartView(generic.DetailView):
 
         # Gather all tests in the module part, ordered by the date of examination.
         tests = Test.objects \
-            .filter(module_part=module_part) \
-            .order_by('time')
+            .filter(Q(type='E') | Q(type='P'), module_part=module_part) \
+            .order_by('module_part__id').distinct()
+
+        assignments = Test.objects \
+            .filter(type='A', module_part=module_part) \
+            .order_by('module_part__id').distinct()
 
         students = dict()
         temp_dict = dict()
@@ -378,6 +394,7 @@ class ModulePartView(generic.DetailView):
         context['module_part'] = module_part
         context['testallreleased'] = testallreleased
         context['tests'] = tests
+        context['assignments'] = assignments
         return context
 
 
