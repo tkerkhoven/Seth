@@ -4,11 +4,12 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
-from django.http import HttpResponseBadRequest
-from django.shortcuts import redirect
+from django.http import HttpResponseBadRequest, HttpResponse
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
+from django.db import transaction
 
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying
 
@@ -19,7 +20,8 @@ class ModuleListView(generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        module_list = Module.objects.prefetch_related('moduleedition_set').filter(moduleedition__coordinators__user=user).distinct()
+        module_list = Module.objects.prefetch_related('moduleedition_set').filter(
+            moduleedition__coordinators__user=user).distinct()
         return module_list
 
     def get_context_data(self, **kwargs):
@@ -95,7 +97,8 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related('study').order_by(
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related(
+            'study').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -255,7 +258,8 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related('study').order_by(
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related(
+            'study').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -545,3 +549,20 @@ class TestDeleteView(generic.DeleteView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+
+@transaction.atomic
+def remove_user(request, spk, mpk):
+    person = Person.objects.get(id=spk)
+    module = ModuleEdition.objects.get(id=mpk)
+    grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
+    studying = Studying.objects.get(person=person, module_edition=module)
+    context = dict()
+    context['person'] = person
+    context['module'] = module
+    if len(grades) == 0:
+        studying.delet()
+        context['success'] = True
+    else:
+        context['failure'] = True
+    return render(request, 'module_management/user_deleted.html', context=context)
