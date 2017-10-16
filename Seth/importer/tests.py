@@ -145,7 +145,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
-        self.assertRedirects(response, '/grades/test/{}/'.format(test.pk))
+        self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
 
 class ImporterPermissionsTest(TestCase):

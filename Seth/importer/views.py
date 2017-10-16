@@ -241,7 +241,7 @@ def import_test(request, pk):
                 invalid_students = []
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
                     if not Studying.objects.filter(person__university_number=row[0]).filter(
-                            module_edition=pk):
+                            module_edition=test.module_part.module_edition_id):
                         invalid_students.append(row[0])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
                 if [student for student in invalid_students if student is not '']:
