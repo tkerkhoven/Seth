@@ -162,7 +162,10 @@ FIXTURE_DIRS = (
 )
 
 # Console mailing backend for development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.utwente.nl'
+
 
 # Django-excel requires these, used in importer.
 FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",
