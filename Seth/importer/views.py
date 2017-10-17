@@ -126,13 +126,15 @@ def import_module(request, pk):
                         # Attempt to find a Test
 
                         # search by ID
-                        if Test.objects.filter(
-                                pk=sheet[table][COLUMN_TITLE_ROW][title_index]
-                        ).filter(module_part__module_edition=pk):
-                            test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
-
+                        try:
+                            if Test.objects.filter(
+                                    pk=sheet[table][COLUMN_TITLE_ROW][title_index]
+                            ).filter(module_part__module_edition=pk):
+                                test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
+                        except ValueError:
+                            pass # Not an int.
                         # search by name
-                        elif Test.objects.filter(
+                        if Test.objects.filter(
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
                         ).filter(module_part__module_edition=pk):
                             test_rows[title_index] = Test.objects.filter(
@@ -301,20 +303,20 @@ def export_module(request, pk):
     tests = Test.objects.filter(module_part__module_edition=module_edition)
 
     # Pre-fill first few columns.
-    table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW - 2)]
+    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 2)]
 
     # Add the module part name and test name for each test if there is enough header room.
     if COLUMN_TITLE_ROW > 1:
-        table.append(['Module part >'] + [test.module_part.name for test in tests])
+        table.append(['', 'Module part >'] + [test.module_part.name for test in tests])
     if COLUMN_TITLE_ROW > 0:
-        table.append(['Test name >'] + [test.name for test in tests])
+        table.append(['', 'Test name >'] + [test.name for test in tests])
 
     # Add machine-readable header row.
-    table.append(['student_id'] + [test.pk for test in tests])
+    table.append(['student_id', 'name'] + [test.pk for test in tests])
 
     # pre-fill student numbers
     for student in students:
-        table.append([student.university_number] + [None for _ in range(len(tests))])
+        table.append([student.university_number, student.name] + [None for _ in range(len(tests))])
 
     return excel.make_response_from_array(table,
                                           file_name='Module Grades {} {}-{}.xlsx'.format(module_edition.module.name,
@@ -359,14 +361,14 @@ def export_test(request, pk):
     students = Person.objects.filter(studying__module_edition__modulepart=test.module_part)
 
     # Insert padding
-    table = [['', '', ''] for _ in range(COLUMN_TITLE_ROW)]
+    table = [['', '', '', ''] for _ in range(COLUMN_TITLE_ROW)]
 
     # Insert title row
-    table.append(['student_id', 'grade', 'description'])
+    table.append(['student_id', 'name', 'grade', 'description'])
 
     # Insert student numbers
     for student in students:
-        table.append([student.university_number, '', ''])
+        table.append([student.university_number, '', '', ''])
 
     return excel.make_response_from_array(table, file_name='Test Grades {} {}-{}.xlsx'
                                           .format(test.name,
