@@ -34,7 +34,7 @@ def known_persons(person):
         studies = Study.objects.none()
         for mod in modules:
             study_set = Study.objects.filter(modules=mod)
-            studies = (studies.all() | study_set.all())
+            studies = (studies | study_set).distinct()
         advisers = Person.objects.filter(study__in=studies)
         queryset = queryset.union(queryset, advisers)
         # Add Teachers and Teaching Assistants
@@ -49,8 +49,8 @@ def known_persons(person):
 
     if pu.is_teacher(person):
         # Add Students and teaching assistants
-        teachers = Teacher.objects.filter(person=person)
-        module_parts = ModulePart.objects.filter(teacher__in=teachers).prefetch_related()
+        teacher = Teacher.objects.get(person=person)
+        module_parts = ModulePart.objects.filter(teacher=teacher).prefetch_related()
         module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         persons = Person.objects.all().filter(studying__in=studyings).distinct()

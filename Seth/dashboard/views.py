@@ -79,8 +79,8 @@ def settings(request):
 
 
 def get_modules(person):
-    coordinators = Coordinator.objects.filter(person=person)
-    return ModuleEdition.objects.filter(coordinator__in=coordinators).order_by('-start')
+    coordinator = Coordinator.objects.get(person=person)
+    return ModuleEdition.objects.filter(coordinator=coordinator).order_by('-start')
 
 
 def get_current_date():
