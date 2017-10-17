@@ -1,14 +1,15 @@
 import pprint
 
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.db.models import Q
-from django.db.transaction import set_autocommit, rollback, commit
 from django.forms.models import ModelForm
-from django.http import HttpResponseBadRequest
-from django.shortcuts import redirect
+from django.http import HttpResponseBadRequest, HttpResponse
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
+from django.db import transaction
 
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying
 
@@ -19,7 +20,8 @@ class ModuleListView(generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        module_list = Module.objects.prefetch_related('moduleedition_set').filter(moduleedition__coordinators__user=user).distinct()
+        module_list = Module.objects.prefetch_related('moduleedition_set').filter(
+            moduleedition__coordinators__user=user).distinct()
         return module_list
 
     def get_context_data(self, **kwargs):
@@ -95,7 +97,8 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related('study').order_by(
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related(
+            'study').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -179,13 +182,12 @@ class ModuleEditionCreateView(generic.CreateView):
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         initial = self.get_form_kwargs()['initial']
         data = self.get_form_kwargs()['data']
         pk = self.kwargs['pk']
         latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('year').pk
-
-        set_autocommit(False)
 
         module_edition = ModuleEdition(
             module=initial['module'],
@@ -199,8 +201,6 @@ class ModuleEditionCreateView(generic.CreateView):
             module_edition.full_clean()
         except ValidationError as e:
             pp = pprint.PrettyPrinter(indent=4, width=120)
-            rollback()
-            set_autocommit(True)
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_edition.save()
 
@@ -213,8 +213,6 @@ class ModuleEditionCreateView(generic.CreateView):
                 module_part.full_clean()
             except ValidationError as e:
                 pp = pprint.PrettyPrinter(indent=4, width=120)
-                rollback()
-                set_autocommit(True)
                 return HttpResponseBadRequest(pp.pformat(('Module Part is invalid: ', e.message_dict)))
             module_part.save()
 
@@ -232,8 +230,6 @@ class ModuleEditionCreateView(generic.CreateView):
                     test.full_clean()
                 except ValidationError as e:
                     pp = pprint.PrettyPrinter(indent=4, width=120)
-                    rollback()
-                    set_autocommit(True)
                     return HttpResponseBadRequest(pp.pformat(('Test is invalid: ', e.message_dict)))
                 test.save()
 
@@ -247,13 +243,9 @@ class ModuleEditionCreateView(generic.CreateView):
                 coordinator.full_clean()
             except ValidationError as e:
                 pp = pprint.PrettyPrinter(indent=4, width=120)
-                rollback()
-                set_autocommit(True)
                 return HttpResponseBadRequest(pp.pformat(('Coordinator is invalid: ', e.message_dict)))
             coordinator.save()
 
-        commit()
-        set_autocommit(True)
         return redirect('module_management:module_overview')
 
 
@@ -266,7 +258,8 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related('study').order_by(
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related(
+            'study').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -361,11 +354,10 @@ class ModulePartCreateView(generic.CreateView):
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         data = self.get_form_kwargs()['data']
         pk = self.kwargs['pk']
-
-        set_autocommit(False)
 
         module_part = ModulePart(
             name=data['name'],
@@ -375,8 +367,6 @@ class ModulePartCreateView(generic.CreateView):
             module_part.full_clean()
         except ValidationError as e:
             pp = pprint.PrettyPrinter(indent=4, width=120)
-            rollback()
-            set_autocommit(True)
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_part.save()
 
@@ -395,13 +385,9 @@ class ModulePartCreateView(generic.CreateView):
                 teacher.full_clean()
             except ValidationError as e:
                 pp = pprint.PrettyPrinter(indent=4, width=120)
-                rollback()
-                set_autocommit(True)
                 return HttpResponseBadRequest(pp.pformat(('Teacher is invalid: ', e.message_dict)))
             teacher.save()
 
-        commit()
-        set_autocommit(True)
         return redirect(reverse_lazy('module_management:module_edition_detail', kwargs={'pk': pk}))
 
 
@@ -516,12 +502,11 @@ class TestCreateView(generic.CreateView):
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         initial = self.get_form_kwargs()['initial']
         data = self.get_form_kwargs()['data']
         pk = self.kwargs['pk']
-
-        set_autocommit(False)
 
         test = Test(
             module_part=initial['module_part'],
@@ -535,13 +520,9 @@ class TestCreateView(generic.CreateView):
             test.full_clean()
         except ValidationError as e:
             pp = pprint.PrettyPrinter(indent=4, width=120)
-            rollback()
-            set_autocommit(True)
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         test.save()
 
-        commit()
-        set_autocommit(True)
         return redirect(reverse_lazy('module_management:module_part_detail', kwargs={'pk': pk}))
 
 
@@ -568,3 +549,20 @@ class TestDeleteView(generic.DeleteView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+
+@transaction.atomic
+def remove_user(request, spk, mpk):
+    person = Person.objects.get(id=spk)
+    module = ModuleEdition.objects.get(id=mpk)
+    grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
+    studying = Studying.objects.get(person=person, module_edition=module)
+    context = dict()
+    context['person'] = person
+    context['module'] = module
+    if len(grades) == 0:
+        studying.delet()
+        context['success'] = True
+    else:
+        context['failure'] = True
+    return render(request, 'module_management/user_deleted.html', context=context)

@@ -27,7 +27,7 @@ with open('{}secrets/django_secret'.format(OS_PATH)) as f:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['farm11.ewi.utwente.nl', 'localhost']
+ALLOWED_HOSTS = ['farm11.ewi.utwente.nl', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -162,7 +162,10 @@ FIXTURE_DIRS = (
 )
 
 # Console mailing backend for development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.utwente.nl'
+
 
 # Django-excel requires these, used in importer.
 FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",

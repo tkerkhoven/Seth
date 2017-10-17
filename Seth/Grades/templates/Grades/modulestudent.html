@@ -53,41 +53,111 @@
                     </div>
                     <br>
 
-                    <div class="table-overflow">
-                        <table id="studentbook" class="table table-striped table-bordered table-responsive">
-                        <thead>
-                        <tr>
-                            {% for module_part in module_parts %}
-                                <th colspan="{{ module_part.test_set.count }}"> {{ module_part }} </th>
-                            {% endfor %}
-                        </tr>
+                    <div class="card card-margin">
+                        <div class="card-header card-header-tabs">
+                            <ul class="nav nav-tabs" id="card-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="tests-projects-tab" data-toggle="tab" href="#tests-projects"
+                                       role="tab" aria-controls="tests-projects" aria-expanded="true">Tests/Projects</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="assignments-tab" data-toggle="tab" href="#assignments"
+                                       role="tab" aria-controls="assignments">Assignments</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content" id="card-tab-content">
+                                <div class="tab-pane fade show active" id="tests-projects" role="tabpanel" aria-labelledby="home-tab">
 
-                        <tr>
-                            {% for test in tests %}
-                                <td><a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></td>
-                            {% endfor %}
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            {% for test in tests %}
-                            {% with grade=gradedict|key:test.id|key:0 %}
-                                <td id="gradeid_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                    <a title="{{ grade }}">{{ grade|round }}</a>
+                                    <div class="table-overflow">
+                                        <table id="studentbook" class="table table-striped table-bordered table-responsive">
+                                        <thead>
+                                        <tr>
+                                            {% for module_part in module_parts %}
+                                                <th colspan="{{ ep_span|key:module_part }}"> {{ module_part.name }} </th>
+                                            {% endfor %}
+                                        </tr>
 
-                                    {% if grades|key:test.id != 'N/A' %}
-                                        {% if grades|key:test.id|key:1 %}
-                                        <i class="material-icons float-right" title="Grade has been released">done</i>
-                                        {% else %}
-                                        <i class="material-icons float-right" title="Grade has not been released">clear</i>
-                                        {% endif %}
-                                    {% endif %}
-                                </td>
-                            {% endwith %}
-                            {% endfor %}
-                        </tr>
-                        </tbody>
-                        </table>
+                                        <tr>
+                                            {% for test in tests %}
+                                                <td><a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a></td>
+                                            {% endfor %}
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            {% for test in tests %}
+                                            {% with grade=gradedict|key:test.id|key:0 %}
+                                                <td id="gradeid_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                                    <a title="{{ grade }}">{{ grade|round }}</a>
+
+                                                    {% if grades|key:test.id != 'N/A' %}
+                                                        {% if grades|key:test.id|key:1 %}
+                                                        <i class="material-icons float-right" title="Grade has been released">done</i>
+                                                        {% else %}
+                                                        <i class="material-icons float-right" title="Grade has not been released">clear</i>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </td>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        </tr>
+                                        </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="profile-tab">
+                                    <div class="table-overflow">
+                                        <table id="assignment_table" data-skip-to-row="1" class="table table-striped table-bordered table-responsive">
+                                        <thead>
+                                        <tr>
+                                            {% for module_part in module_parts %}
+                                            {% if a_span|key:module_part != 0 %}
+                                                <th class="no-sort" colspan="{{ a_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </tr>
+                                        <tr>
+                                            {% for assignment in assignments %}
+                                            <td class="no-sort">
+                                                <a href="{% url 'grades:test' pk=assignment.id %}">{{ assignment.name }}</a>
+                                            </td>
+                                            {% endfor %}
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            {% for assignment in assignments %}
+                                            {% with grade=grades|key:assignment.id|key:0 %}
+                                            <td id="gradeid_{{ student }}_{{ assignment.id }}" data-always-color="True" data-grade="{{ grade }}" data-grade-min="{{ assignment.minimum_grade }}" data-grade-max="{{ assignment.maximum_grade }}">
+
+                                                <!-- <input id="grade_input_{{ student }}_{{ assignment.id }}" type="checkbox" -->
+                                                <i class="material-icons"
+                                                    {% if grades|key:assignment.id|key:1 %}
+                                                        title="Grade has been released"
+                                                    {% else %}
+                                                        title="Grade has not been released"
+                                                    {% endif %}
+                                                >
+                                                    {% if grade == 1 %}
+                                                        done
+                                                    {% elif grades|key:assignment.id != 'N/A' %}
+                                                        clear
+                                                    {% else %}
+                                                        clear
+                                                    {% endif %}
+                                                </i>
+                                            </td>
+                                            {% endwith %}
+                                            {% endfor %}
+                                        </tr>
+                                        </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 {% else %}
                     <p>No courses available</p>
