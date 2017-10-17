@@ -24,7 +24,6 @@ def known_persons(person):
     """
     queryset = Person.objects.none()
     if pu.is_coordinator_or_assistant(person):
-        print("is coordinator")
         # Add Students
         module_eds = ModuleEdition.objects.all().filter(coordinators=person).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
@@ -33,7 +32,6 @@ def known_persons(person):
         # Add Study Advisers
         modules = Module.objects.filter(moduleedition__in=module_eds)
         studies = Study.objects.none()
-        print(queryset)
         for mod in modules:
             study_set = Study.objects.filter(modules=mod)
             studies = (studies.all() | study_set.all())
@@ -50,10 +48,9 @@ def known_persons(person):
         queryset = queryset.union(queryset, coordinators)
 
     if pu.is_teacher(person):
-        print("is teacher")
         # Add Students and teaching assistants
-        teacher = Teacher.objects.get(person=person)
-        module_parts = ModulePart.objects.filter(teacher=teacher).prefetch_related()
+        teachers = Teacher.objects.filter(person=person)
+        module_parts = ModulePart.objects.filter(teacher__in=teachers).prefetch_related()
         module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         persons = Person.objects.all().filter(studying__in=studyings).distinct()
@@ -77,7 +74,6 @@ def known_persons(person):
         queryset = queryset.union(queryset, advisers)
 
     if pu.is_study_adviser(person):
-        print("is advisor")
         # Add students
         studies = Study.objects.filter(advisers=person).prefetch_related()
         modules = Module.objects.filter(study__in=studies).prefetch_related()
