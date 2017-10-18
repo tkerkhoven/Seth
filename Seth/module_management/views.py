@@ -553,13 +553,13 @@ def remove_user(request, spk, mpk):
     if not ModuleEdition.objects.filter(pk=mpk, coordinators__user=user):
         raise PermissionDenied
 
-    module = ModuleEdition.objects.get(id=mpk)
     person = Person.objects.get(id=spk)
+    module_ed = ModuleEdition.objects.get(id=mpk)
     grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
-    studying = Studying.objects.get(person=person, module_edition=module)
+    studying = Studying.objects.get(person=person, module_edition=module_ed)
     context = dict()
     context['person'] = person
-    context['module'] = module
+    context['module'] = module_ed
     if len(grades) == 0:
         studying.delete()
         context['success'] = True
