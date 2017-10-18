@@ -1,8 +1,8 @@
 from django.shortcuts import render
+from django.contrib.auth.models import User
 from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UserUpdateForm, CreateUserForm
 from .forms import UserUpdateForm, CreateUserForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import prefetch_related_objects
@@ -218,11 +218,11 @@ class CreatePersonNew(generic.FormView):
         if form.cleaned_data['create_teacher']:
             role = form.cleaned_data['role_teacher']
             module_part = form.cleaned_data['module_part_teacher']
-            person = Person.objects.get_or_create(name=personName, university_number=utNumber, email_address=email, user=personUser)
+            # todo Nieuwe user aanmaken met als username het medewerkersnummer
+            person = Person.objects.get_or_create(name=personName, university_number=utNumber, email=email, user=personUser)[0]
             Teacher.objects.get_or_create(person=person, module_part=module_part, role=role)
             print("Create teacher")
         else:
-            person = Person.objects.get_or_create(name=personName, university_number=utNumber, email_address=email, user=personUser)
+            person = Person.objects.get_or_create(name=personName, university_number=utNumber, email=email, user=personUser)
             print("Don't create teacher")
         print("right")
-            
