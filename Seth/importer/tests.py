@@ -76,8 +76,7 @@ class ImporterTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica',
-                                           start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
@@ -152,8 +151,7 @@ class ImporterPermissionsTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica',
-                                           start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
@@ -195,9 +193,9 @@ class ImporterPermissionsTest(TestCase):
 
         # Test behavior as basic user
 
-        module = ModuleEdition.objects.all()[0]
+        module_edition = ModuleEdition.objects.filter(year='2017')[0]
 
-        test = Test.objects.all()[0]
+        test = module_edition.modulepart_set.all()[0].test_set.all()[0]
 
         self.client.force_login(dummyuser)
 
@@ -205,7 +203,11 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -213,7 +215,7 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:export_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -225,18 +227,18 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
     def test_importer_views_as_module_coordinator(self):
-        module = ModuleEdition.objects.all()[0]
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
-        test = Test.objects.all()[0]
+        test = Test.objects.filter(module_part__module_edition=module_edition)[0]
 
         self.client.force_login(User.objects.get(username='mverkleij'))
 
@@ -246,7 +248,11 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
-        response = self.client.get(reverse('importer:import_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -254,7 +260,7 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.get(reverse('importer:export_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -266,18 +272,18 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 200)
 
     def test_importer_views_as_teacher(self):
-        module = ModuleEdition.objects.all()[0]
-
         user = User.objects.get(username='teacher')
+
+        module_edition = ModuleEdition.objects.filter(modulepart__teacher__person__user__username='teacher')[0]
 
         test = Test.objects.filter(module_part__teacher__person__user=user)[0]
         other_test = Test.objects.exclude(module_part__teacher__person__user=user)[0]
@@ -290,7 +296,15 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
-        response = self.client.get(reverse('importer:import_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:import_module_part', args=[other_test.module_part.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -302,7 +316,7 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:export_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -318,16 +332,16 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
     def test_importer_views_as_student(self):
-        module = ModuleEdition.objects.all()[0]
+        module_edition = ModuleEdition.objects.all()[0]
 
         user = User.objects.get(username='student')
 
@@ -339,7 +353,11 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -347,7 +365,7 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:export_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -359,11 +377,11 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:export_student_to_module', args=[module.pk]))
+        response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -372,8 +390,7 @@ class MakeGradeTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica',
-                                           start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 

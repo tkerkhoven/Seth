@@ -35,11 +35,11 @@ class ImporterIndexView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         context = dict()
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('-start')
+            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user)
             context['module_coordinator'] = True
             if ModulePart.objects.filter(teacher__person__user=self.request.user):
                 context['teacher'] = True
-                context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+                context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
                 # context['module_part_list'] = ModuleEdition.objects.filter(modulepart__teacher__person__user=self.request.user).order_by('start')
             else:
                 context['teacher'] = False
@@ -51,7 +51,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
         elif ModulePart.objects.filter(teacher__person__user=self.request.user):
             context['module_coordinator'] = False
             context['teacher'] = True
-            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
         else:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
         return render(request, 'importer/mcindex2.html', context)
@@ -202,7 +202,7 @@ def import_module(request, pk):
 @login_required
 @require_http_methods(["GET", "POST"])
 def import_module_part(request, pk):
-    """Course import. Use an .xlsx file to submit grades to a course
+    """Module part import. Use an .xlsx file to submit grades to a module part
 
     On GET the user is presented with a file upload form.
 
@@ -212,18 +212,20 @@ def import_module_part(request, pk):
     declared as part of the module (def:import_student_to_module) raise an import error.
 
     :param request: Django request
-    :param pk: Course that grades should be submitted to
+    :param pk: Module part that grades should be submitted to
     :return: A redirect to the Grades course view on success. Otherwise a 404 (module does not exist), 403
         (no permissions) or 400 (bad excel file or other import error)
     """
     module_part = get_object_or_404(ModulePart, pk=pk)
-    module_edition = get_object_or_404(ModuleEdition, module_part=module_part)
+    module_edition = get_object_or_404(ModuleEdition, modulepart=module_part)
 
-    person = Person.objects.filter(user=request.user, coordinator__module_edition__modulepart=module_part).first()
-    if not ModuleEdition.objects.filter(module_part=module_part):
+    person = Person.objects.filter(user=request.user).filter(
+        Q(coordinator__module_edition__modulepart=module_part) | Q(teacher__module_part=module_part)
+    ).first()
+    if not ModuleEdition.objects.filter(modulepart=module_part):
         raise Http404('Module does not exist.')
-    if not is_coordinator_or_assistant_of_module(person, module_edition):
-        raise PermissionDenied('You are not the module coordinator for this course')
+    if not (is_coordinator_or_assistant_of_module(person, module_edition) or is_teacher_of_part(person, module_part)):
+        raise PermissionDenied('You are not allowed to do this.')
 
     if request.method == "POST":
         form = GradeUploadForm(request.POST, request.FILES)
