@@ -46,7 +46,7 @@ class ImporterStressTest(TestCase):
         students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
                     in range(600)]
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_module_import(self):
         module = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij')[0]
@@ -98,7 +98,7 @@ class ImporterTest(TestCase):
         students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
                     in range(2)]
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_module_import(self):
         module = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
@@ -209,7 +209,7 @@ class ImporterPermissionsTest(TestCase):
 
         students.append(Person.objects.create(name='Student', university_number='s2453483', user=student_user))
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_importer_views_without_privileges(self):
         dummyuser = User.objects.create(username='ppuk', password='welkom123')
@@ -446,7 +446,7 @@ class MakeGradeTest(TestCase):
 
         students.append(Person.objects.create(name='Student', university_number='s2453483', user=student_user))
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_make_grade(self):
         student = Person.objects.filter(name='Student')[0]
