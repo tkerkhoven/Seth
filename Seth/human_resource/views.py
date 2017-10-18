@@ -68,7 +68,7 @@ def known_persons(person):
         studies = Study.objects.none()
         for mod in modules:
             study_set = Study.objects.filter(modules=mod)
-            studies = (studies | study_set).distinct()
+            studies.union(study_set)
         advisers = Person.objects.filter(study__in=studies)
         queryset = queryset.union(queryset, advisers)
 
