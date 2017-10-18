@@ -49,8 +49,7 @@ def known_persons(person):
 
     if pu.is_teacher(person):
         # Add Students and teaching assistants
-        teacher = Teacher.objects.get(person=person)
-        module_parts = ModulePart.objects.filter(teacher=teacher).prefetch_related()
+        module_parts = ModulePart.objects.filter(teacher__person=person).prefetch_related()
         module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         persons = Person.objects.all().filter(studying__in=studyings).distinct()
