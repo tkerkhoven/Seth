@@ -17,7 +17,7 @@ class TeacherInline(admin.TabularInline):
 
 # Admin Views
 class PersonAdmin(admin.ModelAdmin):
-    list_display = ('name', 'university_number', 'email', 'start', 'end', 'user')
+    list_display = ('name', 'university_number', 'email', 'user')
     list_filter = ['university_number']
     inlines = (CoordinatorInline, TeacherInline)
 
@@ -40,8 +40,8 @@ class ModulePartAdmin(admin.ModelAdmin):
 
 
 class GradeAdmin(admin.ModelAdmin):
-    list_display = ('test', 'time', 'student', 'grade')
-    list_filter = ['test', 'time', 'student', 'grade']
+    list_display = ('test', 'student', 'grade')
+    list_filter = ['test', 'student', 'grade']
 
 
 # Registrations

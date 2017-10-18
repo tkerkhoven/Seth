@@ -388,80 +388,30 @@ class ModuleManagementModuleEditionUpdateFormTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         self.client.post(self.url_1,
-                         {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11', 'module': Module.objects.get(code='002').pk})
+                         {'year': 2020, 'block': '1A', 'module': Module.objects.get(code='002').pk})
         self.assertEqual('001', ModuleEdition.objects.get(year=2020).module.code)
 
     def test_invalid_input_year(self):
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1, {'year': 'a', 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        response = self.client.post(self.url_1, {'year': 'a', 'block': '1A'})
         self.assertFormError(response, 'form', 'year', 'Enter a whole number.')
-        response = self.client.post(self.url_1, {'year': 2017.2, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        response = self.client.post(self.url_1, {'year': 2017.2, 'block': '1A'})
         self.assertFormError(response, 'form', 'year', 'Enter a whole number.')
 
     def test_invalid_input_block(self):
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1C', 'start': '2017-10-11', 'end': '2017-10-11'})
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1C'})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1C is not one of the available choices.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1', 'start': '2017-10-11', 'end': '2017-10-11'})
+        response = self.client.post(self.url_1, {'year': 2020, 'block': '1'})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1 is not one of the available choices.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': 1, 'start': '2017-10-11', 'end': '2017-10-11'})
+        response = self.client.post(self.url_1, {'year': 2020, 'block': 1})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1 is not one of the available choices.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': 'Block 1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        response = self.client.post(self.url_1, {'year': 2020, 'block': 'Block 1A'})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. Block 1A is not one of the available choices.')
-
-    def test_invalid_input_start(self):
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-13-11', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-0-11', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-0', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-32', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-02-29', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017--1-11', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': 'a-10-11', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017 10 11', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-20-11', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11 10:10:10', 'end': '2017-10-11'})
-        self.assertFormError(response, 'form', 'start', 'Enter a valid date.')
-
-    def test_invalid_input_end(self):
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-13-11', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-0-11', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-10-0', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-10-32', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-02-29', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017--1-11', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': 'a-10-11', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017 10 11', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-20-11', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'end': '2017-10-11 10:10:10', 'start': '2017-10-11'})
-        self.assertFormError(response, 'form', 'end', 'Enter a valid date.')
 
 
 class ModuleManagementModuleEditionUpdateTests(TestCase):
@@ -546,7 +496,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         self.assertTrue(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
-        self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+        self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
         self.assertFalse(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
         self.assertTrue(ModuleEdition.objects.filter(year=2020))
 
@@ -559,7 +509,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(5):
-            self.client.post(self.url_1, {'year': 2020, 'block': '1A', 'start': '2017-10-11', 'end': '2017-10-11'})
+            self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
 
 class ModuleManagementModuleEditionCreateTests(TestCase):
@@ -647,15 +597,13 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.client.force_login(user=self.user)
 
         self.assertFalse(self.model_cls.objects.filter(year=1337, block='2B', module=self.pk_1))
-        self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
+        self.client.post(self.url_1, {'year': 1337, 'block': '2B'})
         self.assertTrue(self.model_cls.objects.filter(year=1337, block='2B', module=self.pk_1))
 
         new_object = self.model_cls.objects.get(year=1337, block='2B', module=self.pk_1)
         self.assertEquals(self.pk_1, new_object.module.pk)
         self.assertEquals(1337, new_object.year)
         self.assertEquals('2B', new_object.block)
-        self.assertEquals(datetime.date(1337, 4, 20), new_object.start)
-        self.assertEquals(datetime.date(1337, 6, 9), new_object.end)
 
         self.assertEqual(2, len(ModulePart.objects.filter(module_edition=new_object.pk)))
         self.assertEqual(2, len(Test.objects.filter(module_part__module_edition=new_object.pk)))
@@ -669,7 +617,7 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(30):
-            self.client.post(self.url_1, {'year': 1337, 'block': '2B', 'start': '1337-04-20', 'end': '1337-06-09'})
+            self.client.post(self.url_1, {'year': 1337, 'block': '2B'})
 
 
 class ModuleManagementModulePartDetailTests(TestCase):
@@ -1223,7 +1171,6 @@ class ModuleManagementTestUpdateFormTests(TestCase):
         self.client.force_login(user=self.user)
         response = self.client.post(self.url_1, {})
         self.assertFormError(response, 'form', 'type', 'This field is required.')
-        self.assertFormError(response, 'form', 'time', 'This field is required.')
         self.assertFormError(response, 'form', 'maximum_grade', 'This field is required.')
         self.assertFormError(response, 'form', 'minimum_grade', 'This field is required.')
 
@@ -1232,7 +1179,7 @@ class ModuleManagementTestUpdateFormTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         self.client.post(self.url_1,
-                         {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00',
+                         {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1,
                           'module_part': ModulePart.objects.get(name='module_part1').pk})
         self.assertEqual(Test.objects.get(pk=self.pk_1).module_part.pk, ModulePart.objects.get(name='module_part0').pk)
 
@@ -1243,7 +1190,7 @@ class ModuleManagementTestUpdateFormTests(TestCase):
         s = ''
         for i in range(256):
             s = s + str(i)
-        response = self.client.post(self.url_1, {'name': s, 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+        response = self.client.post(self.url_1, {'name': s, 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1})
         self.assertFormError(response, 'form', 'name', 'Ensure this value has at most 255 characters (it has 658).')
 
     def test_invalid_input_type(self):
@@ -1251,38 +1198,24 @@ class ModuleManagementTestUpdateFormTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'Exam', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 'Exam', 'maximum_grade': 10, 'minimum_grade': 1})
         self.assertFormError(response, 'form', 'type', 'Select a valid choice. Exam is not one of the available choices.')
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'X', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 'X', 'maximum_grade': 10, 'minimum_grade': 1})
         self.assertFormError(response, 'form', 'type', 'Select a valid choice. X is not one of the available choices.')
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 0, 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 0, 'maximum_grade': 10, 'minimum_grade': 1})
         self.assertFormError(response, 'form', 'type', 'Select a valid choice. 0 is not one of the available choices.')
-
-    def test_invalid_input_time(self):
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-11 25:37:00'})
-        self.assertFormError(response, 'form', 'time', 'Enter a valid date/time.')
-        response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-10-eleven 13:37:00'})
-        self.assertFormError(response, 'form', 'time', 'Enter a valid date/time.')
-        response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 10, 'minimum_grade': 1, 'time': '2017-13-11 13:37:00'})
-        self.assertFormError(response, 'form', 'time', 'Enter a valid date/time.')
 
     def test_invalid_input_maximum_grade(self):
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 100000, 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 100000, 'minimum_grade': 1})
         self.assertFormError(response, 'form', 'maximum_grade', 'Ensure that there are no more than 4 digits in total.')
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 'Ten', 'minimum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 'E', 'maximum_grade': 'Ten', 'minimum_grade': 1})
         self.assertFormError(response, 'form', 'maximum_grade', 'Enter a number.')
 
     def test_invalid_input_minimum_grade(self):
@@ -1290,10 +1223,10 @@ class ModuleManagementTestUpdateFormTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'minimum_grade': 100000, 'maximum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 'E', 'minimum_grade': 100000, 'maximum_grade': 1})
         self.assertFormError(response, 'form', 'minimum_grade', 'Ensure that there are no more than 4 digits in total.')
         response = self.client.post(self.url_1,
-                                    {'name': 'newname', 'type': 'E', 'minimum_grade': 'Ten', 'maximum_grade': 1, 'time': '2017-10-11 13:37:00'})
+                                    {'name': 'newname', 'type': 'E', 'minimum_grade': 'Ten', 'maximum_grade': 1})
         self.assertFormError(response, 'form', 'minimum_grade', 'Enter a number.')
 
 
@@ -1379,7 +1312,7 @@ class ModuleManagementTestUpdateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         self.assertTrue(Test.objects.filter(name='test0'))
-        self.client.post(self.url_1, {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
+        self.client.post(self.url_1, {'name': 'test0_new', 'type': 'P', 'maximum_grade': '1', 'minimum_grade': '10'})
         self.assertFalse(Test.objects.filter(name='test0'))
         self.assertTrue(Test.objects.filter(name='test0_new'))
         self.assertEquals('P', Test.objects.get(pk=self.pk_1).type)
@@ -1394,7 +1327,7 @@ class ModuleManagementTestUpdateTests(TestCase):
 
         with self.assertNumQueries(5):
             self.client.post(self.url_1,
-                             {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
+                             {'name': 'test0_new', 'type': 'P', 'maximum_grade': '1', 'minimum_grade': '10'})
 
 
 class ModuleManagementTestCreateTests(TestCase):
@@ -1482,14 +1415,13 @@ class ModuleManagementTestCreateTests(TestCase):
         self.client.force_login(user=self.user)
 
         self.assertFalse(self.model_cls.objects.filter(name='new_object'))
-        self.client.post(self.url_1, {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+        self.client.post(self.url_1, {'name': 'new_object', 'type': 'P', 'minimum_grade': 42, 'maximum_grade': 133.7})
         self.assertTrue(self.model_cls.objects.filter(name='new_object'))
 
         new_object = self.model_cls.objects.get(name='new_object')
         self.assertEquals(self.pk_1, new_object.module_part.pk)
         self.assertEquals('new_object', new_object.name)
-        self.assertEquals('A', new_object.type)
-        self.assertEquals(datetime.datetime(2017, 10, 11, 13, 37, tzinfo=UTC), new_object.time)
+        self.assertEquals('P', new_object.type)
         self.assertEquals(42, float(new_object.minimum_grade))
         self.assertEquals(133.7, float(new_object.maximum_grade))
 
@@ -1503,7 +1435,7 @@ class ModuleManagementTestCreateTests(TestCase):
 
         with self.assertNumQueries(9):
             self.client.post(self.url_1,
-                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+                             {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
 
 class ModuleManagementTestDeleteTests(TestCase):
