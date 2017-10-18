@@ -107,11 +107,11 @@ class ImporterTest(TestCase):
 
         tests = Test.objects.filter(module_part__module_edition=module)
 
-        table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW)] + [
-            ['student_id'] + [test.pk for test in tests]]
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['student_id', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -130,11 +130,11 @@ class ImporterTest(TestCase):
         test = Test.objects.filter(module_part__module_edition=module)[0]
         students = Person.objects.filter(studying__module_edition=module)
 
-        table = [['' for _ in range(3)] for _ in range(COLUMN_TITLE_ROW)] + \
-                [['student_id', 'grade', 'description']]
+        table = [['' for _ in range(4)] for _ in range(COLUMN_TITLE_ROW)] + \
+                [['student_id', 'name', 'grade', 'description']]
 
         for student in students:
-            table.append([student.university_number, 6, ''])
+            table.append([student.university_number, student.name, 6, ''])
 
         sheet = Sheet(sheet=table)
 
