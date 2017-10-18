@@ -50,6 +50,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
             context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
         else:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
+        return render(request, 'importer/mcindex2.html', context)
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
