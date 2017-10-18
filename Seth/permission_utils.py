@@ -4,61 +4,51 @@ import datetime
 
 
 def is_coordinator(person):
-    today = now()
     result = Coordinator.objects.filter(person=person, is_assistant=False)
     return result.count() > 0
 
 
 def is_coordinator_of_module(person, module_edition):
-    today = now()
     result = Coordinator.objects.filter(person=person, module_edition=module_edition, is_assistant=False)
     return result.count() > 0
 
 
 def is_teacher(person):
-    today = now()
     result = Teacher.objects.filter(person=person, role='T')
     return result.count() > 0
 
 
 def is_teacher_of_part(person, module_part):
-    today = now()
     result = Teacher.objects.filter(person=person, module_part=module_part, role='T')
     return result.count() > 0
 
 
 def is_teaching_assistant(person):
-    today = now()
     result = Teacher.objects.filter(person=person, role='A')
     return result.count() > 0
 
 
 def is_teaching_assistant_of_part(person, module_part):
-    today = now()
     result = Teacher.objects.filter(person=person, role='A', module_part=module_part)
     return result.count() > 0
 
 
 def is_student(person):
-    today = now()
     result = Studying.objects.filter(person=person)
     return result.count() > 0
 
 
 def is_student_of_module(person, module_part):
-    today = now()
     result = Studying.objects.filter(person=person, module_edition=module_part)
     return result.count() > 0
 
 
 def is_study_adviser(person):
-    today = now()
     result = Study.objects.filter(advisers=person)
     return result.count() > 0
 
 
 def is_study_adviser_of_study(person, study):
-    today = now()
     return Study.objects.filter(advisers=person).filter(pk=study.pk).count() > 0
 
 
@@ -68,7 +58,6 @@ def is_coordinator_assistant(person):
 
 
 def is_coordinator_assistant_of_module(person, module_edition):
-    today = now()
     result = Coordinator.objects.filter(person=person, is_assistant=True, module_edition=module_edition)
     return result.count() > 0
 
@@ -93,6 +82,3 @@ def is_coordinator_or_teacher_of_test(person, test):
         Q(module_part__module_edition__coordinator__person=person)
     ).filter(pk=test.pk).count() > 0
 
-
-def now():
-    return datetime.datetime.now()
