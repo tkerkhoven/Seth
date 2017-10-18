@@ -34,7 +34,7 @@ def known_persons(person):
         studies = Study.objects.none()
         for mod in modules:
             study_set = Study.objects.filter(modules=mod)
-            studies = (studies | study_set).distinct()
+            studies = (studies.all() | study_set.all())
         advisers = Person.objects.filter(study__in=studies)
         queryset = queryset.union(queryset, advisers)
         # Add Teachers and Teaching Assistants
@@ -49,8 +49,7 @@ def known_persons(person):
 
     if pu.is_teacher(person):
         # Add Students and teaching assistants
-        teacher = Teacher.objects.get(person=person)
-        module_parts = ModulePart.objects.filter(teacher=teacher).prefetch_related()
+        module_parts = ModulePart.objects.filter(teacher__person=person).prefetch_related()
         module_eds = ModuleEdition.objects.filter(modulepart__in=module_parts).prefetch_related()
         studyings = Studying.objects.all().filter(module_edition__in=module_eds).prefetch_related()
         persons = Person.objects.all().filter(studying__in=studyings).distinct()
@@ -69,7 +68,7 @@ def known_persons(person):
         studies = Study.objects.none()
         for mod in modules:
             study_set = Study.objects.filter(modules=mod)
-            studies = (studies | study_set).distinct()
+            studies.union(study_set)
         advisers = Person.objects.filter(study__in=studies)
         queryset = queryset.union(queryset, advisers)
 
@@ -202,3 +201,18 @@ class CreatePerson(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
+
+
+class CreatePersonNew(generic.FormView):
+    template_name = 'human_resource/person_form.html'
+    form_class = CreateUserForm
+
+    def form_invalid(self, form):
+        print("Wrong")
+
+    def form_valid(self, form):
+        if form.cleaned_data['create_teacher']:
+            print("Create teacher")
+        else:
+            print("Don't create teacher")
+        print("right")

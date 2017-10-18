@@ -4,12 +4,11 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
-from django.http import HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
-from django.db import transaction
 
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying
 
@@ -114,7 +113,7 @@ class ModuleEditionDetailView(generic.DetailView):
 class ModuleEditionUpdateView(generic.UpdateView):
     template_name = 'module_management/module_edition_update.html'
     model = ModuleEdition
-    fields = ['year', 'block', 'start', 'end']
+    fields = ['year', 'block']
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -136,7 +135,7 @@ class ModuleEditionUpdateView(generic.UpdateView):
 class ModuleEditionCreateForm(ModelForm):
     class Meta:
         model = ModuleEdition
-        fields = ['module', 'year', 'block', 'start', 'end', 'coordinators']
+        fields = ['module', 'year', 'block', 'coordinators']
 
     def __init__(self, *args, **kwargs):
         super(ModuleEditionCreateForm, self).__init__(*args, **kwargs)
@@ -150,7 +149,7 @@ class ModuleEditionCreateView(generic.CreateView):
 
     def get_initial(self):
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest().pk
         return {
             'module': Module.objects.get(pk=pk),
             'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition)
@@ -191,8 +190,6 @@ class ModuleEditionCreateView(generic.CreateView):
 
         module_edition = ModuleEdition(
             module=initial['module'],
-            start=data['start'],
-            end=data['end'],
             year=data['year'],
             block=data['block']
         )
@@ -223,7 +220,6 @@ class ModuleEditionCreateView(generic.CreateView):
                     module_part=module_part,
                     name=old_test.name,
                     released=False,
-                    time=old_test.time,
                     type=old_test.type
                 )
                 try:
@@ -439,7 +435,7 @@ class TestDetailView(generic.DetailView):
 class TestUpdateView(generic.UpdateView):
     template_name = 'module_management/test_update.html'
     model = Test
-    fields = ['name', 'type', 'time', 'maximum_grade', 'minimum_grade']
+    fields = ['name', 'type', 'maximum_grade', 'minimum_grade']
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -460,7 +456,7 @@ class TestUpdateView(generic.UpdateView):
 class TestCreateForm(ModelForm):
     class Meta:
         model = Test
-        fields = ['module_part', 'name', 'type', 'time', 'maximum_grade', 'minimum_grade']
+        fields = ['module_part', 'name', 'type', 'maximum_grade', 'minimum_grade']
 
     def __init__(self, *args, **kwargs):
         super(TestCreateForm, self).__init__(*args, **kwargs)
@@ -512,7 +508,6 @@ class TestCreateView(generic.CreateView):
             module_part=initial['module_part'],
             name=data['name'],
             type=data['type'],
-            time=data['time'],
             maximum_grade=data['maximum_grade'],
             minimum_grade=data['minimum_grade']
         )
@@ -561,7 +556,7 @@ def remove_user(request, spk, mpk):
     context['person'] = person
     context['module'] = module
     if len(grades) == 0:
-        studying.delet()
+        studying.delete()
         context['success'] = True
     else:
         context['failure'] = True

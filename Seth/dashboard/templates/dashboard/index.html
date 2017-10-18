@@ -8,112 +8,57 @@
 
     {% include 'navbar.html' with active_page="dashboard"%}
 
-    <div class="container-fluid">
+    <div class="container">
+        <hr class="remove-top-margin">
+        {% for module_ed in modules %}
         <div class="row">
-            <div class="col-lg-1"></div>
-            <div class="col-lg-10">
-                <h1 class="display-2">Dashboard</h1>
-                <hr>
-            </div>
-            <div class="col-lg-1"></div>
-        </div>
-        <div class="row justify-content-center">
-            <div class="col-lg-4">
-                <h1 class="display-4">Active modules</h1>
-                <hr>
-                {% for mod in modules %}
-                    {% if mod.start < time and mod.end > time %}
-                    <div class="card">
-                        <div class="card-header" role="tab" id="headingActive{{ mod.pk }}">
-                            <h4 class="md-0 skin-text remove-margin">
-                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.pk }}">
-                                    {{ mod.module.name}}
-                                </a>
-                                <a href="{% url 'module_management:module_edition_detail' pk=mod.pk %}"><i class="material-icons float-right">settings</i></a>
-                            </h4>
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <div class="display-5">{{ module_ed }}</div>
+                            </div>
+                            <div class="col-lg-5">
+                                <form class="d-inline-block mb-0 ml-1 float-right" action="{% url 'importer:import_module' module_ed.pk %}">
+                                    <input class="btn btn-info pointer" type="submit" value="Upload Module Grades"/>
+                                </form>
+                                <form class="d-inline-block mb-0 float-right" action="{% url 'importer:import_student_to_module' module_ed.pk %}">
+                                    <input class="btn btn-primary pointer" type="submit" value="Upload Students"/>
+                                </form>
+                            </div>
                         </div>
-                        <div id="collapseActive{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.pk }}" data-parent="#accordion">
-                            <div class="card-body">
-                                <div id="accordion" role="tablist">
-                                    {% for module_part in mod.modulepart_set.all %}
-                                    <div class="card">
-                                        <div class="card-header" role="tab" id="headingActiveCourse{{ module_part.pk }}">
-                                            <h5 class="md-0 skin-text remove-margin">
-                                                <a class="text-dark" data-toggle="collapse" href="#collapseActiveCourse{{ module_part.pk }}" aria-expanded="true" aria-controls="collapseActiveCourse{{ module_part.pk }}">
-                                                    {{ module_part.name }}
-                                                </a>
-                                                <a href="{% url 'module_management:module_part_detail' pk=module_part.pk %}"><i class="material-icons float-right md-20">settings</i></a>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseActiveCourse{{ module_part.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActiveCourse{{ module_part.pk }}" data-parent="#accordion">
-                                            <div class="card-body">
-                                                <ul class="list-group">
-                                                    {% for test in module_part.test_set.all %}
-                                                        <li class="list-group-item"><a href="{% url 'module_management:test_detail' pk=test.pk %}" class="text-dark">{{ test.name }}</a></li>
-                                                    {% endfor %}
-                                                </ul>
+                        <hr>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card-columns">
+                                    {% for module_part in module_ed.modulepart_set.all %}
+                                        <div class="card">
+                                            <div class="card-body px-3 pb-2 pt-3">
+                                                <h6>{{ module_part }}</h6>
                                             </div>
+                                            <ul class="list-group list-group-flush">
+                                                {% for test in module_part.test_set.all %}
+                                                    <li class="list-group-item">
+                                                        {{ test.name }} - <a href="{% url 'grades:test' test.pk%}"><span class="font-italic">{% if test.grade_set.empty %}0{% else %}{{ test.grade_set.all.count }} grades{% endif %}</span></a>
+                                                        {% if test.released %}
+                                                            <i class="material-icons float-right text-success" data-toggle="tooltip" data-placement="bottom" title="Released">check_circle</i>
+                                                        {% else %}
+                                                            <i class="material-icons float-right text-danger" data-toggle="tooltip" data-placement="bottom" title="Not released">cancel</i>
+                                                        {% endif %}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
                                         </div>
-                                    </div>
                                     {% endfor %}
                                 </div>
                             </div>
                         </div>
                     </div>
-                        <hr>
-                    {% endif %}
-                {% endfor %}
+                </div>
             </div>
-        <div class="col-lg-1"></div>
-{#        <div class="col-lg-4">#}
-{#            <h1 class="display-4">All modules</h1>#}
-{#            <hr>#}
-{#            {% for mod in modules %}#}
-{#                <div class="card">#}
-{#                    <div class="card-header" role="tab" id="heading{{ mod.pk }}">#}
-{#                        <h4 class="md-0 skin-text remove-margin">#}
-{#                            <a class="text-dark" data-toggle="collapse" href="#collapse{{ mod.pk }}" aria-expanded="true" aria-controls="collapse{{ mod.pk }}">#}
-{#                                {{ mod.module.name}}{{ mod.module_code_extension }}#}
-{#                            </a>#}
-{#                            <a href="#"><i class="material-icons float-right">settings</i></a></h4>#}
-{#                    </div>#}
-{##}
-{#                    <div id="collapse{{ mod.pk }}" class="collapse" role="tabpanel" aria-labelledby="heading{{ mod.pk }}" data-parent="#accordion">#}
-{#                        <div class="card-body">#}
-{#                            <div id="accordion" role="tablist">#}
-{#                                {% for module_part in mod.modulepart_set.all %}#}
-{#                                <div class="card">#}
-{#                                    <div class="card-header" role="tab" id="headingCourse{{ module_part.pk }}">#}
-{#                                        <h5 class="md-0 skin-text remove-margin">#}
-{#                                            <a class="text-dark" data-toggle="collapse" href="#collapseCourse{{ module_part.pk }}" aria-expanded="true" aria-controls="collapseCourse{{ module_part.pk }}">#}
-{#                                                {{ module_part.name }}#}
-{#                                            </a>#}
-{#                                            <a href="#"><i class="material-icons float-right md-20">settings</i></a>#}
-{#                                        </h5>#}
-{#                                    </div>#}
-
-{#                                    <div id="collapseCourse{{ module_part.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingCourse{{ module_part.pk }}" data-parent="#accordion">#}
-
-{#                                        <div class="card-body">#}
-{#                                            <ul class="list-group">#}
-{#                                                {% for test in module_part.test_set.all %}#}
-{#                                                    <li class="list-group-item"><a href="#" class="text-dark">{{ test.name }}</a></li>#}
-{#                                                {% endfor %}#}
-{#                                            </ul>#}
-{#                                        </div>#}
-{#                                    </div>#}
-{#                                </div>#}
-{#                                {% endfor %}#}
-{#                            </div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#                <hr>#}
-{#            {% endfor %}#}
-{#        </div>#}
         </div>
-
-        {{ coordinator }}
-
+        <hr>
+        {% endfor %}
     </div>
 {% endblock %}
