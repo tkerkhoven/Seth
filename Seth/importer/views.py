@@ -32,6 +32,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
     download and upload an excel sheet that contains grades. This can be done per test individually.
     """
     model = ModuleEdition
+
     def get(self, request, *args, **kwargs):
         context = dict()
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
@@ -43,11 +44,6 @@ class ImporterIndexView(LoginRequiredMixin, View):
                 # context['module_part_list'] = ModuleEdition.objects.filter(modulepart__teacher__person__user=self.request.user).order_by('start')
             else:
                 context['teacher'] = False
-            # return render(request, 'importer/mcindex2.html', {
-            #     'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
-            #         'start'),
-            #     'module_coordinator': True
-            # })
         elif ModulePart.objects.filter(teacher__person__user=self.request.user):
             context['module_coordinator'] = False
             context['teacher'] = True
@@ -55,27 +51,6 @@ class ImporterIndexView(LoginRequiredMixin, View):
         else:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
         return render(request, 'importer/mcindex2.html', context)
-            # return render(request, 'importer/teacherindex.html',
-            #               {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-            #                   'module_edition__start')})
-
-# =======
-#         person = Person.objects.filter(user=request.user).first()
-#         if is_coordinator_or_assistant(person):
-#             return render(request, 'importer/mcindex.html', {
-#                 'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
-#                     'start')})
-#         elif is_teacher(person):
-#             return render(request, 'importer/teacherindex.html',
-#                           {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-#                               'module_edition__start')})
-#
-#         raise PermissionDenied('Only module coordinators or teachers can view this page.')
-# >>>>>>> 71e09ed0f0df597504089a385fa9a49fd86acdee
-
-
-        # def get_queryset(self):
-        #     return ModuleEdition.objects.filter(coordinators__person__user=self.request.user).order_by('start')
 
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
@@ -127,14 +102,14 @@ def import_module(request, pk):
                         # search by ID
                         try:
                             test = Test.objects.filter(
-                                    pk=sheet[table][COLUMN_TITLE_ROW][title_index])
+                                pk=sheet[table][COLUMN_TITLE_ROW][title_index])
                             if test:
                                 if not test.filter(module_part__module_edition=module_edition):
                                     raise SuspiciousOperation("Attempt to register grades for a test that is not part "
                                                               "of this module.")
                                 test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
                         except ValueError:
-                            pass # Not an int.
+                            pass  # Not an int.
                         # search by name
                         if Test.objects.filter(
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
@@ -158,7 +133,6 @@ def import_module(request, pk):
                 # Retrieve Test object beforehand to validate permissions on tests and speed up Grade creation
                 tests = dict()
                 for test_column in test_rows.keys():
-
                     tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
 
                 # Check excel file for invalid students
@@ -251,14 +225,14 @@ def import_module_part(request, pk):
                         # search by ID
                         try:
                             test = Test.objects.filter(
-                                    pk=sheet[table][COLUMN_TITLE_ROW][title_index])
+                                pk=sheet[table][COLUMN_TITLE_ROW][title_index])
                             if test:
                                 if not test.filter(module_part=module_part):
                                     raise SuspiciousOperation("Attempt to register grades for a test that is not part "
                                                               "of this module.")
                                 test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
                         except ValueError:
-                            pass # Not an int.
+                            pass  # Not an int.
                         # search by name
                         if Test.objects.filter(
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
@@ -282,7 +256,6 @@ def import_module_part(request, pk):
                 # Retrieve Test object beforehand to validate permissions on tests and speed up Grade creation
                 tests = dict()
                 for test_column in test_rows.keys():
-
                     tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
 
                 # Check excel file for invalid students
@@ -632,7 +605,7 @@ def workbook_student_to_module(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     # Insert column titles
-    table = [['student_id', 'name', 'email', 'start date', 'study', 'role']]
+    table = [['student_id', 'name', 'email', 'role']]
 
     print("foo")
 
@@ -672,8 +645,8 @@ def import_student_to_module(request, pk):
             emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
                 1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
-                students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
-                            students_to_module[0][5].lower() == 'role':
+                students_to_module[0][3].lower()) and \
+                            students_to_module[0][4].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
@@ -707,26 +680,26 @@ def import_student_to_module(request, pk):
                     )
                     if created:
                         context['created'].append([student.name, student.full_id])
+
                     studying, created = Studying.objects.get_or_create(
                         person=student,
                         module_edition=ModuleEdition.objects.get(pk=pk),
-                        study=Study.objects.get(abbreviation=students_to_module[i][4]),
                         defaults={
-                            'role': students_to_module[i][5],
+                            'role': students_to_module[i][4],
                         }
                     )
                     if created:
                         module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
                         module = Module.objects.get(moduleedition=module_ed)
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code])       # studying.study])
                     else:
                         module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
                         module = Module.objects.get(moduleedition=module_ed)
                         context['failed'].append(
-                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code])       # studying.study])
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code, studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code])       # studying.study])
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
                 # print(students_to_module[0][0].lower() == 'student_id')
