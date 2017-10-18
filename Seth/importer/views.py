@@ -642,8 +642,7 @@ def import_student_to_module(request, pk):
             string = ""
             emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
-                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and students_to_module[0][3].lower() == 'study' and \
-                            students_to_module[0][4].lower() == 'role':
+                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and students_to_module[0][3].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
