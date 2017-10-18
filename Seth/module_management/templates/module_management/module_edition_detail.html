@@ -75,10 +75,10 @@
                     <td>{{ coordinator.person.university_number }}</td>
                     <td>
                         {% if coordinator.is_assistant %}
-                        <i class="material-icons float-left" data-toggle="tooltip" data-placement="right"
+                        <i class="material-icons float-left text-success" data-toggle="tooltip" data-placement="right"
                            title="True">check_circle</i>
                         {% else %}
-                        <i class="material-icons float-left" data-toggle="tooltip" data-placement="right" title="False">cancel</i>
+                        <i class="material-icons float-left text-danger " data-toggle="tooltip" data-placement="right" title="False">cancel</i>
                         {% endif %}
                     </td>
                 </tr>
@@ -108,7 +108,7 @@
                     <td>{{ s.study.abbreviation }}</td>
                     <td>{{ s.role }}</td>
                     <td>
-                        <a href="{% url 'module_management:remove-user' s.person.id moduleedition.pk %}"><i class="material-icons">delete</i></a>
+                        <a href="{% url 'module_management:remove-user' s.person.pk moduleedition.pk %}"><i class="material-icons">delete</i></a>
 
                     </td>
                 </tr>
