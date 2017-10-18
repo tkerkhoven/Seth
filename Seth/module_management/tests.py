@@ -1,10 +1,7 @@
-import datetime
-
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from pytz import UTC
 
 from Grades.models import Module, Person, Study, ModuleEdition, ModulePart, Studying, Test, Grade, Teacher, Coordinator
 from Seth.settings import LOGIN_URL
@@ -17,12 +14,14 @@ def set_up_base_data():
     # Define Users
     student_user0 = User(username='student0', password='secure_password')
     student_user1 = User(username='student1', password='secure_password')
+    student_user2 = User(username='student2', password='secure_password')
     teaching_assistant_user = User(username='teaching_assistant0', password='secure_password')
     teacher_user = User(username='teacher0', password='secure_password')
     study_adviser_user = User(username='study_adviser0', password='secure_password')
     coordinator_user = User(username='coordinator0', password='secure_password')
     student_user0.save()
     student_user1.save()
+    student_user2.save()
     teaching_assistant_user.save()
     teacher_user.save()
     study_adviser_user.save()
@@ -30,17 +29,19 @@ def set_up_base_data():
 
     # Define Persons
     student_person0 = Person(university_number='s0', name='Student 0', user=student_user0)
+    student_person1 = Person(university_number='s5', name='Student 1', user=student_user1)
+    student_person2 = Person(university_number='s6', name='Student 2', user=student_user2)
     teaching_assistant_person = Person(university_number='s1', name='Teaching Assistant 0', user=teaching_assistant_user)
     teacher_person = Person(university_number='m2', name='Teacher 0', user=teacher_user)
     study_adviser_person = Person(university_number='m3', name='Study Adviser 0', user=study_adviser_user)
     coordinator_person = Person(university_number='m4', name='Coordinator 0', user=coordinator_user)
-    student_person1 = Person(university_number='s5', name='Student 1', user=student_user1)
     student_person0.save()
+    student_person1.save()
+    student_person2.save()
     teaching_assistant_person.save()
     teacher_person.save()
     study_adviser_person.save()
     coordinator_person.save()
-    student_person1.save()
 
     # Define Modules
     module0 = Module(code='001', name='Module 1')
@@ -79,8 +80,12 @@ def set_up_base_data():
     module_part2.save()
 
     # Define Studying
-    studying = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
-    studying.save()
+    studying0 = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
+    studying1 = Studying(person=student_person2, study=study, module_edition=module_ed0, role='student')
+    studying2 = Studying(person=student_person1, study=study, module_edition=module_ed2, role='student')
+    studying0.save()
+    studying1.save()
+    studying2.save()
 
     # Define Tests
     test0 = Test(module_part=module_part0, name='test0', type='E')
@@ -1543,3 +1548,110 @@ class ModuleManagementTestDeleteTests(TestCase):
 
         with self.assertNumQueries(7):
             self.client.post(self.url_3)
+
+
+class ModuleManagementRemoveUserTests(TestCase):
+    def setUp(self):
+        set_up_base_data()
+        self.base_url = 'module_management:user_delete'
+        self.template = 'module_management/user_delete.html'
+        self.pk_1 = Person.objects.get(university_number='s6').pk
+        self.pk_2 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        self.pk_3 = Person.objects.get(university_number='s5').pk
+        self.pk_4 = Person.objects.get(university_number='s0').pk
+        self.pk_5 = ModuleEdition.objects.get(module='002', block='1B', year=timezone.now().year).pk
+        self.url_1 = reverse(self.base_url, kwargs={'spk': self.pk_1, 'mpk': self.pk_2})
+        self.url_2 = reverse(self.base_url, kwargs={'spk': self.pk_3, 'mpk': self.pk_5})
+        self.url_3 = reverse(self.base_url, kwargs={'spk': self.pk_4, 'mpk': self.pk_2})
+        self.user = User.objects.get(username='coordinator0')
+
+    def test_no_login(self):
+        self.client.logout()
+        response = self.client.get(self.url_1, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + self.url_1)
+
+    def test_insufficient_permissions(self):
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(self.url_1)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as wrong coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(self.url_2)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        response = self.client.get(self.url_1, follow=True)
+        self.assertEqual(response.status_code, 200)
+        response = self.client.get(self.url_3, follow=True)
+        self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        response = self.client.get(self.url_1, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context['person'], Person.objects.get(pk=self.pk_1))
+        self.assertEqual(response.context['module'], ModuleEdition.objects.get(pk=self.pk_2))
+        self.assertTrue(response.context['success'])
+
+        response = self.client.get(self.url_3)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, self.template)
+
+        self.assertEqual(response.context['person'], Person.objects.get(pk=self.pk_4))
+        self.assertEqual(response.context['module'], ModuleEdition.objects.get(pk=self.pk_2))
+        self.assertTrue(response.context['failure'])
+
+    def test_queries(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        with self.assertNumQueries(12):
+            self.client.get(self.url_1)
