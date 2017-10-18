@@ -121,7 +121,7 @@ class ModulePart(models.Model):
         return '{} ({})'.format(self.name, self.module_edition_code)
 
     class Meta:
-        ordering = ['module_edition', 'name']
+        ordering = ['module_edition', 'id']
 
 
 class Coordinator(models.Model):
