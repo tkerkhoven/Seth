@@ -116,7 +116,7 @@
                     <td>{{ s.study.abbreviation }}</td>
                     <td>{{ s.role }}</td>
                     <td>
-                        <a href="{% url 'module_management:remove-user' s.person.pk moduleedition.pk %}"><i class="material-icons">delete</i></a>
+                        <a href="{% url 'module_management:user_delete' s.person.pk moduleedition.pk %}"><i class="material-icons">delete</i></a>
 
                     </td>
                 </tr>
