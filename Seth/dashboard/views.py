@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
 
-from Grades.models import ModuleEdition, Person, Coordinator, Studying
+from Grades.models import ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart
 
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
@@ -21,7 +21,7 @@ def home(request):
     person = Person.objects.get(user=request.user)
     if pu.is_coordinator_or_assistant(person):
         context = {
-            'modules': get_modules(person),
+            'modules': ModuleEdition.objects.filter(coordinator__person=person),
             'time': get_current_date()
         }
         return render(request, 'dashboard/index.html', context)
@@ -49,9 +49,9 @@ def modules(request):
     :return: Redirect to module (edition) overview
     """
     person = Person.objects.get(user=request.user)
-    if pu.is_coordinator_or_assistant(Person.objects.get(user=request.user)):
+    if pu.is_coordinator_or_assistant(person):
         context = {
-            'modules': get_modules(person)
+            'modules': ModuleEdition.objects.filter(coordinator__person=person)
         }
         return render(request, 'dashboard/modules.html', context)
     else:
@@ -79,14 +79,14 @@ def settings(request):
 
 
 def get_modules(person):
-    coordinator = Coordinator.objects.get(person=person)
-    return ModuleEdition.objects.filter(coordinator=coordinator).order_by('-start')
+    return ModuleEdition.objects.filter(coordinator__person=person).order_by('-start')
 
 
 def get_current_date():
     return timezone.localdate()
 
 
+# View renders for the error pages
 def server_error(request):
     return render(request, 'errors/500.html', status=500)
 
