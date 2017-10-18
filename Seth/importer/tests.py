@@ -160,8 +160,8 @@ class ImporterPermissionsTest(TestCase):
         module_coordinator = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
         module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed_2 = ModuleEdition.objects.create(module=module_tcs, year=2018, block='A1')
 
-        module_ed.save()
 
         module_parts = [
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[module_coordinator])
@@ -173,8 +173,10 @@ class ImporterPermissionsTest(TestCase):
         teacher_user = Person.objects.create(name='Teacher', university_number='m12345678', user=teacher)
 
         Teacher.objects.create(person=teacher_user, module_part=module_parts[0], role='T')
+        Teacher.objects.create(person=teacher_user, module_part=module_parts[1], role='A')
 
         Coordinator.objects.create(module_edition=module_ed, person=module_coordinator, is_assistant=False)
+        Coordinator.objects.create(module_edition=module_ed_2, person=module_coordinator, is_assistant=True)
 
         tests = [Test.objects.create(name='Theory Test {}'.format(course.name), module_part=course, type='E') for course
                  in module_parts]
