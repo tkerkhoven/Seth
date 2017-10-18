@@ -1653,9 +1653,13 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        self.assertTrue(Person.objects.filter(pk=self.pk_1))
+        self.assertTrue(Studying.objects.filter(person=self.pk_1, module_edition=self.pk_2))
         self.client.post(self.url_1, follow=True)
-        self.assertFalse(Person.objects.filter(pk=self.pk_1))
+        self.assertFalse(Studying.objects.filter(person=self.pk_1, module_edition=self.pk_2))
+
+        self.assertTrue(Studying.objects.filter(person=self.pk_4, module_edition=self.pk_2))
+        self.client.post(self.url_3, follow=True)
+        self.assertTrue(Studying.objects.filter(person=self.pk_4, module_edition=self.pk_2))
 
     def test_queries(self):
         # Login as coordinator
