@@ -641,14 +641,14 @@ def import_student_to_module(request, pk):
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
             emailpattern = re.compile('e[-]?mail*')
-            if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
-                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and students_to_module[0][3].lower() == 'role':
+            if students_to_module[COLUMN_TITLE_ROW][0].lower() == 'student_id' and students_to_module[COLUMN_TITLE_ROW][
+                1].lower() == 'name' and emailpattern.match(students_to_module[COLUMN_TITLE_ROW][2].lower()) and students_to_module[COLUMN_TITLE_ROW][3].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
                 context['failed'] = []
 
-                for i in range(1, len(students_to_module)):
+                for i in range(COLUMN_TITLE_ROW, len(students_to_module)):
                     # Sanitize number input
                     if str(students_to_module[i][0])[0] == 's':
                         username = str(students_to_module[i][0])
