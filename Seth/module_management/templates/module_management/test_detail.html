@@ -1,22 +1,54 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Details: {{ test }}
+    {{ test }}
 {% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
-    <ul>
-        <li>Course: <a
-                href="{% url 'module_management:course_detail' test.course_id.pk %}">{{ test.course_id.course_code }}
-            - {{ test.course_id.name }}</a></li>
-        <li>Test Name: {{ test.name }}</li>
-        <li>Test Type: {{ test.get_type }}</li>
-        <li>Test Time: {{ test.time }}</li>
-        <li>Minimum Grade: {{ test.minimum_grade }}</li>
-        <li>Maximum Grade: {{ test.maximum_grade }}</li>
-        <li><a href="{% url 'grades:test' test.pk %}">Test Grades</a></li>
-    </ul>
+    {% include 'navbar.html' with active_page="module_management" %}
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                    <h3 class="display-4">{{ test.name }} ({{ test.get_type }})</h3>
 
-    <a href="{% url 'module_management:test_update' test.pk %}">Edit</a>
+                    <ul class="navbar-nav mr-auto"></ul>
+
+                    <a href="{% url 'grades:test' test.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
+                        <i class="material-icons md-36 title-bar">spellcheck</i>
+                    </a>
+                    <a href="{% url 'module_management:test_update' test.pk %}" data-toggle="tooltip" data-placement="bottom" title="Edit test">
+                        <i class="material-icons md-36 title-bar">mode_edit</i>
+                    </a>
+                    <a href="{% url 'module_management:test_delete' test.pk %}" data-toggle="tooltip" data-placement="bottom" title="Delete test">
+                        <i class="material-icons md-36 text-danger title-bar">delete_forever</i>
+                    </a>
+                </nav>
+            </div>
+        </div>
+        <hr class="remove-top-margin">
+        <div class="col-lg-5">
+            <div class="card">
+                <h5 class="card-header">
+                    Info
+                </h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Module part: <a href="{% url 'module_management:module_part_detail' test.module_part.pk %}">{{ test.module_part }}</a></li>
+                    <li class="list-group-item">Test Name: <span class="font-italic">{{ test.name }}</span></li>
+                    <li class="list-group-item">Test Type: <span class="font-italic">{{ test.get_type }}</span></li>
+                    <li class="list-group-item">Minimum Grade: <span class="font-italic">{{ test.minimum_grade }}</span></li>
+                    <li class="list-group-item">Maximum Grade: <span class="font-italic">{{ test.maximum_grade }}</span></li>
+                </ul>
+            </div>
+{#            <p>#}
+{#                Module Part: <a href="{% url 'module_management:module_part_detail' test.module_part.pk %}">{{ test.module_part }}</a><br>#}
+{#                Test Name: {{ test.name }}<br>#}
+{#                Test Type: {{ test.get_type }}<br>#}
+{#                Test Time: {{ test.time }}<br>#}
+{#                Minimum Grade: {{ test.minimum_grade }}<br>#}
+{#                Maximum Grade: {{ test.maximum_grade }}<br>#}
+{#            </p>#}
+        </div>
+        <div class="col-lg-7"></div>
+    </div>
 {% endblock %}

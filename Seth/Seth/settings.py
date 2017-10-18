@@ -18,14 +18,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
+OS_PATH = '../../'
+
 # SECURITY WARNING: keep the secret key used in production secret!
-with open('../../secrets/django_secret') as f:
+with open('{}secrets/django_secret'.format(OS_PATH)) as f:
     SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['farm11.ewi.utwente.nl', 'localhost', '127.0.0.1']
 
 # Application definition
 
@@ -37,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'widget_tweaks',
     'dashboard',
     'module_management',
     'importer',
@@ -68,6 +71,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'dashboard.context_processors.installed_apps.installed_apps',
+                'dashboard.context_processors.navbar_permissions.permissions',
             ],
         },
     },
@@ -78,8 +82,8 @@ WSGI_APPLICATION = 'Seth.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-with open('../../secrets/postgres_host') as hfile:
-    with open('../../secrets/postgres_password') as pwfile:
+with open('{}secrets/postgres_host'.format(OS_PATH)) as hfile:
+    with open('{}secrets/postgres_password'.format(OS_PATH)) as pwfile:
 
         DATABASES = {
             'default': {
@@ -90,6 +94,22 @@ with open('../../secrets/postgres_host') as hfile:
                 'HOST': hfile.read().strip(),
             }
         }
+
+
+# Add radius authentication.
+try:
+    with open('{}secrets/radius_host'.format(OS_PATH)) as radius_host:
+        with open('{}secrets/radius_secret'.format(OS_PATH)) as radius_secret:
+            AUTHENTICATION_BACKENDS = (
+                'radiusauth.backends.RADIUSBackend',
+                'django.contrib.auth.backends.ModelBackend',
+            )
+
+            RADIUS_SERVER = radius_host.read().strip()
+            RADIUS_PORT = 1812
+            RADIUS_SECRET = radius_secret.read().strip()
+except FileNotFoundError as e:
+    pass
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -126,6 +146,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/html/static/'
 STATICFILES_DIRS = [
     'static/Seth'
 ]
@@ -139,6 +160,12 @@ LOGOUT_REDIRECT_URL = '/successfully_logged_out/'
 FIXTURE_DIRS = (
     './fixtures/',
 )
+
+# Console mailing backend for development
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_HOST = 'smtp.utwente.nl'
+
 
 # Django-excel requires these, used in importer.
 FILE_UPLOAD_HANDLERS = ("django_excel.ExcelMemoryFileUploadHandler",

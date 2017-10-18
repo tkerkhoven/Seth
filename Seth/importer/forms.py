@@ -1,6 +1,6 @@
 from django import forms
 
-from Grades.models import Test, Course
+from Grades.models import Test, ModulePart
 
 
 class GradeUploadForm(forms.Form):
@@ -16,6 +16,12 @@ class TestGradeUploadForm(forms.Form):
 
 
 class ImportStudentForm(forms.Form):
+    file = forms.FileField(
+        label='Select Student excel file'
+    )
+
+
+class ImportStudentModule(forms.Form):
     file = forms.FileField(
         label='Select Student excel file'
     )

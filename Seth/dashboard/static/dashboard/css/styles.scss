@@ -9,10 +9,6 @@ body {
   color: $brand-primary;
 }
 
-.bg-dark {
-  background-color: red;
-}
-
 .display-5 {
   font-size: 2rem;
   font-weight: 300;
@@ -25,6 +21,49 @@ body {
   overflow-x: auto;
 }
 
-@import '../../../../static/Seth/seth/css/_icons';
+.skin-text {
+  font-weight: 400;
+  line-height: 1.1;
+  &.remove-margin {
+    margin-bottom: 0;
+  }
+}
 
-@import '../../../../static/Seth/seth/css/_navbar-menus';
+.pointer {
+  cursor: pointer;
+}
+
+.user-toolbar {
+  float: right;
+  line-height: 6.5;
+  height: inherit;
+}
+.navbar {
+  &.title-bar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+hr {
+  &.remove-top-margin {
+    margin-top: 0;
+  }
+}
+
+.card {
+  &.card-margin {
+    margin-top: 10px;
+  }
+  .card-header {
+    &.card-header-tabs {
+      margin: 0;
+      padding: 0;
+      border-bottom: 0;
+    }
+  }
+}
+
+  @import '../../../../static/Seth/seth/css/_icons';
+
+  @import '../../../../static/Seth/seth/css/_navbar-menus';

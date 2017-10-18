@@ -4,7 +4,13 @@
 
 {% block content %}
 
-    {% include 'navbar.html' %}
+    <style>
+    .min_width {
+        min-width: 100px;
+    }
+    </style>
+
+    {% include 'navbar.html' with active_page="gradebook" %}
     {% load grade_extras %}
     {% if student %}
         <div class="container">
@@ -15,43 +21,100 @@
                     </h1>
                     <hr>
 
-                    {% for mod in coursedict.keys %}
+                    {% for mod_ed in modules %}
                     <div class="card">
                         <div class="card-header" role="tab" id="headingActive{{ mod.module.pk }}">
                             <h4 class="md-0">
-                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod.module.pk }}" aria-expanded="true" aria-controls="collapseActive{{ mod.module.pk }}">
-                                    {{ mod.module.name}}
+                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ mod_ed.id }}" aria-expanded="true" aria-controls="collapseActive{{ mod_ed.id }}">
+                                    {{ mod_ed.module.name}}
                                 </a>
                             </h4>
                         </div>
-                        <div id="collapseActive{{ mod.module.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod.module.pk }}" data-parent="#accordion">
+                        <div id="collapseActive{{ mod_ed.id }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ mod_ed.id }}" data-parent="#accordion">
                             <div class="card-body">
-                                <div id="accordion" role="tablist">
-                                    {% for course in coursedict|key:mod %}
-                                    <div class="card">
-                                        <div class="card-header" role="tab" id="headingActive{{ course.pk }}">
-                                            <h5 class="md-0">
-                                                <a class="text-dark" data-toggle="collapse" href="#collapseActive{{ course.pk }}" aria-expanded="true" aria-controls="collapseActive{{ course.pk }}">
-                                                    {{ course.name }}
-                                                </a>
-                                            </h5>
-                                        </div>
-                                        <div id="collapseActive{{ course.pk }}" class="collapse" role="tabpanel" aria-labelledby="headingActive{{ course.pk }}" data-parent="#accordion">
-                                            <div class="card-body">
-                                                <table class="table table-striped table-bordered table-responsive">
-                                                    {% for test in testdict|key:course %}
-                                                    {% with grade=gradedict|key:test|last %}
+                                <div class="card card-margin">
+                                    <div class="card-header card-header-tabs">
+                                        <ul class="nav nav-tabs" id="card-tabs" role="tablist">
+                                            <li class="nav-item">
+                                                <a class="nav-link active" id="tests-projects-tab" data-toggle="tab" href="#tests-projects"
+                                                   role="tab" aria-controls="tests-projects" aria-expanded="true">Tests/Projects</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" id="assignments-tab" data-toggle="tab" href="#assignments"
+                                                   role="tab" aria-controls="assignments">Assignments</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="tab-content" id="card-tab-content">
+                                            <div class="tab-pane fade show active" id="tests-projects" role="tabpanel" aria-labelledby="home-tab">
+                                                <div class="table-overflow">
+                                                    <table id="studentbook" class="table table-striped table-bordered table-responsive">
+                                                    <thead>
                                                     <tr>
-                                                        <td>{{ test.name }}</td>
-                                                        <td>{{ grade|grade_od }}</td>
+                                                        {% for module_part in module_parts|key:mod_ed %}
+                                                            <th colspan="{{ ep_span|key:module_part }}"> {{ module_part.name }} </th>
+                                                        {% endfor %}
                                                     </tr>
-                                                    {% endwith %}
-                                                    {% endfor %}
-                                                </table>
+                                                    <tr>
+                                                        {% for test in tests|key:mod_ed %}
+                                                            <td class="min_width" ><a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}"> {{ test.name }} </a></td>
+                                                        {% endfor %}
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr>
+                                                        {% for test in tests|key:mod_ed %}
+                                                        {% with grade=gradedict|key:test.id %}
+                                                            <td id="gradeid_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
+                                                                <a data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}</a>
+                                                            </td>
+                                                        {% endwith %}
+                                                        {% endfor %}
+                                                    </tr>
+                                                    </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="profile-tab">
+                                                <div class="table-overflow">
+                                                    <table id="studentbook_assignments" class="table table-striped table-bordered table-responsive">
+                                                    <thead>
+                                                    <tr>
+                                                        {% for module_part in module_parts|key:mod_ed %}
+                                                            <th colspan="{{ a_span|key:module_part }}"> {{ module_part.name }} </th>
+                                                        {% endfor %}
+                                                    </tr>
+                                                    <tr>
+                                                        {% for assignment in assignments|key:mod_ed %}
+                                                            <td class="min_width" ><a data-toggle="tooltip" title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}"> {{ assignment.name }} </a></td>
+                                                        {% endfor %}
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr>
+                                                        {% for assignment in assignments|key:mod_ed %}
+                                                        {% with grade=gradedict|key:assignment.id %}
+                                                            <td id="gradeid_{{ assignment.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ assignment.minimum_grade }}" data-grade-max="{{ assignment.maximum_grade }}">
+                                                                <i class="material-icons">
+                                                                    {% if grade == 1 %}
+                                                                        done
+                                                                    {% elif grades|key:assignment.id != 'N/A' %}
+                                                                        clear
+                                                                    {% else %}
+                                                                        clear
+                                                                    {% endif %}
+                                                                </i>
+                                                            </td>
+                                                        {% endwith %}
+                                                        {% endfor %}
+                                                    </tr>
+                                                    </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    {% endfor %}
                                 </div>
                             </div>
                         </div>

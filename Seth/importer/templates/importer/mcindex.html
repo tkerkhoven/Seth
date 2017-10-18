@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Importer
+{% endblock %}
+
+{% block content %}
+{% include 'navbar.html' with active_page="importer"%}
+<div class="container">
+    {% if module_ed_list %}
+    <div class="row">
+        <div class="col-lg-12">
+            <h3 class="display-4">Choose module</h3>
+            <hr>
+        </div>
+    </div>
+    {% for mod in module_ed_list %}
+    <div class="row">
+        <div class="col-lg-8">
+            <li><a href="{% url 'importer:import_module' mod.pk %}">{{ mod }}</a> - <a
+                    href="{% url 'importer:export_module' mod.pk %}"><i class="material-icons">view_list</i></a></li>
+            <br>
+                <a href="{% url 'importer:export_student_form' %}">
+                    <i class="material-icons">view_list
+                    </i>
+                </a>
+            <ul>
+                {% for module_part in mod.modulepart_set.all %}
+                <li>{{ module_part.name }}</li>
+                <ul>
+                    {% for test in module_part.test_set.all %}
+                    <li><a href="{% url 'importer:import_test' test.pk %}">{{ test.name }}</a> - <a
+                            href="{% url 'importer:export_test' test.pk %}">
+{#                        <i class="material-icons">view_list</i>#}
+                        <i class="fa fa-file-excel-o" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" title="Download template"></i>
+                    </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-lg-4">
+            <form action="{% url 'importer:import_module' mod.pk %}">
+                <input class="btn btn-info pointer" type="submit" value="Upload Grades"/>
+            </form>
+            <form action="{% url 'importer:import_student_to_module' mod.pk %}">
+                <input class="btn btnt-info pointer" type="submit" value="Upload Students"/>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div class="row">
+        <div class="col-lg-12">
+            <h3 class="display-2">No module_eds available</h3>
+        </div>
+    </div>
+    {% endif %}
+    <h3 class="display-4">New Students</h3>
+    <hr>
+    <ul>
+        <div class="row">
+            <form action="{% url 'importer:import_new_student' %}">
+                <input class="btn btn-info pointer" type="submit" value="Upload Students into System"/>
+            </form>
+        </div>
+    </ul>
+
+</div>
+{% endblock %}
+

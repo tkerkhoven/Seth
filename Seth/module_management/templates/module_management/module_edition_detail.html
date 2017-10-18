@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ moduleedition }}
+{% endblock %}
+
+{% block content %}
+
+{% include 'navbar.html' with active_page="module_management" %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                <h3 class="display-4">{{ moduleedition }}</h3>
+
+                <ul class="navbar-nav mr-auto"></ul>
+
+                <a href="{% url 'grades:gradebook' moduleedition.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
+                    <i class="material-icons md-36">spellcheck</i>
+                </a>
+                <a href="{% url 'module_management:module_edition_update' moduleedition.pk %}" data-toggle="tooltip"
+                   data-placement="bottom"
+                   title="Edit module edition"><i class="material-icons md-36">settings</i></a>
+            </nav>
+        </div>
+    </div>
+    <hr class="remove-top-margin">
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="card">
+                <h5 class="card-header">
+                    Info
+                </h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Module:
+                        <a href="{% url 'module_management:module_detail' moduleedition.module.pk%}">
+                            {{ moduleedition.module }}
+                        </a>
+                    </li>
+                    <li class="list-group-item">Code: {{ moduleedition.code }}</li>
+                    <li class="list-group-item">Year: {{ moduleedition.year }}</li>
+                    <li class="list-group-item">Bock: {{ moduleedition.block }}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-1"></div>
+        <div class="col-lg-6">
+            <div class="card">
+                <h5 class="card-header">
+                    Module Parts
+                    <a href="{% url 'module_management:module_part_create' moduleedition.pk %}">
+                        <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom"
+                           title="Create new module part">add_circle</i>
+                    </a>
+                </h5>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for module_part in module_parts %}
+                        <li class="list-group-item">
+                            <a href="{% url 'module_management:module_part_detail' module_part.pk %}">
+                                {{ module_part.name }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-lg-12">
+            <h3 class="display-4">Coordinators</h3>
+            {% if coordinators %}
+            <table class="table">
+                <tr>
+                    <th>Name</th>
+                    <th>University Number</th>
+                    <th>Assistant</th>
+                </tr>
+                {% for coordinator in coordinators %}
+                <tr>
+                    <td>{{ coordinator.person.name }}</td>
+                    <td>{{ coordinator.person.university_number }}</td>
+                    <td>
+                        {% if coordinator.is_assistant %}
+                        <i class="material-icons float-left text-success" data-toggle="tooltip" data-placement="right"
+                           title="True">check_circle</i>
+                        {% else %}
+                        <i class="material-icons float-left text-danger " data-toggle="tooltip" data-placement="right" title="False">cancel</i>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            This module edition does not have coordinators.
+            {% endif %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <h3 class="display-4">Students</h3>
+            {% if studying %}
+            <table class="table">
+                <tr>
+                    <th>Name</th>
+                    <th>University Number</th>
+                    <th>Study</th>
+                    <th>Role</th>
+                    <th>Delete</th>
+                </tr>
+                {% for s in studying %}
+                <tr>
+                    <td>{{ s.person.name }}</td>
+                    <td>{{ s.person.university_number }}</td>
+                    <td>{{ s.study.abbreviation }}</td>
+                    <td>{{ s.role }}</td>
+                    <td>
+                        <a href="{% url 'module_management:user_delete' spk=s.person.pk mpk=moduleedition.pk %}"><i class="material-icons">delete</i></a>
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            There are no students enrolled in this module yet.
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

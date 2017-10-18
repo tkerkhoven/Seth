@@ -3,31 +3,94 @@
 {% block title %}User{% endblock %}
 
 {% block content %}
-    {% include 'navbar.html' %}
+    {% include 'navbar.html' with active_page="human_resource" %}
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
-                <h3 class="display-4">{{ person.name }}</h3>
-                <hr>
-{#                Name: {{ person.name }} <br>#}
-                Id: {{ person.id }} <br>
-                Start: {{ person.start }} <br>
-                Stop: {{ person.stop }} <br>
-                {% for study in person.studies.all %}
-                Studies: {{ study }} <br>
-                {% endfor %}
-                Full ID: {{ person.full_id }}
-                <br><br>
-                <!--<a href="/grades/update-user">Edit:</a>-->
-                <form action="update-user/" method="get">{% csrf_token %}
-                    <!--{{ form.as_p }}-->
-                    <input class="btn btn-secondary" type="submit" value="Edit">
-                </form>
-                <form action="remove-user/" method="get">{% csrf_token %}
-                    <!--{{ form.as_p }}-->
-                    <input class="btn btn-secondary" type="submit" value="Remove">
-                </form>
+                <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                    <h3 class="display-4">{{ person.name }}</h3>
+                    <ul class="navbar-nav mr-auto"></ul>
+                    <a id="updateUserLink" href="#">
+                        <i class="material-icons md-36 text-info" data-toggle="tooltip" data-placement="bottom" title="Edit person">mode_edit</i>
+                    </a>
+                    <a id="removeUserLink" href="#">
+                        <i class="material-icons md-36 text-danger" data-toggle="tooltip" data-placement="bottom" title="Delete person">delete_forever</i>
+                    </a>
+                </nav>
+{#                <div style="height: 65px;">#}
+{#                    <h3 class="display-4 d-inline-block">{{ person.name }}</h3>#}
+{#                    <div class="user-toolbar">#}
+{#                        <a id="updateUserLink" href="#"><i class="material-icons md-36 text-secondary">settings</i></a>#}
+{#                        <a id="removeUserLink" href="#"><i class="material-icons md-36 text-danger">delete_forever</i></a>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <hr class="remove-top-margin">#}
+                {#                Name: {{ person.name }} <br>#}
+{#                Id: {{ person.id }} <br>#}
+{#                Start: {{ person.start }} <br>#}
+{#                Stop: {{ person.end }} <br>#}
+{#                {% for study in person.studies.all %}#}
+{#                    Studies: {{ study }} <br>#}
+{#                {% endfor %}#}
+{#                Full ID: {{ person.full_id }}#}
+{#                <br><br>#}
+{#                <!--<a href="/grades/update-user">Edit:</a>-->#}
+            </div>
+        </div>
+        <hr class="remove-top-margin">
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="card">
+                    <h5 class="card-header">
+                        User info
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Student/Employer number: <span class="font-italic">{{ person.university_number }}</span></li>
+                        <li class="list-group-item">Email address: <span class="font-italic">{{ person.email }}</span></li>
+                        <li class="list-group-item">Start date: <span class="font-italic">{{ person.start }}</span></li>
+                        <li class="list-group-item">End date: <span class="font-italic">{{ person.end }}</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-1"></div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <h5 class="card-header">
+                        Enrolled modules
+                    </h5>
+                    <ul class="list-group list-group-flush">
+                        {% for study in studies %}
+                            <li class="list-group-item">{{ study }}</li>
+                        {% empty %}
+                            <li class="list-group-item"><span class="font-italic">This user is not enrolled in any modules</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+{#=======#}
+{#                Id: {{ person.id }} <br>#}
+{#                Start: {{ person.start }} <br>#}
+{#                End: {{ person.end }} <br>#}
+{#                University number: {{ person.university_number }} <br>#}
+{#                Studies:#}
+{#                <ul>#}
+{#                {% for study in studies %}#}
+{#                    <li>{{ study }}</li>#}
+{#                {% empty %}#}
+{#                    <li> <i>Empty</i> </li>#}
+{#                {% endfor %}#}
+{#                </ul>#}
+{#                <br><br>#}
+{#                <!--<a href="/grades/update-user">Edit:</a>-->#}
+{#>>>>>>> b6f013c8eb6ceb0c9c43aa9ab29a4f7b013d9f7d#}
             </div>
         </div>
     </div>
+    <form id="updateUser" action="update-user/" method="get">{% csrf_token %}
+        <!--{{ form }}-->
+        {#                  <input class="btn btn-secondary" type="submit" value="Edit">#}
+    </form>
+    <form id="removeUser" action="remove-user/" method="get">{% csrf_token %}
+        <!--{{ form }}-->
+        {#                  <input class="btn btn-secondary" type="submit" value="Remove">#}
+    </form>
 {% endblock %}
