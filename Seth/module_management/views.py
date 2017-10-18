@@ -546,6 +546,11 @@ class TestDeleteView(generic.DeleteView):
 
 @transaction.atomic
 def remove_user(request, spk, mpk):
+    # Authentication
+    user = request.user
+    if not ModuleEdition.objects.filter(pk=mpk, coordinators__user=user):
+        raise PermissionDenied
+
     person = Person.objects.get(id=spk)
     module_ed = ModuleEdition.objects.get(id=mpk)
     grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
@@ -558,4 +563,4 @@ def remove_user(request, spk, mpk):
         context['success'] = True
     else:
         context['failure'] = True
-    return render(request, 'module_management/user_deleted.html', context=context)
+    return render(request, 'module_management/user_delete.html', context=context)

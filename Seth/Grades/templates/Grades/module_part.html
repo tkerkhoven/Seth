@@ -91,12 +91,15 @@
                                             <tr>
                                                 <td>
                                                     <a href="{% url 'grades:modstudent' pk=module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
-                                                    <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
+                                                    <p style="display: none">{{ roledict|key:student }}</p>
                                                 </td>
                                                 {% for test in tests %}
                                                 {% with grade=grades|key:test.id|key:0 %}
                                                     <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                        <a title="{{ grade }}">{{ grade|round }}</a>
+                                                        <a title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
+                                                        {% if grades|key:test.id != 'N/A' %}
+                                                        <a id="gradepop_{{ student }}_{{ test.id }}" class="float-right" data-url="{% url 'grades:remove' pk=test.id sid=student %}" data-toggle="popover"><i class="material-icons">arrow_drop_down</i></a>
+                                                        {% endif %}
                                                     </td>
                                                 {% endwith %}
                                                 {% endfor %}
@@ -129,7 +132,7 @@
                                         <tr>
                                             <td>
                                                 <a href="{% url 'grades:modstudent' pk=module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
-                                                <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
+                                                <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
 
                                             {% for assignment in assignments %}
@@ -163,5 +166,22 @@
                 {% endif %}
             </div>
         </div>
+    </div>
+
+    <div id="gradeRemoveModal" class="modal fade" role="dialog">
+       <div class="modal-dialog">
+         <div class="modal-content">
+          <div class="modal-body">
+            <p>Are you sure you want to remove this grade?</p>
+          </div>
+          <div class="modal-footer">
+            <form id="remove_grade_yes" method="POST">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-default" value="Yes" />
+                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
 {% endblock %}
