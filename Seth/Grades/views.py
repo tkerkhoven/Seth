@@ -8,7 +8,6 @@ from django.views import generic
 import django_excel as excel
 from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module
-import re
 
 
 class ModuleView(generic.ListView):
@@ -69,8 +68,7 @@ class GradeView(generic.DetailView):
         user = request.user
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | (
-            Q(modulepart__teachers__user=user) & Q(modulepart__teacher__role='T')),
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user),
                                             id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -190,12 +188,13 @@ class StudentView(generic.DetailView):
         module_parts_dict = dict()
         test_dict = dict()
         assign_dict = dict()
+        remove_cols = dict()
 
         # Gather all connected grade objects to the person.
         dicts = Grade.objects \
             .prefetch_related('test') \
-            .values('grade', 'released', 'test') \
-            .filter(student=person, released=True) \
+            .values('grade', 'test') \
+            .filter(student=person, test__released=True) \
             .order_by('test', 'time')
 
         # Gather all modules which the person is studying.
@@ -204,6 +203,8 @@ class StudentView(generic.DetailView):
 
         # For each of these modules, gather the module parts and tests.
         for module_edition in modules:
+            remove_cols[module_edition] = []
+
             module_parts = ModulePart.objects \
                 .filter(module_edition=module_edition, test__released=True, test__grade__student=person) \
                 .order_by('id').distinct()
@@ -215,6 +216,23 @@ class StudentView(generic.DetailView):
                 .filter(type='A', module_part__in=module_parts, released=True) \
                 .order_by('module_part__id').distinct()
 
+            last_done = False
+            start = None
+            for assignment in assignments:
+                grade = assignment.grade_set.filter(student=person).values('grade').order_by('-time').first()
+                if grade is not None and grade['grade'] == 1.0:
+                    if last_done:
+                        remove_cols[module_edition].append(assignment)
+                    else:
+                        start = assignment
+                    last_done = True
+                else:
+                    if last_done:
+                        remove_cols[module_edition].insert(0, start)
+                        break
+                    start = None
+                    last_done = False
+
             module_parts_dict[module_edition] = module_parts
             test_dict[module_edition] = tests
             assign_dict[module_edition] = assignments
@@ -223,6 +241,7 @@ class StudentView(generic.DetailView):
         context_dict = OrderedDict()
         ep_span = dict()
         a_span = dict()
+        name_override = dict()
 
         # Changing the queryset to something more useable.
         # Makes a dictionary of grades (temp_dict[TEST] = [GRADE])
@@ -235,11 +254,16 @@ class StudentView(generic.DetailView):
             context_dict[key] = temp_dict[key]
 
         for module_part in module_parts:
-            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), grade__student=person,
-                                                               released=True).count()
-            a_span[module_part] = module_part.test_set.filter(type='A', grade__student=person, released=True)
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), grade__student=person, released=True).distinct('id').count()
+            a_span[module_part] = module_part.test_set.filter(type='A', grade__student=person, released=True).distinct('id').count()
+
+        for module_edition in modules:
+            if remove_cols[module_edition][0] is not None:
+                name_override[remove_cols[module_edition][0]] = remove_cols[module_edition][0].name + " to " + remove_cols[module_edition][-1].name
+                remove_cols[module_edition] = remove_cols[module_edition][1:]
 
         # Add everything to the context
+        context['name_override'] = name_override
         context['ep_span'] = ep_span
         context['a_span'] = a_span
         context['student'] = person
@@ -248,6 +272,7 @@ class StudentView(generic.DetailView):
         context['tests'] = test_dict
         context['assignments'] = assign_dict
         context['gradedict'] = context_dict
+        context['remove_cols'] = remove_cols
 
         return context
 
@@ -595,6 +620,28 @@ def release(request, *args, **kwargs):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
+def signoff(request, *args, **kwargs):
+
+    # Return to the page the user came from.
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def remove(request, *args, **kwargs):
+
+    user = request.user
+
+    test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user,
+                                                          id=kwargs['pk'])
+    if not test:
+        raise PermissionDenied()
+
+    if request.POST:
+        student = kwargs['sid']
+        test.grade_set.filter(student=student).delete()
+
+    # Return to the page the user came from.
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
 def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
     """ Change a queryset to something more useable.
     :param dicts: The queryset to be changed.
@@ -615,9 +662,6 @@ def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
         # Create the student dictionary.
         students[student]['name'] = d['person__name']
         students[student]['pid'] = d['person__university_number']
-        # Todo: fix dit?
-        # students[student]['study'] = d['study__name']
-        # students[student]['sstudy'] = d['study__abbreviation']
 
         # Create the grade dictionary.
         temp_dict[student][test] = (
