@@ -96,8 +96,7 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related(
-            'study').order_by(
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -254,8 +253,7 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related(
-            'study').order_by(
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by(
             'person__university_number')
         context['studying'] = studying
 
