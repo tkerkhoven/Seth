@@ -80,9 +80,9 @@ def set_up_base_data():
     module_part2.save()
 
     # Define Studying
-    studying0 = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
-    studying1 = Studying(person=student_person2, study=study, module_edition=module_ed0, role='student')
-    studying2 = Studying(person=student_person1, study=study, module_edition=module_ed2, role='student')
+    studying0 = Studying(person=student_person0, module_edition=module_ed0, role='student')
+    studying1 = Studying(person=student_person2, module_edition=module_ed0, role='student')
+    studying2 = Studying(person=student_person1, module_edition=module_ed2, role='student')
     studying0.save()
     studying1.save()
     studying2.save()
@@ -1647,6 +1647,19 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.context['person'], Person.objects.get(pk=self.pk_4))
         self.assertEqual(response.context['module'], ModuleEdition.objects.get(pk=self.pk_2))
         self.assertTrue(response.context['failure'])
+
+    def test_deletion(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        self.assertTrue(Studying.objects.filter(person=self.pk_1, module_edition=self.pk_2))
+        self.client.post(self.url_1, follow=True)
+        self.assertFalse(Studying.objects.filter(person=self.pk_1, module_edition=self.pk_2))
+
+        self.assertTrue(Studying.objects.filter(person=self.pk_4, module_edition=self.pk_2))
+        self.client.post(self.url_3, follow=True)
+        self.assertTrue(Studying.objects.filter(person=self.pk_4, module_edition=self.pk_2))
 
     def test_queries(self):
         # Login as coordinator
