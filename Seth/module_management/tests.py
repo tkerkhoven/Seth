@@ -1648,6 +1648,15 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.context['module'], ModuleEdition.objects.get(pk=self.pk_2))
         self.assertTrue(response.context['failure'])
 
+    def test_deletion(self):
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=self.user)
+
+        self.assertTrue(Person.objects.filter(pk=self.pk_1))
+        self.client.post(self.url_1, follow=True)
+        self.assertFalse(Person.objects.filter(pk=self.pk_1))
+
     def test_queries(self):
         # Login as coordinator
         self.client.logout()
