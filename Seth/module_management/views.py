@@ -561,7 +561,7 @@ def remove_user(request, spk, mpk):
     context['person'] = person
     context['module'] = module
     if len(grades) == 0:
-        studying.delet()
+        studying.delete()
         context['success'] = True
     else:
         context['failure'] = True
