@@ -14,8 +14,6 @@ from django.utils import timezone
 class Module(models.Model):
     code = models.CharField(max_length=32, primary_key=True)
     name = models.CharField(max_length=255)
-    start = models.DateField(default=timezone.now)
-    end = models.DateField(default=datetime.date(9999, 12, 31))
 
     def __str__(self):
         return '{} ({})'.format(self.name, self.code)
@@ -31,8 +29,6 @@ class Person(models.Model):
     university_number = models.CharField(max_length=16, unique=True)
     email = models.EmailField(verbose_name='Student e-mail', null=True)
     user = models.ForeignKey(User, null=True, blank=True)
-    start = models.DateField(default=timezone.now)
-    end = models.DateField(null=True, blank=True)
 
     @property
     def full_id(self):
@@ -80,8 +76,6 @@ class ModuleEdition(models.Model):
     )
     block = models.CharField(choices=BLOCKS, max_length=16)
     coordinators = models.ManyToManyField(Person, through='Coordinator', blank=True)
-    start = models.DateField(default=timezone.now)
-    end = models.DateField(default=datetime.date(9999, 12, 31))
 
     @property
     def code(self):
@@ -175,13 +169,12 @@ class Test(models.Model):
         ('P', 'Project')
     )
     type = models.CharField(max_length=1, choices=TEST_TYPES)
-    time = models.DateTimeField(default=timezone.now)
     maximum_grade = models.DecimalField(max_digits=4, decimal_places=1, default=10.0)
     minimum_grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
     released = models.BooleanField(default=False)
 
     def __str__(self):
-        return '{} ({}) {}'.format(self.name, self.type, self.time)
+        return '{} ({})'.format(self.name, self.type)
 
     # Should be the same as TEST_TYPES
     @property
