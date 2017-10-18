@@ -89,7 +89,7 @@
                         </div>
                         <div class="card-body">
                             <div class="tab-content" id="card-tab-content">
-                                <div class="tab-pane fade show active" id="tests-projects" role="tabpanel" aria-labelledby="home-tab">
+                                <div class="tab-pane fade show active" id="tests-projects" role="tabpanel" aria-labelledby="tp-tab">
 
                                     <div class="table-overflow">
                                         <table id="gradebook" data-skip-to-row="1" class="table table-striped table-bordered table-responsive">
@@ -119,13 +119,16 @@
                                         <tr>
                                             <td>
                                                 <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
-                                                <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
+                                                <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
 
                                             {% for test in tests %}
                                             {% with grade=grades|key:test.id|key:0 %}
                                             <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                <a id="grade_{{ student }}_{{ test.id }}" title="{{ grade }}">{{ grade|round }}</a>
+                                                <a id="grade_{{ student }}_{{ test.id }}" title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
+                                                {% if grades|key:test.id != 'N/A' %}
+                                                <a id="gradepop_{{ student }}_{{ test.id }}" class="float-right" data-url="{% url 'grades:remove' pk=test.id sid=student %}" data-toggle="popover"><i class="material-icons">arrow_drop_down</i></a>
+                                                {% endif %}
                                             </td>
                                             {% endwith %}
                                             {% endfor %}
@@ -135,10 +138,9 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="profile-tab">
+                                <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="a-tab">
                                     <form action="{% url 'grades:signoff' %}" method="POST">
                                         {% csrf_token %}
-                                        <input id="assign_hidden" type="hidden" />
                                         <input class="btn btn-secondary" type="submit" value="Save Changes" />
                                     </form>
 
@@ -172,7 +174,7 @@
                                         <tr>
                                             <td>
                                                 <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
-                                                <p style="display: none">{{ studentdict|key:student|key:'study' }} {{ studentdict|key:student|key:'sstudy' }} {{ roledict|key:student }}</p>
+                                                <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
 
                                             {% for assignment in assignments %}
@@ -207,4 +209,22 @@
             </div>
         </div>
     </div>
+
+    <div id="gradeRemoveModal" class="modal fade" role="dialog">
+       <div class="modal-dialog">
+         <div class="modal-content">
+          <div class="modal-body">
+            <p>Are you sure you want to remove this grade?</p>
+          </div>
+          <div class="modal-footer">
+            <form id="remove_grade_yes" method="POST">
+                {% csrf_token %}
+                <input type="submit" class="btn btn-default" value="Yes" />
+                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
 {% endblock %}

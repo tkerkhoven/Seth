@@ -17,6 +17,26 @@ function BlurEdit() {
 };
 
 $(document).ready(function() {
+
+    $('[data-toggle="popover"]').each( function() {
+      $(this).popover({
+                        html : true,
+                        content: '<a id="remove_grade_a" data-url="' + $(this).attr("data-url") + '" data-toggle="modal" data-target="#gradeRemoveModal">' +
+                                   '<i class="material-icons float-right">' +
+                                     'delete_forever' +
+                                   '</i>' +
+                                 '</a>',
+                        placement: "bottom"
+                     });
+    });
+
+    $('#gradeRemoveModal').on('show.bs.modal', function(e) {
+      var url = $(e.relatedTarget).data('url');
+      $(e.currentTarget).find('form[id="remove_grade_yes"]').attr("action", url);
+    });
+
+    $('th:has(a.expandable)').addClass('dashed');
+
     $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
       var i = $(this).find("i");
       if(i.html().trim() == "done") {
@@ -44,10 +64,11 @@ $(document).ready(function() {
       if(!removed)
         changed.push({sid: ids[1], assign: ids[2]});
 
-      $("#assign_hidden").val("bla");
       updateColoring();
     });
 
+    /*
+    Grade click change
     $(document).on('click', 'a[id^="grade_"]', function() {
 
       var edit = $("<input type=number max=" + $(this).parent().closest('td').attr('data-grade-max') +
@@ -68,6 +89,7 @@ $(document).ready(function() {
       edit.focus();
       edit.blur(BlurEdit)
     });
+    */
 
     $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
         $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
@@ -93,10 +115,10 @@ $(document).ready(function() {
     var assignmenttable = $('#assignment_table').DataTable({
       "ordering": true,
       "order": [[0, 'asc']],
-      "columnDefs": [{
-        orderable: false,
-        targets: "no-sort"
-      }],
+      "columnDefs": [
+        {orderable: false, targets: "no-sort"},
+        {visible: false, targets: "remove"}
+      ],
 
       drawCallback: function(settings){
         var api = this.api();
@@ -125,6 +147,9 @@ $(document).ready(function() {
       "ordering": false,
       "paging": false,
       "searching": false,
+      "columnDefs": [
+        {visible: false, targets: "remove"}
+      ],
 
       drawCallback: function(settings){
         var api = this.api();
@@ -133,6 +158,12 @@ $(document).ready(function() {
            container: 'body'
         });
       }
+    });
+
+    studenttable.on('draw', function() {
+      studenttable.columns('.remove').each(function() {
+        ($(this).visible(false));
+      });
     });
 
     var testtable = $('#testbook').DataTable({
@@ -154,15 +185,35 @@ $(document).ready(function() {
     });
 
     testtable.on('draw', function() {
+      $('[data-toggle="popover"]').popover();
       updateColoring();
     });
 
     assignmenttable.on('draw', function() {
+      $('[data-toggle="popover"]').popover();
       updateColoring();
     });
 
     table.on('draw', function() {
+      $('[data-toggle="popover"]').popover();
       updateColoring();
+    })
+
+    $(".expandable").click(function() {
+      name = $(this).attr("data-original-name");
+      $(this).attr("data-original-name", $(this).html())
+      $(this).html(name);
+
+      if($(this).attr("data-expanded") == 0) {
+        $(this).attr("data-expanded", 1);
+        $(this).parent().addClass("dashed");
+        studenttable.columns(".remove").visible(false);
+      }
+      else {
+        $(this).attr("data-expanded", 0);
+        $(this).parent().removeClass("dashed");
+        studenttable.columns('.remove').visible(true);
+      }
     });
 
     $("#lowerNum").bind('keyup mouseup', function () {
