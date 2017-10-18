@@ -96,8 +96,7 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related(
-            'study').order_by(
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -254,8 +253,7 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related(
-            'study').order_by(
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -548,6 +546,11 @@ class TestDeleteView(generic.DeleteView):
 
 @transaction.atomic
 def remove_user(request, spk, mpk):
+    # Authentication
+    user = request.user
+    if not ModuleEdition.objects.filter(pk=mpk, coordinators__user=user):
+        raise PermissionDenied
+
     person = Person.objects.get(id=spk)
     module_ed = ModuleEdition.objects.get(id=mpk)
     grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
@@ -560,4 +563,4 @@ def remove_user(request, spk, mpk):
         context['success'] = True
     else:
         context['failure'] = True
-    return render(request, 'module_management/user_deleted.html', context=context)
+    return render(request, 'module_management/user_delete.html', context=context)

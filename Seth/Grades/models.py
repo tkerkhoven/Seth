@@ -191,15 +191,15 @@ class Test(models.Model):
 
 class Studying(models.Model):
     person = models.ForeignKey(Person)
-    study = models.ForeignKey(Study)
+    # study = models.ForeignKey(Study)
     module_edition = models.ForeignKey(ModuleEdition)
     role = models.CharField(max_length=32)
 
     class Meta:
-        unique_together = (('person', 'study', 'module_edition'),)
+        unique_together = (('person', 'module_edition'),)
 
     def __str__(self):
-        return '{} - {} ({})'.format(self.person, self.module_edition, self.study)
+        return '{} - {} ({})'.format(self.person, self.module_edition, self.role)       #, self.study)
 
 
 class Criterion(models.Model):
