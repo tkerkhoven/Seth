@@ -32,46 +32,43 @@ class ImporterIndexView(LoginRequiredMixin, View):
     download and upload an excel sheet that contains grades. This can be done per test individually.
     """
     model = ModuleEdition
+
     def get(self, request, *args, **kwargs):
         context = dict()
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('-start')
+            context['module_ed_list'] = ModuleEdition.objects.filter(
+                coordinator__person__user=self.request.user).order_by('module__name')
             context['module_coordinator'] = True
             if ModulePart.objects.filter(teacher__person__user=self.request.user):
                 context['teacher'] = True
-                context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
-                # context['module_part_list'] = ModuleEdition.objects.filter(modulepart__teacher__person__user=self.request.user).order_by('start')
+                context['module_part_list'] = ModulePart.objects.filter(
+                    teacher__person__user=self.request.user).order_by('module_edition__module__name')
             else:
                 context['teacher'] = False
-            # return render(request, 'importer/mcindex2.html', {
-            #     'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
-            #         'start'),
-            #     'module_coordinator': True
-            # })
         elif ModulePart.objects.filter(teacher__person__user=self.request.user):
             context['module_coordinator'] = False
             context['teacher'] = True
-            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('module_edition__start', 'name')
+            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user).order_by('name')
         else:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
         return render(request, 'importer/mcindex2.html', context)
-            # return render(request, 'importer/teacherindex.html',
-            #               {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-            #                   'module_edition__start')})
+        # return render(request, 'importer/teacherindex.html',
+        #               {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
+        #                   'module_edition__start')})
 
-# =======
-#         person = Person.objects.filter(user=request.user).first()
-#         if is_coordinator_or_assistant(person):
-#             return render(request, 'importer/mcindex.html', {
-#                 'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
-#                     'start')})
-#         elif is_teacher(person):
-#             return render(request, 'importer/teacherindex.html',
-#                           {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
-#                               'module_edition__start')})
-#
-#         raise PermissionDenied('Only module coordinators or teachers can view this page.')
-# >>>>>>> 71e09ed0f0df597504089a385fa9a49fd86acdee
+        # =======
+        #         person = Person.objects.filter(user=request.user).first()
+        #         if is_coordinator_or_assistant(person):
+        #             return render(request, 'importer/mcindex.html', {
+        #                 'module_ed_list': ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by(
+        #                     'start')})
+        #         elif is_teacher(person):
+        #             return render(request, 'importer/teacherindex.html',
+        #                           {'course_list': ModulePart.objects.filter(teacher__person__user=self.request.user).order_by(
+        #                               'module_edition__start')})
+        #
+        #         raise PermissionDenied('Only module coordinators or teachers can view this page.')
+        # >>>>>>> 71e09ed0f0df597504089a385fa9a49fd86acdee
 
 
         # def get_queryset(self):
@@ -132,7 +129,7 @@ def import_module(request, pk):
                             ).filter(module_part__module_edition=pk):
                                 test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
                         except ValueError:
-                            pass # Not an int.
+                            pass  # Not an int.
                         # search by name
                         if Test.objects.filter(
                                 name=sheet[table][COLUMN_TITLE_ROW][title_index]
@@ -340,7 +337,7 @@ def export_student_import_format(request):
     :param request: Django request; not used in function
     :return: .xlsx file response, named Import_students.xlsx
     """
-    table = [['Student_id', 'name', 'E-mail', 'Start (yyyy-mm-dd)', 'study', 'role']]
+    table = [['Student_id', 'name', 'E-mail', 'study', 'role']]
     return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
 
 
@@ -505,7 +502,7 @@ def workbook_student_to_module(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     # Insert column titles
-    table = [['student_id', 'name', 'email', 'start date', 'study', 'role']]
+    table = [['student_id', 'name', 'email', 'study', 'role']]
 
     print("foo")
 
@@ -541,12 +538,10 @@ def import_student_to_module(request, pk):
             dict = file.get_book_dict()
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
-            startpattern = re.compile('start*')
             emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
-                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
-                students_to_module[0][3].lower()) and students_to_module[0][4].lower() == 'study' and \
-                            students_to_module[0][5].lower() == 'role':
+                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and students_to_module[0][3].lower() == 'study' and \
+                            students_to_module[0][4].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
@@ -575,7 +570,6 @@ def import_student_to_module(request, pk):
                             'user': user,
                             'name': students_to_module[i][1],
                             'email': students_to_module[i][2],
-                            'start': students_to_module[i][3],
                         }
                     )
                     if created:
@@ -583,9 +577,9 @@ def import_student_to_module(request, pk):
                     studying, created = Studying.objects.get_or_create(
                         person=student,
                         module_edition=ModuleEdition.objects.get(pk=pk),
-                        study=Study.objects.get(abbreviation=students_to_module[i][4]),
+                        study=Study.objects.get(abbreviation=students_to_module[i][3]),
                         defaults={
-                            'role': students_to_module[i][5],
+                            'role': students_to_module[i][4],
                         }
                     )
                     if created:
