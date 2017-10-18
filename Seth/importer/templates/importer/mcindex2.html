@@ -27,25 +27,25 @@
                     <div class="card-body">
                         <div class="tab-content" id="card-tab-content">
                             <div class="tab-pane fade
-                                {% if module_coordinator %}show active{% endif %}" id="module_coordinator" role="tabpanel" aria-labelledby="home-tab">
+                                {% if module_coordinator %}show active{% endif %}" id="module_coordinator" role="tabpanel" aria-labelledby="module-coordinator-tab">
                                 {% for mod in module_ed_list %}
                                     <div class="col-lg-12">
                                         <div class="card">
-                        {#                    <h5 class="card-header">#}
-                        {#                        {{ mod }}#}
-                        {#                        <a href="#" class="float-right">#}
-                        {#                            <i class="material-icons">file_upload</i>#}
-                        {#                        </a>#}
-                        {#                        <a href="#" class="float-right">#}
-                        {#                            <i class="material-icons">file_download</i>#}
-                        {#                        </a>#}
-                        {#                    </h5>#}
                                             <div class="card-header">
                                                 <span class="display-5">{{ mod }}</span>
-                                                <form style="margin-bottom: 0; margin-left: 10px;" action="{% url 'importer:import_module' mod.pk %}" class="float-right">
+
+                                            </div>
+                                            <div style="background: white" class="card-header text-center">
+                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:export_module' mod.pk %}">
+                                                    <input class="btn btn-info pointer" type="submit" value="Download Module worksheet"/>
+                                                </form>
+                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:import_module' mod.pk %}">
                                                     <input class="btn btn-info pointer" type="submit" value="Upload Module Grades"/>
                                                 </form>
-                                                <form style="margin-bottom: 0;" action="{% url 'importer:import_student_to_module' mod.pk %}" class="float-right">
+                                                <form style="display: inline-block; margin-bottom: 0;" action="{% url 'importer:export_student_to_module' mod.pk %}">
+                                                    <input class="btn btn-primary pointer" type="submit" value="Download Student worksheet"/>
+                                                </form>
+                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:import_student_to_module' mod.pk %}">
                                                     <input class="btn btn-primary pointer" type="submit" value="Upload Students"/>
                                                 </form>
                                             </div>
@@ -66,7 +66,7 @@
                                                                         <li class="list-group-item">
                                                                             {{ test.name }}
                                                                             <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
-                                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="left" title="Download template sheet">file_download</i></a>
+                                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
                                                                         </li>
                                                                     {% endfor %}
                                                                 </ul>
@@ -83,7 +83,7 @@
                                 {% endfor %}
                             </div>
                             <div class="tab-pane fade
-                                {% if module_coordinator == False and teacher %}show active{% endif %}" id="teacher" role="tabpanel" aria-labelledby="profile-tab">
+                                {% if module_coordinator == False and teacher %}show active{% endif %}" id="teacher" role="tabpanel" aria-labelledby="teacher-tab">
                                 <div class="row">
                                     {% for module_part in module_part_list %}
                                         <div class="col-md-6">
@@ -94,7 +94,7 @@
                                                         <li class="list-group-item">
                                                             {{ test.name }}
                                                             <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
-                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="left" title="Download template sheet">file_download</i></a>
+                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
                                                         </li>
                                                     {% endfor %}
                                                 </ul>

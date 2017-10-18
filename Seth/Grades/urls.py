@@ -14,4 +14,6 @@ urlpatterns = [
     url(r'^tests/(?P<pk>[0-9]+)/$', login_required(views.TestView.as_view()), name='test'),
     url(r'^exports/(?P<pk>([0-9]+))/$', login_required(views.export), name='export'),
     url(r'^release/(?P<pk>([0-9]+))/$', login_required(views.release), name='release'),
+    url(r'^signoff/$', login_required(views.signoff), name='signoff'),
+    url(r'^remove/(?P<pk>([0-9]+))/(?P<sid>([0-9]+))/$', login_required(views.remove), name='remove'),
 ]

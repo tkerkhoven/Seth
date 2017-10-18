@@ -14,7 +14,7 @@
                 <form action="{% url 'importer:import_module' pk %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 {#                    {{ form.as_p }}#}
-                    {% include 'form_snippet.html   ' %}
+                    {% include 'form_snippet.html' %}
                     <input class="btn btn-info" type="submit" value="Upload" /></p>
                 </form>
             </div>

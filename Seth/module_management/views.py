@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
 from django.http import HttpResponseBadRequest
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
@@ -19,7 +19,8 @@ class ModuleListView(generic.ListView):
 
     def get_queryset(self):
         user = self.request.user
-        module_list = Module.objects.prefetch_related('moduleedition_set').filter(moduleedition__coordinators__user=user).distinct()
+        module_list = Module.objects.prefetch_related('moduleedition_set').filter(
+            moduleedition__coordinators__user=user).distinct()
         return module_list
 
     def get_context_data(self, **kwargs):
@@ -95,7 +96,7 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').prefetch_related('study').order_by(
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -111,7 +112,7 @@ class ModuleEditionDetailView(generic.DetailView):
 class ModuleEditionUpdateView(generic.UpdateView):
     template_name = 'module_management/module_edition_update.html'
     model = ModuleEdition
-    fields = ['year', 'block', 'start', 'end']
+    fields = ['year', 'block']
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -133,7 +134,7 @@ class ModuleEditionUpdateView(generic.UpdateView):
 class ModuleEditionCreateForm(ModelForm):
     class Meta:
         model = ModuleEdition
-        fields = ['module', 'year', 'block', 'start', 'end', 'coordinators']
+        fields = ['module', 'year', 'block', 'coordinators']
 
     def __init__(self, *args, **kwargs):
         super(ModuleEditionCreateForm, self).__init__(*args, **kwargs)
@@ -147,7 +148,7 @@ class ModuleEditionCreateView(generic.CreateView):
 
     def get_initial(self):
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest().pk
         return {
             'module': Module.objects.get(pk=pk),
             'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition)
@@ -188,8 +189,6 @@ class ModuleEditionCreateView(generic.CreateView):
 
         module_edition = ModuleEdition(
             module=initial['module'],
-            start=data['start'],
-            end=data['end'],
             year=data['year'],
             block=data['block']
         )
@@ -220,7 +219,6 @@ class ModuleEditionCreateView(generic.CreateView):
                     module_part=module_part,
                     name=old_test.name,
                     released=False,
-                    time=old_test.time,
                     type=old_test.type
                 )
                 try:
@@ -255,7 +253,7 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').prefetch_related('study').order_by(
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by(
             'person__university_number')
         context['studying'] = studying
 
@@ -435,7 +433,7 @@ class TestDetailView(generic.DetailView):
 class TestUpdateView(generic.UpdateView):
     template_name = 'module_management/test_update.html'
     model = Test
-    fields = ['name', 'type', 'time', 'maximum_grade', 'minimum_grade']
+    fields = ['name', 'type', 'maximum_grade', 'minimum_grade']
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -456,7 +454,7 @@ class TestUpdateView(generic.UpdateView):
 class TestCreateForm(ModelForm):
     class Meta:
         model = Test
-        fields = ['module_part', 'name', 'type', 'time', 'maximum_grade', 'minimum_grade']
+        fields = ['module_part', 'name', 'type', 'maximum_grade', 'minimum_grade']
 
     def __init__(self, *args, **kwargs):
         super(TestCreateForm, self).__init__(*args, **kwargs)
@@ -508,7 +506,6 @@ class TestCreateView(generic.CreateView):
             module_part=initial['module_part'],
             name=data['name'],
             type=data['type'],
-            time=data['time'],
             maximum_grade=data['maximum_grade'],
             minimum_grade=data['minimum_grade']
         )
@@ -545,3 +542,25 @@ class TestDeleteView(generic.DeleteView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+
+@transaction.atomic
+def remove_user(request, spk, mpk):
+    # Authentication
+    user = request.user
+    if not ModuleEdition.objects.filter(pk=mpk, coordinators__user=user):
+        raise PermissionDenied
+
+    person = Person.objects.get(id=spk)
+    module_ed = ModuleEdition.objects.get(id=mpk)
+    grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
+    studying = Studying.objects.get(person=person, module_edition=module_ed)
+    context = dict()
+    context['person'] = person
+    context['module'] = module_ed
+    if len(grades) == 0:
+        studying.delete()
+        context['success'] = True
+    else:
+        context['failure'] = True
+    return render(request, 'module_management/user_delete.html', context=context)
