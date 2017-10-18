@@ -1,14 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-{% if success %}
-{{person.name}} ({{person.university_number}}) was deleted succesfully from module {{module.module.name}} ({{module.code}})
-{% else %}
-{{person.name}} ({{person.university_number}}) was <strong>not</strong> deleted from module {{module.module.name}} ({{module.code}}), as there are grades received already.
-{% endif %}
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Remove user{% endblock %}
+
+{% block content %}
+
+    {% include 'navbar.html' %}
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                {% if success %}
+                    {{person.name}} ({{person.university_number}}) was deleted succesfully from module {{module.module.name}} ({{module.code}})
+                {% else %}
+                    {{person.name}} ({{person.university_number}}) was <strong>not</strong> deleted from module {{module.module.name}} ({{module.code}})
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -49,7 +49,8 @@ def is_study_adviser(person):
 
 
 def is_study_adviser_of_study(person, study):
-    return Study.objects.filter(advisers=person).filter(pk=study.pk).count() > 0
+    return Study.objects.filter(advisers=person).filter(
+        pk=study.pk).count() > 0
 
 
 def is_coordinator_assistant(person):
