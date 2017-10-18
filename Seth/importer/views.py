@@ -603,11 +603,7 @@ def workbook_student_to_module(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     # Insert column titles
-<<<<<<< HEAD
     table = [['student_id', 'name', 'email', 'role']]
-=======
-    table = [['student_id', 'name', 'email', 'study', 'role']]
->>>>>>> 40899213dc1222715629ca7bd31065b9c0028404
 
     print("foo")
 
