@@ -50,8 +50,6 @@ class ImporterIndexView(LoginRequiredMixin, View):
             context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
         else:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
-        return render(request, 'importer/mcindex2.html', context)
-
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
@@ -440,7 +438,7 @@ def export_student_import_format(request):
     :param request: Django request; not used in function
     :return: .xlsx file response, named Import_students.xlsx
     """
-    table = [['Student_id', 'name', 'E-mail', 'Start (yyyy-mm-dd)', 'study', 'role']]
+    table = [['Student_id', 'name', 'E-mail', 'study', 'role']]
     return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
 
 
@@ -605,7 +603,11 @@ def workbook_student_to_module(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     # Insert column titles
+<<<<<<< HEAD
     table = [['student_id', 'name', 'email', 'role']]
+=======
+    table = [['student_id', 'name', 'email', 'study', 'role']]
+>>>>>>> 40899213dc1222715629ca7bd31065b9c0028404
 
     print("foo")
 
@@ -641,11 +643,9 @@ def import_student_to_module(request, pk):
             dict = file.get_book_dict()
             students_to_module = dict[list(dict.keys())[0]]
             string = ""
-            startpattern = re.compile('start*')
             emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'student_id' and students_to_module[0][
-                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and startpattern.match(
-                students_to_module[0][3].lower()) and \
+                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and students_to_module[0][3].lower() == 'study' and \
                             students_to_module[0][4].lower() == 'role':
                 context = {}
                 context['created'] = []
@@ -675,7 +675,6 @@ def import_student_to_module(request, pk):
                             'user': user,
                             'name': students_to_module[i][1],
                             'email': students_to_module[i][2],
-                            'start': students_to_module[i][3],
                         }
                     )
                     if created:
