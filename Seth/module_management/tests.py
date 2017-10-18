@@ -184,7 +184,7 @@ def set_up_large_independent_data():
         module_part2.save()
 
         # Define Studying
-        studying = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
+        studying = Studying(person=student_person0, module_edition=module_ed0, role='student')
         studying.save()
 
         # Define Tests
@@ -266,7 +266,7 @@ def set_up_large_dependent_data():
         module_part0.save()
 
         # Define Studying / Fill old_module_ed, old_study
-        studying = Studying(person=student_person0, study=old_study, module_edition=old_module_edition, role='student')
+        studying = Studying(person=student_person0, module_edition=old_module_edition, role='student')
         studying.save()
 
         # Define Tests / Fill old_module_part
