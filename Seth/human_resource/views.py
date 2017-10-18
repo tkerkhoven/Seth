@@ -201,3 +201,18 @@ class CreatePerson(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
+
+
+class CreatePersonNew(generic.FormView):
+    template_name = 'human_resource/person_form.html'
+    form_class = CreateUserForm
+
+    def form_invalid(self, form):
+        print("Wrong")
+
+    def form_valid(self, form):
+        if form.cleaned_data['create_teacher']:
+            print("Create teacher")
+        else:
+            print("Don't create teacher")
+        print("right")
