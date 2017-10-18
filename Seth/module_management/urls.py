@@ -18,5 +18,5 @@ urlpatterns = [
     url(r'^(?P<pk>.+)/test_update$', login_required(views.TestUpdateView.as_view()), name='test_update'),
     url(r'^(?P<pk>.+)/test_create$', login_required(views.TestCreateView.as_view()), name='test_create'),
     url(r'^(?P<pk>.+)/test_delete$', login_required(views.TestDeleteView.as_view()), name='test_delete'),
-    url(r'(?P<spk>.+)(?P<mpk>.+)/delete-user$', views.remove_user, name='remove-user')
+    url(r'(?P<spk>.+)/(?P<mpk>.+)/delete-user$', views.remove_user, name='remove-user')
 ]
