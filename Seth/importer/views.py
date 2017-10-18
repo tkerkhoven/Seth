@@ -681,7 +681,7 @@ def import_student_to_module(request, pk):
                         person=student,
                         module_edition=ModuleEdition.objects.get(pk=pk),
                         defaults={
-                            'role': students_to_module[i][4],
+                            'role': students_to_module[i][3],
                         }
                     )
                     if created:
