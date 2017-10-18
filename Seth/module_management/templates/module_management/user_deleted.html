@@ -12,7 +12,8 @@
                 {% if success %}
                     {{person.name}} ({{person.university_number}}) was deleted succesfully from module {{module.module.name}} ({{module.code}})
                 {% else %}
-                    {{person.name}} ({{person.university_number}}) was <strong>not</strong> deleted from module {{module.module.name}} ({{module.code}})
+                    {{person.name}} ({{person.university_number}}) was <strong>not</strong> deleted from module
+                    {{module.module.name}} ({{module.code}}) because {{ person.name }} still has grades in the system.
                 {% endif %}
             </div>
         </div>

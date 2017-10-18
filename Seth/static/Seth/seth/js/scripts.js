@@ -205,8 +205,21 @@ $(document).ready(function() {
     // $("#id_module_part").hide();
     var $role_div = $("#form_role_teacher"),
     $module_part_div = $("#form_module_part_teacher"),
-    $create_teacher_checkbox = $("#id_create_teacher");
+    $create_teacher_checkbox = $("#id_create_teacher"),
+    $role_teacher = $("#id_role_teacher"),
+    $module_part_teacher = $("#id_module_part_teacher");
     // Function that checks for a checked checkbox and changes a form
+
+    $create_teacher_checkbox.change(function() {
+       if ($role_teacher.attr('required') && $module_part_teacher.attr('required')) {
+           $role_teacher.removeAttr('required');
+           $module_part_teacher.removeAttr('required');
+       } else {
+           $role_teacher.attr('required', 'required');
+           $module_part_teacher.attr('required', 'required');
+       }
+    });
+
     if ($create_teacher_checkbox.checked) {
         $role_div.show();
         $module_part_div.show();

@@ -16,5 +16,5 @@ class CreateUserForm(forms.Form):
     email_address = forms.EmailField(label='Email address')
     user = forms.ModelChoiceField(queryset=Person.objects.all())
     create_teacher = forms.BooleanField(required=False)
-    role_teacher = forms.ChoiceField(choices=Teacher.ROLES, label='Role')
-    module_part_teacher = forms.ModelChoiceField(queryset=ModulePart.objects.all(), label='Module part')
+    role_teacher = forms.ChoiceField(choices=Teacher.ROLES, label='Role', required=False)
+    module_part_teacher = forms.ModelChoiceField(queryset=ModulePart.objects.all(), label='Module part', required=False)

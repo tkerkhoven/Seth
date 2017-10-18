@@ -16,11 +16,11 @@
                 <ul class="navbar-nav mr-auto"></ul>
 
                 <a href="{% url 'grades:gradebook' moduleedition.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
-                    <i class="material-icons md-36">spellcheck</i>
+                    <i class="material-icons md-36 title-bar">spellcheck</i>
                 </a>
                 <a href="{% url 'module_management:module_edition_update' moduleedition.pk %}" data-toggle="tooltip"
                    data-placement="bottom"
-                   title="Edit module edition"><i class="material-icons md-36">settings</i></a>
+                   title="Edit module edition"><i class="material-icons md-36 title-bar">mode_edit</i></a>
             </nav>
         </div>
     </div>
@@ -53,16 +53,14 @@
                            title="Create new module part">add_circle</i>
                     </a>
                 </h5>
-                <div class="card-body">
-                    <ul class="list-group">
-                        {% for module_part in module_parts %}
-                        <li class="list-group-item">
-                            <a href="{% url 'module_management:module_part_detail' module_part.pk %}">
-                                {{ module_part.name }}</a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+                <ul class="list-group list-group-flush">
+                    {% for module_part in module_parts %}
+                    <li class="list-group-item">
+                        <a href="{% url 'module_management:module_part_detail' module_part.pk %}">
+                            {{ module_part.name }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
