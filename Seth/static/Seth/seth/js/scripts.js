@@ -323,8 +323,39 @@ $(document).ready(function() {
             $role_div.hide();
             $module_part_div.hide();
         }
-    })
+    });
 });
+
+// Functions for deleting persons from a module edition
+function deleteUser(userpk, studyingspk, url) {
+    console.log("Hello world" + userpk + " " + studyingspk + " " + url);
+    $.ajax({
+        type: 'GET',
+        dataType: 'json',
+        url: url,
+        success: function(response) {
+            console.log(response);
+            var success = response['success'];
+            console.log(success);
+            var personpk = response['person_pk'];
+            $modal = $("#confirmModal" + personpk);
+            console.log("#confirmModal" + personpk);
+            if (success) {
+                $tablerow = $("#row" + personpk);
+                $modal.modal('hide');
+                $tablerow.hide();
+            } else {
+                console.log("Person is not deleted");
+                $modal.modal('hide');
+            }
+        },
+        error: function(xhr, status, errorThrown) {
+            console.log(status);
+            console.log(errorThrown)
+            // Oops, something went wrong
+        }
+    })
+}
 
 jQuery(document).ready(function($) {
   $('[data-toggle="tooltip"]').tooltip();
