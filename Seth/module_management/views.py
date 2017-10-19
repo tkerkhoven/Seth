@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
@@ -552,18 +552,22 @@ def remove_user(request, spk, mpk):
     # Authentication
     user = request.user
     if not ModuleEdition.objects.filter(pk=mpk, coordinators__user=user):
-        raise PermissionDenied
+        raise PermissionDenied("Something went wrong")
 
     person = Person.objects.get(id=spk)
     module_ed = ModuleEdition.objects.get(id=mpk)
     grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
     studying = Studying.objects.get(person=person, module_edition=module_ed)
     context = dict()
-    context['person'] = person
-    context['module'] = module_ed
+    context['person_name'] = person.name
+    context['person_number'] = person.university_number
+    context['person_pk'] = person.pk
+    context['module_code'] = module_ed.code
+    context['module_name'] = module_ed.module.name
     if len(grades) == 0:
         studying.delete()
         context['success'] = True
     else:
-        context['failure'] = True
-    return render(request, 'module_management/user_delete.html', context=context)
+        context['success'] = False
+    # return render(request, 'module_management/user_delete.html', context=context)
+    return JsonResponse(context)

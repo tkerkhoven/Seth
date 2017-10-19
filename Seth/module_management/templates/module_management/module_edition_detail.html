@@ -16,11 +16,11 @@
                 <ul class="navbar-nav mr-auto"></ul>
 
                 <a href="{% url 'grades:gradebook' moduleedition.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
-                    <i class="material-icons md-36">spellcheck</i>
+                    <i class="material-icons md-36 title-bar">spellcheck</i>
                 </a>
                 <a href="{% url 'module_management:module_edition_update' moduleedition.pk %}" data-toggle="tooltip"
                    data-placement="bottom"
-                   title="Edit module edition"><i class="material-icons md-36">settings</i></a>
+                   title="Edit module edition"><i class="material-icons md-36 title-bar">mode_edit</i></a>
             </nav>
         </div>
     </div>
@@ -58,16 +58,14 @@
                            title="Create new module part">add_circle</i>
                     </a>
                 </h5>
-                <div class="card-body">
-                    <ul class="list-group">
-                        {% for module_part in module_parts %}
-                        <li class="list-group-item">
-                            <a href="{% url 'module_management:module_part_detail' module_part.pk %}">
-                                {{ module_part.name }}</a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+                <ul class="list-group list-group-flush">
+                    {% for module_part in module_parts %}
+                    <li class="list-group-item">
+                        <a href="{% url 'module_management:module_part_detail' module_part.pk %}">
+                            {{ module_part.name }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
@@ -115,14 +113,38 @@
                     <th>Delete</th>
                 </tr>
                 {% for s in studying %}
-                <tr>
+                <tr id="row{{ s.person.pk }}">
                     <td>{{ s.person.name }}</td>
                     <td>{{ s.person.university_number }}</td>
-                    <td>{{ s.study.abbreviation }}</td>
+                    <td>{{ s.module_edition.module.study_set.first.abbreviation }}</td>
                     <td>{{ s.role }}</td>
                     <td>
-                        <a href="{% url 'module_management:user_delete' spk=s.person.pk mpk=moduleedition.pk %}"><i class="material-icons">delete</i></a>
-
+{#                        <a href="{% url 'module_management:user_delete' spk=s.person.pk mpk=moduleedition.pk %}"><i class="material-icons">delete</i></a>#}
+                        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#confirmModal{{ s.person.pk }}">
+                            <i class="material-icons">delete</i>
+                        </button>
+                        <div class="modal fade" id="confirmModal{{ s.person.pk }}" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel{{ s.person.pk }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="confirmModalLabel{{ s.person.pk }}">Are you sure?</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="message{{ s.person.pk }}">Deleting <span class="font-italic">{{ s.person.name }}</span> cannot be undone.</div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-danger"
+                                                onclick="var url = '{% url 'module_management:user_delete' spk=s.person.pk mpk=moduleedition.pk %}';
+                                                deleteUser({{ s.person.pk }}, {{ moduleedition.pk }}, url);">Confirm deletion
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -134,4 +156,8 @@
     </div>
 </div>
 
+<div id="snackbar" class="bg-success">
+    <span id="snackbarMessage">A very long message about a user that is deleted from the module.</span>
+    <button type="button" id="snackbarClose" class="close text-center"><span aria-hidden="true">&times;</span> </button>
+</div>
 {% endblock %}
