@@ -3,11 +3,12 @@ from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views import generic
 import django_excel as excel
 from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
-from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module
+from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study
 
 
 class ModuleView(generic.ListView):
@@ -550,36 +551,49 @@ def export(request, *args, **kwargs):
     # This dictionary is ordered by the university ID and the date their grade has been added.
     dicts = Studying.objects \
         .prefetch_related('person', 'person__Submitter') \
-        .values('person__name', 'person__university_number',
-                'person__Submitter__grade', 'person__Submitter__time') \
+        .values('person__name', 'person__university_number') \
         .filter(module_edition__modulepart__test=test) \
-        .order_by('person__name', 'person__Submitter__time')
+        .order_by('person__name')
+
+    grades = Grade.objects \
+        .filter(test=test) \
+        .order_by('time')
+
+    study = Study.objects \
+        .get(modules__moduleedition__modulepart__test=test)
 
     mod_ed = test.module_part.module_edition
 
     table = [
-        ['Cursus', '{}'.format(mod_ed.module.code), '', '', 'Tijdstip', '{}'.format(test.time)],
+        ['Cursus', '{}'.format(mod_ed.module.code), '', '', 'Tijdstip', 'N/A'],
         ['Collegejaar', '{}'.format(mod_ed.year)],
         ['Toets', '{}'.format(test.name)],
         ['Blok', '{}'.format(mod_ed.block), '', 'Resultaatschaal', ''],
         ['Gelegenheid', ''],
         [''],
-        ['Studentnummer', 'Naam', 'Toetsdatum', 'Resultaat', 'Afwijkende catogorie', 'Geldigheidsduur']
+        ['Studentnummer', 'Naam', 'Toetsdatum', 'Resultaat', 'Afwijkende categorie', 'Geldigheidsduur']
     ]
 
     temp_dict = OrderedDict()
-    for d in dicts:
-        temp_dict[d['person__university_number'][1:]] = (d['person__name'], d['person__Submitter__grade'],
-                                                         d['person__Submitter__time'].date())
+    grade_dict = dict()
+    for grade in grades:
+        grade_dict[grade.student.university_number] = grade.grade
 
-    for u_num, details in temp_dict.items():
-        table.append(
-            ['{}'.format(u_num), '{}'.format(details[0]), '{}'.format(details[2]), '{}'.format(details[1]),
-             '-', '-']
-        )
+    for d in dicts:
+        temp_dict[d['person__university_number'][1:]] = d['person__name']
+
+    for u_num, name in temp_dict.items():
+        if ('s' + u_num) in grade_dict.keys():
+            table.append(
+                ['{}'.format(u_num), '{}'.format(name), 'N/A', '{}'.format(grade_dict['s' + u_num]), 'N/A', 'N/A']
+            )
+        else:
+            table.append(
+                ['{}'.format(u_num), '{}'.format(name), 'N/A', 'N/A', 'N/A', 'N/A']
+            )
 
     return excel.make_response_from_array(table, file_name='{} MODXX {} {}.xlsx'
-                                          .format(dicts[0][mod_ed.module.code, test.name]),
+                                          .format(study.abbreviation, mod_ed.module.code, test.name),
                                           file_type='xlsx')
 
 
@@ -629,6 +643,7 @@ def signoff(request, *args, **kwargs):
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 def remove(request, *args, **kwargs):
 
     user = request.user
@@ -644,6 +659,31 @@ def remove(request, *args, **kwargs):
 
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def edit(request, *args, **kwargs):
+
+    user = request.user
+
+    test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user,
+                                                          id=kwargs['pk'])
+    if not test:
+        raise PermissionDenied()
+
+    data = {}
+
+    if request.POST:
+        student = kwargs['sid']
+        g = test.grade_set.filter(student=student).last()
+
+        g.grade = request.POST.get('grade', None)
+        g.save()
+
+        data = {
+            'succeeded': True
+        }
+
+    # Return to the page the user came from.
+    return JsonResponse(data)
 
 
 def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
