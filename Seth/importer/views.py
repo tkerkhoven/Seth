@@ -720,25 +720,25 @@ def import_student_to_module(request, pk):
                       {'form': student_form, 'pk': pk})
 
 
-class ModuleStructureImporter(View):
+class ModuleStructureImporter(LoginRequiredMixin, View):
     """Import to bulk-create Module parts and Tests for a module.
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if is_coordinator_or_assistant_of_module(Person.objects.get(user=request.user), kwargs['pk']):
-            super(ModuleStructureImporter, self).dispatch(self, request, *args, **kwargs)
+        module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
+        if is_coordinator_or_assistant_of_module(Person.objects.get(user=self.request.user), module_edition):
+            return super(ModuleStructureImporter, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not the module coordinator of this module.")
 
-
     def get(self, request, pk):
         module_structure_form = ImportModuleEditionStructureForm()
-        return render(request, 'importer/import-module-student.html',
-                      {'form': module_structure_form, 'pk': pk})
+        return render(request, 'importer/import-module-structure.html',
+                      {'form': module_structure_form, 'pk': pk, 'module_edition': ModuleEdition.objects.get(pk=pk)})
 
     @transaction.atomic
     def post(self, request, pk):
-        module_edition = get_object_or_404(ModuleEdition, pk)
+        module_edition = get_object_or_404(ModuleEdition, pk=pk)
 
         student_form = ImportModuleEditionStructureForm(request.POST, request.FILES)
         if student_form.is_valid():
@@ -746,13 +746,11 @@ class ModuleStructureImporter(View):
             workbook = file.get_book_dict()
 
             structure = dict()
-            if len(workbook) != 2:
-                raise SuspiciousOperation("Bad worksheet.")
 
             for page in workbook.keys():
                 module_part = ModulePart.objects.create(name=workbook[page][0][1], module_edition=module_edition)
 
-                for i in range(1, len(workbook[page])):
+                for i in range(1, len(workbook[page][0])):
 
                     min_grade = float(workbook[page][2][i])
                     max_grade = float(workbook[page][3][i])
@@ -766,4 +764,5 @@ class ModuleStructureImporter(View):
                                         , minimum_grade=min_grade, maximum_grade=max_grade)
         else:
             raise SuspiciousOperation('Bad POST')
-        redirect('module_management:module_edition_detail', pk)
+
+        return redirect('module_management:module_edition_detail', pk)

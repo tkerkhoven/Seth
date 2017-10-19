@@ -27,5 +27,5 @@ class ImportStudentModule(forms.Form):
     )
 class ImportModuleEditionStructureForm(forms.Form):
     file = forms.FileField(
-        label='Select Student excel file'
+        label='Select module structure excel file'
     )
