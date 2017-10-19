@@ -40,6 +40,11 @@
                     <li class="list-group-item">Code: {{ moduleedition.code }}</li>
                     <li class="list-group-item">Year: {{ moduleedition.year }}</li>
                     <li class="list-group-item">Bock: {{ moduleedition.block }}</li>
+                    {% if studies %}
+                    {% for study in studies %}
+                    <li class="list-group-item">Study: {{ study.name }}</li>
+                    {% endfor %}
+                    {% endif %}
                 </ul>
             </div>
         </div>
