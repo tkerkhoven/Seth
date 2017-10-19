@@ -16,15 +16,15 @@
                     <ul class="navbar-nav mr-auto"></ul>
 
                     <a href="{% url 'grades:module_part' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom" title="View grades">
-                        <i class="material-icons md-36">spellcheck</i>
+                        <i class="material-icons md-36 title-bar">spellcheck</i>
                     </a>
                     <a href="{% url 'module_management:module_part_update' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom"
                        title="Edit module part">
-                        <i class="material-icons md-36">mode_edit</i>
+                        <i class="material-icons md-36 title-bar">mode_edit</i>
                     </a>
                     <a href="{% url 'module_management:module_part_delete' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom"
                        title="Delete module part">
-                        <i class="material-icons md-36 text-danger">delete_forever</i>
+                        <i class="material-icons md-36 text-danger title-bar">delete_forever</i>
                     </a>
                 </nav>
             </div>
@@ -86,7 +86,7 @@
                             <th>University Number</th>
                             <th>Role</th>
                         </tr>
-                        {% for teacher in modulepart.teacher_set.all %}
+                        {% for teacher in teachers %}
                             <tr>
                                 <td>{{ teacher.person.name }}</td>
                                 <td>{{ teacher.person.university_number }}</td>

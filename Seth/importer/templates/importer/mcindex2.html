@@ -12,14 +12,12 @@
                         <ul class="nav nav-tabs" id="card-tabs" role="tablist">
                             <li class="nav-item">
                                 <a class="nav-link
-                                    {% if module_coordinator %}active{% endif %}
-                                    {% if module_coordinator == False %} disabled {% endif %}"
+                                    {% if is_module_coordinator %} active {% else %} disabled {% endif %}"
                                     id="module-coordinator-tab" data-toggle="tab" href="#module_coordinator" role="tab" aria-controls="module_coordinator" aria-expanded="true">As module coordinator</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link
-                                    {% if teacher == False %} disabled {% endif %}
-                                    {% if teacher and module_coordinator == False %} active {% endif %}"
+                                    {% if is_teacher and not is_module_coordinator %} active {% else %} disabled {% endif %}"
                                     id="teacher-tab" data-toggle="tab" href="#teacher" role="tab" aria-controls="teacher">As teacher</a>
                             </li>
                         </ul>
@@ -27,31 +25,49 @@
                     <div class="card-body">
                         <div class="tab-content" id="card-tab-content">
                             <div class="tab-pane fade
-                                {% if module_coordinator %}show active{% endif %}" id="module_coordinator" role="tabpanel" aria-labelledby="module-coordinator-tab">
-                                {% for mod in module_ed_list %}
+                                {% if is_module_coordinator %}show active{% endif %}" id="module_coordinator" role="tabpanel" aria-labelledby="module-coordinator-tab">
+                                {% for mod in module_editions_list.module_editions %}
                                     <div class="col-lg-12">
                                         <div class="card">
                                             <div class="card-header">
-                                                <span class="display-5">{{ mod }}</span>
+                                                <span class="display-5">{{ mod.name }}</span>
 
                                             </div>
-                                            <div style="background: white" class="card-header text-center">
-                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:export_module' mod.pk %}">
-                                                    <input class="btn btn-info pointer" type="submit" value="Download Module worksheet"/>
-                                                </form>
-                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:import_module' mod.pk %}">
-                                                    <input class="btn btn-info pointer" type="submit" value="Upload Module Grades"/>
-                                                </form>
-                                                <form style="display: inline-block; margin-bottom: 0;" action="{% url 'importer:export_student_to_module' mod.pk %}">
-                                                    <input class="btn btn-primary pointer" type="submit" value="Download Student worksheet"/>
-                                                </form>
-                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:import_student_to_module' mod.pk %}">
-                                                    <input class="btn btn-primary pointer" type="submit" value="Upload Students"/>
-                                                </form>
+
+
+                                            <div class="card-header bg-white">
+                                                <div class="row">
+                                                    <div class="col-lg-4">
+                                                        <div class="card">
+                                                            <div class="card-header card-margin">
+                                                                <span style="font-size: larger">Module Structure</span>
+                                                                <a href="{% url 'importer:import_module_structure' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload module structure">file_upload</i></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <div class="card">
+                                                            <div class="card-header card-margin">
+                                                                <span style="font-size: larger">Students</span>
+                                                                <a href="{% url 'importer:import_student_to_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload students to module">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_student_to_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download student worksheet">file_download</i></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <div class="card">
+                                                            <div class="card-header card-margin">
+                                                                <span style="font-size: larger">Grades</span>
+                                                                <a href="{% url 'importer:import_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload module grades">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module worksheet">file_download</i></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="card-body">
                                                 <div class="row">
-                                                    {% for module_part in mod.modulepart_set.all %}
+                                                    {% for module_part in mod.module_parts %}
                                                         {% if forloop.first %}
                                                             <div class="col-lg-6">
                                                         {% endif %}
@@ -60,14 +76,25 @@
                                                             <div class="col-lg-6">
                                                         {% endif %}
                                                             <div class="card card-margin">
-                                                                <h6 class="card-header">{{ module_part.name }}</h6>
+                                                                <span class="card-header">{{ module_part.name }}
+                                                                <a href="{% url 'importer:import_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades to module part">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module part grading sheet">file_download</i></a>
+                                                                </span>
                                                                 <ul class="list-group list-group-flush">
-                                                                    {% for test in module_part.test_set.all %}
-                                                                        <li class="list-group-item">
-                                                                            {{ test.name }}
-                                                                            <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
-                                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
-                                                                        </li>
+                                                                    {% for test in module_part.tests %}
+                                                                        {% if test.signoff %}
+                                                                            <li class="list-group-item" style="background: rgba(0,0,0,.03)">
+                                                                                {{ test.name }}
+                                                                                <a href="{% url 'importer:import_module_part' test.module_part_pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
+                                                                                <a href="{% url 'importer:export_module_part_signoff' test.module_part_pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
+                                                                            </li>
+                                                                         {% else %}
+                                                                            <li class="list-group-item">
+                                                                                {{ test.name }}
+                                                                                <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
+                                                                                <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
+                                                                            </li>
+                                                                        {% endif %}
                                                                     {% endfor %}
                                                                 </ul>
                                                             </div>
@@ -83,12 +110,15 @@
                                 {% endfor %}
                             </div>
                             <div class="tab-pane fade
-                                {% if module_coordinator == False and teacher %}show active{% endif %}" id="teacher" role="tabpanel" aria-labelledby="teacher-tab">
+                                {% if is_teacher and not is_module_coordinator %}show active{% endif %}" id="teacher" role="tabpanel" aria-labelledby="teacher-tab">
                                 <div class="row">
                                     {% for module_part in module_part_list %}
                                         <div class="col-md-6">
                                             <div class="card card-margin">
-                                                <h5 class="card-header">{{ module_part }}</h5>
+                                                <span class="card-header">{{ module_part }}
+                                                <a href="{% url 'importer:import_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades to module part">file_upload</i></a>
+                                                <a href="{% url 'importer:export_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module part grading sheet">file_download</i></a>
+                                                </span>
                                                 <ul class="list-group list-group-flush">
                                                     {% for test in module_part.test_set.all %}
                                                         <li class="list-group-item">

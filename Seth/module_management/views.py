@@ -4,7 +4,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import generic
@@ -97,14 +97,13 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by(
-            'person__university_number')
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
         context['studying'] = studying
 
         module_parts = ModulePart.objects.filter(module_edition=pk)
         context['module_parts'] = module_parts
 
-        coordinators = Coordinator.objects.filter(module_edition=pk).order_by('person__university_number')
+        coordinators = Coordinator.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
         context['coordinators'] = coordinators
 
         studies = Study.objects.filter(modules__moduleedition=pk)
@@ -256,9 +255,10 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by(
-            'person__university_number')
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by('person__university_number')
         context['studying'] = studying
+        teachers = Teacher.objects.filter(module_part=pk).prefetch_related('person').order_by('person__university_number')
+        context['teachers'] = teachers
 
         return context
 
@@ -552,18 +552,22 @@ def remove_user(request, spk, mpk):
     # Authentication
     user = request.user
     if not ModuleEdition.objects.filter(pk=mpk, coordinators__user=user):
-        raise PermissionDenied
+        raise PermissionDenied("Something went wrong")
 
     person = Person.objects.get(id=spk)
     module_ed = ModuleEdition.objects.get(id=mpk)
     grades = Grade.objects.filter(test__module_part__module_edition=mpk).filter(student=person)
     studying = Studying.objects.get(person=person, module_edition=module_ed)
     context = dict()
-    context['person'] = person
-    context['module'] = module_ed
+    context['person_name'] = person.name
+    context['person_number'] = person.university_number
+    context['person_pk'] = person.pk
+    context['module_code'] = module_ed.code
+    context['module_name'] = module_ed.module.name
     if len(grades) == 0:
         studying.delete()
         context['success'] = True
     else:
-        context['failure'] = True
-    return render(request, 'module_management/user_delete.html', context=context)
+        context['success'] = False
+    # return render(request, 'module_management/user_delete.html', context=context)
+    return JsonResponse(context)

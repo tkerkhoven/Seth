@@ -42,6 +42,32 @@ hr.remove-top-margin {
   padding: 0;
   border-bottom: 0; }
 
+#snackbar {
+  display: none;
+  /* Display set to none for toggling with JQuery */
+  transform: translate(-50%, -50%);
+  background-color: #333;
+  /* Black background color */
+  color: #fff;
+  /* White text color */
+  text-align: center;
+  /* Centered text */
+  border-radius: 2px;
+  /* Rounded borders */
+  padding: 16px;
+  /* Padding */
+  position: fixed;
+  /* Sit on top of the screen */
+  z-index: 1;
+  /* Add a z-index if needed */
+  left: 50%;
+  /* Center the snackbar */
+  bottom: 30px;
+  /* 30px from the bottom */ }
+
+#snackbarClose.close {
+  color: white; }
+
 .material-icons.md-18 {
   font-size: 18px; }
 .material-icons.md-20 {

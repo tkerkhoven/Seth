@@ -40,7 +40,13 @@
                                             <ul class="list-group list-group-flush">
                                                 {% for test in module_part.test_set.all %}
                                                     <li class="list-group-item">
-                                                        {{ test.name }} - <a href="{% url 'grades:test' test.pk%}"><span class="font-italic">{% if test.grade_set.empty %}0{% else %}{{ test.grade_set.all.count }} grades{% endif %}</span></a>
+                                                        {{ test.name }} - <a href="{% url 'grades:test' test.pk%}"><span class="font-italic">
+                                                        {% if test.grade_set.empty %}
+                                                            0
+                                                        {% else %}
+                                                            {{ test.grade_set.all.count }}
+                                                            grade{% if test.grade_set.all.count > 1 %}s{% endif %}
+                                                        {% endif %}</span></a>
                                                         {% if test.released %}
                                                             <i class="material-icons float-right text-success" data-toggle="tooltip" data-placement="bottom" title="Released">check_circle</i>
                                                         {% else %}

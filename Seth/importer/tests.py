@@ -11,7 +11,7 @@ from pyexcel import Sheet
 
 from Grades.exceptions import GradeException
 from Grades.models import *
-from importer.forms import GradeUploadForm, TestGradeUploadForm
+from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule
 from importer.views import make_grade, COLUMN_TITLE_ROW
 from django.contrib.auth.models import User
 
@@ -46,13 +46,13 @@ class ImporterStressTest(TestCase):
         students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
                     in range(600)]
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_module_import(self):
-        module = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij')[0]
-        students = Person.objects.filter(studying__module_edition=module)
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
 
-        tests = Test.objects.filter(module_part__module_edition=module)
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
 
         table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW)] + [
             ['student_id'] + [test.pk for test in tests]]
@@ -68,8 +68,8 @@ class ImporterStressTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module.pk), {'title': 'test.xlsx', 'file': file})
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module.pk))
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
 
 class ImporterTest(TestCase):
@@ -98,13 +98,13 @@ class ImporterTest(TestCase):
         students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
                     in range(2)]
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_module_import(self):
-        module = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij')[0]
-        students = Person.objects.filter(studying__module_edition=module)
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
 
-        tests = Test.objects.filter(module_part__module_edition=module)
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
 
         table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
             ['student_id', 'name'] + [test.pk for test in tests]]
@@ -120,14 +120,37 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module.pk), {'title': 'test.xlsx', 'file': file})
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module.pk))
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+    def test_course_import(self):
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['student_id', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_test_import(self):
-        module = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij')[0]
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
-        test = Test.objects.filter(module_part__module_edition=module)[0]
-        students = Person.objects.filter(studying__module_edition=module)
+        test = Test.objects.filter(module_part__module_edition=module_edition)[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
 
         table = [['' for _ in range(4)] for _ in range(COLUMN_TITLE_ROW)] + \
                 [['student_id', 'name', 'grade', 'description']]
@@ -146,6 +169,32 @@ class ImporterTest(TestCase):
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
+    def test_student_import(self):
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        table = [['' for _ in range(4)] for _ in range(COLUMN_TITLE_ROW)] + \
+                [['student_id', 'name', 'email', 'role']]
+
+        university_number = 's54321'
+
+        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = ImportStudentModule(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        self.assertTemplateUsed(response, 'importer/students-module-imported.html')
+
+        if not Person.objects.filter(university_number=university_number):
+            self.fail('Person imported to module does not exist.')
+        if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
+            self.fail('Studying imported to module does not exist.')
+
 
 class ImporterPermissionsTest(TestCase):
     def setUp(self):
@@ -159,7 +208,6 @@ class ImporterPermissionsTest(TestCase):
 
         module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
         module_ed_2 = ModuleEdition.objects.create(module=module_tcs, year=2018, block='A1')
-
 
         module_parts = [
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[module_coordinator])
@@ -186,7 +234,7 @@ class ImporterPermissionsTest(TestCase):
 
         students.append(Person.objects.create(name='Student', university_number='s2453483', user=student_user))
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_importer_views_without_privileges(self):
         dummyuser = User.objects.create(username='ppuk', password='welkom123')
@@ -216,6 +264,14 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -261,6 +317,14 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -320,6 +384,23 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[other_test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_part_signoff', args=[other_test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
 
         self.assertEqual(response.status_code, 200)
@@ -366,6 +447,14 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 403)
 
@@ -423,7 +512,7 @@ class MakeGradeTest(TestCase):
 
         students.append(Person.objects.create(name='Student', university_number='s2453483', user=student_user))
 
-        [Studying.objects.create(module_edition=module_ed, study=tcs, person=student, role='s') for student in students]
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
     def test_make_grade(self):
         student = Person.objects.filter(name='Student')[0]
