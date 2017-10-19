@@ -344,20 +344,19 @@ function deleteUser(userpk, studyingspk, url) {
         url: url,
         success: function(response) {
             console.log(response);
-            var success = response['success'];
-            var personpk = response['person_pk'];
-            $modal = $("#confirmModal" + personpk);
-            $alertGood = $("#alertGood");
+            var success = response['success'],
+            personpk = response['person_pk'],
+            $modal = $("#confirmModal" + personpk),
             $messageModal = $("#message" + personpk);
             if (success) {
-                $tablerow = $("#row" + personpk);
+                var $tablerow = $("#row" + personpk);
                 $modal.modal('hide');
-                $tablerow.hide();
-                $alertGood.show();
+                // $messageModal.html("The person is deleted");
+                $tablerow.hide(1000, function() { $tablerow.remove() });
             } else {
                 console.log("Person is not deleted");
-                $modal.modal('hide');
-                $alertGood.show();
+                // $modal.modal('hide');
+                $messageModal.html("The person is <strong>not</strong> deleted");
             }
         },
         error: function(xhr, status, errorThrown) {
