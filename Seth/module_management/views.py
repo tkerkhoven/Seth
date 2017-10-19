@@ -562,7 +562,7 @@ def remove_user(request, spk, mpk):
     context['person_name'] = person.name
     context['person_number'] = person.university_number
     context['person_pk'] = person.pk
-    context['module'] = module_ed.code
+    context['module_code'] = module_ed.code
     context['module_name'] = module_ed.module.name
     if len(grades) == 0:
         studying.delete()

@@ -291,10 +291,6 @@ $(document).ready(function() {
         }
     });
 
-    // $("#label_role").hide();
-    // $("#label_module_part").hide();
-    // $("#id_role").hide();
-    // $("#id_module_part").hide();
     var $role_div = $("#form_role_teacher"),
     $module_part_div = $("#form_module_part_teacher"),
     $create_teacher_checkbox = $("#id_create_teacher"),
@@ -318,53 +314,60 @@ $(document).ready(function() {
     }
     $create_teacher_checkbox.change(function() {
         if (this.checked) {
-            // $("#id_role").show();
-            // $("#label_role").show();
-            // $("#id_module_part").show();
-            // $("#label_module_part").show();
             $role_div.show();
             $module_part_div.show();
         } else {
-            // $("#id_role").hide();
-            // $("#label_role").hide();
-            // $("#id_module_part").hide();
-            // $("#label_module_part").hide();
             $role_div.hide();
             $module_part_div.hide();
         }
     });
+
+    $("#snackbarClose").on('click', function() {
+        $("#snackbar").fadeOut(500);
+    })
 });
 
 // Functions for deleting persons from a module edition
 function deleteUser(userpk, studyingspk, url) {
-    console.log("Hello world" + userpk + " " + studyingspk + " " + url);
     $.ajax({
         type: 'GET',
         dataType: 'json',
         url: url,
         success: function(response) {
-            console.log(response);
             var success = response['success'],
             personpk = response['person_pk'],
+            personName = response['person_name'],
+            personNumber = response['person_number'],
+            moduleCode = response['module_code'],
+            moduleName = response['module_name'],
             $modal = $("#confirmModal" + personpk),
-            $messageModal = $("#message" + personpk);
+            $messageModal = $("#message" + personpk),
+            $snackbar = $("#snackbar"),
+            $snackbarMessage = $("#snackbarMessage"),
+            message = $messageModal.html();
             if (success) {
                 var $tablerow = $("#row" + personpk);
                 $modal.modal('hide');
-                // $messageModal.html("The person is deleted");
                 $tablerow.hide(1000, function() { $tablerow.remove() });
+                $snackbarMessage.html(personName + " (" + personNumber +") was successfully removed from module "
+                    + moduleName + " (" + moduleCode + ").");
+                $snackbar.fadeIn(1000);
             } else {
-                console.log("Person is not deleted");
-                // $modal.modal('hide');
-                $messageModal.html("The person is <strong>not</strong> deleted");
+                $messageModal.html(personName + " (<span class='font-italic'>" + personNumber + "</span>) was <strong>not</strong> deleted from " +
+                    moduleName + " (<span class='font-italic'>" + moduleCode + "</span>), because there are still grades in the system for this person.");
             }
+            $modal.on('hidden.bs.modal', function() {
+                // Resets the modal message
+                $messageModal.html(message);
+            })
         },
         error: function(xhr, status, errorThrown) {
             console.log(status);
             console.log(errorThrown)
             // Oops, something went wrong
         }
-    })
+    });
+
 }
 
 jQuery(document).ready(function($) {
