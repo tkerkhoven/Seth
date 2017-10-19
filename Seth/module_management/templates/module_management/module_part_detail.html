@@ -86,7 +86,7 @@
                             <th>University Number</th>
                             <th>Role</th>
                         </tr>
-                        {% for teacher in modulepart.teacher_set.all %}
+                        {% for teacher in teachers %}
                             <tr>
                                 <td>{{ teacher.person.name }}</td>
                                 <td>{{ teacher.person.university_number }}</td>

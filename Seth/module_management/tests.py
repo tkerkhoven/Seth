@@ -639,7 +639,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(12):
+        with self.assertNumQueries(11):
             self.client.get(url_1, follow=True)
 
     def test_queries_all(self):
@@ -1089,7 +1089,7 @@ class ModuleManagementModulePartDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
 
-        with self.assertNumQueries(16):
+        with self.assertNumQueries(14):
             self.client.get(self.url_1)
 
     def test_queries_all(self):
@@ -2009,7 +2009,7 @@ class ModuleManagementTestCreateTests(TestCase):
 
         with self.assertNumQueries(9):
             self.client.post(self.url_1,
-                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+                             {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
     def test_queries_independent(self):
         set_up_large_independent_data()
@@ -2022,7 +2022,7 @@ class ModuleManagementTestCreateTests(TestCase):
 
         with self.assertNumQueries(9):
             self.client.post(self.url_1,
-                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+                             {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
     def test_queries_dependent(self):
         set_up_large_dependent_data()
@@ -2035,7 +2035,7 @@ class ModuleManagementTestCreateTests(TestCase):
 
         with self.assertNumQueries(9):
             self.client.post(self.url_1,
-                             {'name': 'new_object', 'type': 'A', 'time': '2017-10-11 13:37:00', 'minimum_grade': 42, 'maximum_grade': 133.7})
+                             {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
     def test_queries_all(self):
         set_up_large_dependent_data()
