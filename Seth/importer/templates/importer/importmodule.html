@@ -11,6 +11,10 @@
             <div class="col-lg-12">
                 <h3 class="display-3">Import module master sheet</h3>
                 <hr>
+                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:export_module' pk %}">
+                    <input class="btn btn-info pointer" type="submit" value="Download module gradesheet"/>
+                </form>
+                <hr>
                 <form action="{% url 'importer:import_module' pk %}" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 {#                    {{ form.as_p }}#}
