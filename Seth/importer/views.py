@@ -37,22 +37,52 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         context = dict()
+        context['is_module_coordinator'] = False
+        context['is_teacher'] = False
+        coordinator_or_teacher = False
+
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            context['module_ed_list'] = ModuleEdition.objects.filter(coordinator__person__user=self.request.user)
-            context['module_coordinator'] = True
-            if ModulePart.objects.filter(teacher__person__user=self.request.user):
-                context['teacher'] = True
-                context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
-                # context['module_part_list'] = ModuleEdition.objects.filter(modulepart__teacher__person__user=self.request.user).order_by('start')
-            else:
-                context['teacher'] = False
-        elif ModulePart.objects.filter(teacher__person__user=self.request.user):
-            context['module_coordinator'] = False
-            context['teacher'] = True
+            context['is_module_coordinator'] = True
+            context['module_editions_list'] = self.make_modules_context()
+            coordinator_or_teacher = True
+        if ModulePart.objects.filter(teacher__person__user=self.request.user):
+            context['is_teacher'] = True
             context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
-        else:
+            coordinator_or_teacher = True
+        if not coordinator_or_teacher:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
         return render(request, 'importer/mcindex2.html', context)
+
+    def make_modules_context(self):
+        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).prefetch_related(
+            'modulepart_set__test_set')
+
+        context = dict()
+        context['module_editions'] = []
+        for module_edition in module_editions:
+            edition = {'name': module_edition.module.name, 'pk': module_edition.pk, 'module_parts': []}
+            for module_part in module_edition.modulepart_set.all():
+                part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
+                sign_off_assignments = []
+                for test in module_part.test_set.all():
+                    if test.type is 'A':
+                        sign_off_assignments.append(test)
+                        continue
+                    test_item = {'name': test.name, 'pk': test.pk, 'signoff': False}
+                    part['tests'].append(test_item)
+                if sign_off_assignments:
+                    soa_line = {'module_part_pk': module_part.pk, 'signoff': True}
+                    if len(sign_off_assignments) > 1:
+                        soa_line['name'] =  'S/O assignments {} to {}'.format(sign_off_assignments[0].name,
+                                                                  sign_off_assignments[-1].name)
+                    else:
+                        soa_line['name'] =  'S/O assignment {}'.format(sign_off_assignments[0].name)
+                    part['tests'].append(soa_line)
+                edition['module_parts'].append(part)
+
+            context['module_editions'].append(edition)
+        return context
+
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
@@ -205,7 +235,7 @@ def import_module_part(request, pk):
         raise PermissionDenied('You are not allowed to do this.')
 
     if request.method == "POST":
-        form = GradeUploadForm(request.POST, request.FILES)
+        form = ImportModuleEditionStructureForm(request.POST, request.FILES)
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -295,8 +325,8 @@ def import_module_part(request, pk):
                                       'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
                                       'using that instead.')
     else:  # GET request
-        form = GradeUploadForm()
-        return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
+        form = ImportModuleEditionStructureForm()
+        return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk})
 
 
 @login_required
@@ -407,7 +437,7 @@ def export_module(request, pk):
     if not is_coordinator_or_assistant_of_module(person, module_edition):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
-    students = Person.objects.filter(studying__module_edition=module_edition)
+    students = Person.objects.filter(studying__module_edition=module_edition).values('university_number', 'name')
     tests = Test.objects.filter(module_part__module_edition=module_edition)
 
     # Pre-fill first few columns.
@@ -424,13 +454,14 @@ def export_module(request, pk):
 
     # pre-fill student numbers
     for student in students:
-        table.append([student.university_number, student.name] + [None for _ in range(len(tests))])
+        table.append([student['university_number'], student['name']] + [None for _ in range(len(tests))])
 
     return excel.make_response_from_array(table,
                                           file_name='Module Grades {} {}-{}.xlsx'.format(module_edition.module.name,
                                                                                          module_edition.year,
                                                                                          module_edition.block),
                                           file_type='xlsx')
+
 
 @login_required()
 @require_http_methods(["GET"])
@@ -450,29 +481,70 @@ def export_module_part(request, pk):
     if not is_coordinator_or_teacher_of_module_part(person, module_part):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
-    students = Person.objects.filter(studying__module_edition=module_edition)
-    tests = Test.objects.filter(module_part=module_part)
+    students = Person.objects.filter(studying__module_edition=module_edition).values('university_number', 'name')
+    tests = Test.objects.filter(module_part=module_part).values('pk', 'name')
 
     # Pre-fill first few columns.
     table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 1)]
 
     # Add the module part name and test name for each test if there is enough header room.
     if COLUMN_TITLE_ROW > 0:
-        table.append(['', 'Test name >'] + [test.name for test in tests])
+        table.append(['', 'Test name >'] + [test['name'] for test in tests])
 
     # Add machine-readable header row.
-    table.append(['student_id', 'name'] + [test.pk for test in tests])
+    table.append(['student_id', 'name'] + [test['pk'] for test in tests])
 
     # pre-fill student numbers
     for student in students:
-        table.append([student.university_number, student.name] + [None for _ in range(len(tests))])
+        table.append([student['university_number'], student['name']] + [None for _ in range(len(tests))])
 
     return excel.make_response_from_array(table,
                                           file_name='Sign-off sheet {} {}-{}.xlsx'.format(module_edition.module.name,
-                                                                                         module_edition.year,
-                                                                                         module_edition.block),
+                                                                                          module_edition.year,
+                                                                                          module_edition.block),
                                           file_type='xlsx')
 
+
+@login_required()
+@require_http_methods(["GET"])
+def export_module_part_signoff(request, pk):
+    """ Creates an excel sheet that contains all tests that are in a course. Used mainly to download sign off excel sheets.
+
+    :param request: Django request
+    :param pk: Module part ID
+    :return: A file response containing an .xlsx file.
+    """
+
+    module_part = get_object_or_404(ModulePart, pk=pk)
+    module_edition = ModuleEdition.objects.get(modulepart=module_part)
+    person = Person.objects.filter(user=request.user).first()
+
+    # Check if user is a module coordinator.
+    if not is_coordinator_or_teacher_of_module_part(person, module_part):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    students = Person.objects.filter(studying__module_edition=module_edition).values('university_number', 'name')
+    tests = Test.objects.filter(module_part=module_part, type='A').values('pk', 'name')
+
+    # Pre-fill first few columns.
+    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 1)]
+
+    # Add the module part name and test name for each test if there is enough header room.
+    if COLUMN_TITLE_ROW > 0:
+        table.append(['', 'Test name >'] + [test['name'] for test in tests])
+
+    # Add machine-readable header row.
+    table.append(['student_id', 'name'] + [test['pk'] for test in tests])
+
+    # pre-fill student numbers
+    for student in students:
+        table.append([student['university_number'], student['name']] + [None for _ in range(len(tests))])
+
+    return excel.make_response_from_array(table,
+                                          file_name='Sign-off sheet {} {}-{}.xlsx'.format(module_edition.module.name,
+                                                                                          module_edition.year,
+                                                                                          module_edition.block),
+                                          file_type='xlsx')
 
 
 @login_required()
@@ -486,7 +558,7 @@ def export_student_import_format(request):
     :param request: Django request; not used in function
     :return: .xlsx file response, named Import_students.xlsx
     """
-    table = [['Student_id', 'name', 'E-mail', 'study', 'role']]
+    table = [['Student_id', 'name', 'E-mail', 'role']]
     return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
 
 
@@ -508,7 +580,8 @@ def export_test(request, pk):
     if not is_coordinator_or_teacher_of_test(person, test):
         raise PermissionDenied('Not allowed to export test.')
 
-    students = Person.objects.filter(studying__module_edition__modulepart=test.module_part)
+    students = Person.objects.filter(studying__module_edition__modulepart=test.module_part).values('university_number',
+                                                                                                   'name')
 
     # Insert padding
     table = [['', '', '', ''] for _ in range(COLUMN_TITLE_ROW)]
@@ -518,7 +591,7 @@ def export_test(request, pk):
 
     # Insert student numbers
     for student in students:
-        table.append([student.university_number, student.name, '', ''])
+        table.append([student['university_number'], student['name'], '', ''])
 
     return excel.make_response_from_array(table, file_name='Test Grades {} {}-{}.xlsx'
                                           .format(test.name,
@@ -654,8 +727,6 @@ def workbook_student_to_module(request, pk):
     # Insert column titles
     table = [['student_id', 'name', 'email', 'role']]
 
-    print("foo")
-
     return excel.make_response_from_array(table, file_name='Module import Sheet.xlsx', file_type='xlsx')
 
 
@@ -691,7 +762,8 @@ def import_student_to_module(request, pk):
             string = ""
             emailpattern = re.compile('e[-]?mail*')
             if students_to_module[COLUMN_TITLE_ROW][0].lower() == 'student_id' and students_to_module[COLUMN_TITLE_ROW][
-                1].lower() == 'name' and emailpattern.match(students_to_module[COLUMN_TITLE_ROW][2].lower()) and students_to_module[COLUMN_TITLE_ROW][3].lower() == 'role':
+                1].lower() == 'name' and emailpattern.match(students_to_module[COLUMN_TITLE_ROW][2].lower()) and \
+                            students_to_module[COLUMN_TITLE_ROW][3].lower() == 'role':
                 context = {}
                 context['created'] = []
                 context['studying'] = []
@@ -736,14 +808,14 @@ def import_student_to_module(request, pk):
                         module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
                         module = Module.objects.get(moduleedition=module_ed)
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])       # studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
                     else:
                         module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
                         module = Module.objects.get(moduleedition=module_ed)
                         context['failed'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])       # studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
                         context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])       # studying.study])
+                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
                 return render(request, 'importer/students-module-imported.html', context={'context': context})
             else:
                 # print(students_to_module[0][0].lower() == 'student_id')
