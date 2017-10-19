@@ -10,7 +10,7 @@ from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
 
-from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying
+from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying, Study
 
 
 class ModuleListView(generic.ListView):
@@ -53,6 +53,7 @@ class ModuleDetailView(generic.DetailView):
         context = super(ModuleDetailView, self).get_context_data(**kwargs)
         user = self.request.user
         context['module_editions'] = ModuleEdition.objects.filter(coordinators__user=user)
+        context['studies'] = Study.objects.filter(modules__moduleedition__in=context['module_editions'])
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -105,6 +106,8 @@ class ModuleEditionDetailView(generic.DetailView):
         coordinators = Coordinator.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
         context['coordinators'] = coordinators
 
+        studies = Study.objects.filter(modules__moduleedition=pk)
+        context['studies'] = studies
         return context
 
 
