@@ -518,7 +518,7 @@ def export_test(request, pk):
 
     # Insert student numbers
     for student in students:
-        table.append([student.university_number, '', '', ''])
+        table.append([student.university_number, student.name, '', ''])
 
     return excel.make_response_from_array(table, file_name='Test Grades {} {}-{}.xlsx'
                                           .format(test.name,
