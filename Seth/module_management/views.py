@@ -97,14 +97,13 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by(
-            'person__university_number')
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
         context['studying'] = studying
 
         module_parts = ModulePart.objects.filter(module_edition=pk)
         context['module_parts'] = module_parts
 
-        coordinators = Coordinator.objects.filter(module_edition=pk).order_by('person__university_number')
+        coordinators = Coordinator.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
         context['coordinators'] = coordinators
 
         studies = Study.objects.filter(modules__moduleedition=pk)
@@ -256,9 +255,10 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by(
-            'person__university_number')
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by('person__university_number')
         context['studying'] = studying
+        teachers = Teacher.objects.filter(module_part=pk).prefetch_related('person').order_by('person__university_number')
+        context['teachers'] = teachers
 
         return context
 

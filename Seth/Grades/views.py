@@ -206,36 +206,10 @@ class StudentView(generic.DetailView):
             remove_cols[module_edition] = []
 
             module_parts = ModulePart.objects \
-                .filter(module_edition=module_edition, test__released=True, test__grade__student=person) \
+                .filter(module_edition=module_edition, test__released=True) \
                 .order_by('id').distinct()
-            tests = Test.objects \
-                .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts, released=True) \
-                .order_by('module_part__id').distinct()
-
-            assignments = Test.objects \
-                .filter(type='A', module_part__in=module_parts, released=True) \
-                .order_by('module_part__id').distinct()
-
-            last_done = False
-            start = None
-            for assignment in assignments:
-                grade = assignment.grade_set.filter(student=person).values('grade').order_by('-time').first()
-                if grade is not None and grade['grade'] == 1.0:
-                    if last_done:
-                        remove_cols[module_edition].append(assignment)
-                    else:
-                        start = assignment
-                    last_done = True
-                else:
-                    if last_done:
-                        remove_cols[module_edition].insert(0, start)
-                        break
-                    start = None
-                    last_done = False
 
             module_parts_dict[module_edition] = module_parts
-            test_dict[module_edition] = tests
-            assign_dict[module_edition] = assignments
 
         temp_dict = dict()
         context_dict = OrderedDict()
@@ -254,8 +228,38 @@ class StudentView(generic.DetailView):
             context_dict[key] = temp_dict[key]
 
         for module_part in module_parts:
-            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), grade__student=person, released=True).distinct('id').count()
-            a_span[module_part] = module_part.test_set.filter(type='A', grade__student=person, released=True).distinct('id').count()
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), released=True).distinct('id').count()
+            a_span[module_part] = module_part.test_set.filter(type='A', released=True).distinct('id').count()
+
+            tests = Test.objects \
+                .filter(Q(type='E') | Q(type='P'), module_part=module_part, released=True) \
+                .order_by('id') \
+                .distinct()
+
+            assignments = Test.objects \
+                .filter(type='A', module_part=module_part, released=True) \
+                .order_by('id').distinct()
+
+            last_done = False
+            start = None
+            for assignment in assignments:
+                grade = assignment.grade_set.filter(student=person).values('grade').order_by('-time').first()
+
+                if grade is not None and grade['grade'] == 1.0:
+                    if last_done:
+                        remove_cols[module_edition].append(assignment)
+                    else:
+                        start = assignment
+                    last_done = True
+                else:
+                    if last_done:
+                        remove_cols[module_edition].insert(0, start)
+                        break
+                    start = None
+                    last_done = False
+
+            test_dict[module_part] = tests
+            assign_dict[module_part] = assignments.filter(grade__student=person, grade__grade=1.0)
 
         for module_edition in modules:
             if remove_cols[module_edition][0] is not None:
