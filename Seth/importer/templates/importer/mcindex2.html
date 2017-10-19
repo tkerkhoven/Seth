@@ -35,19 +35,37 @@
                                                 <span class="display-5">{{ mod }}</span>
 
                                             </div>
-                                            <div style="background: white" class="card-header text-center">
-                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:export_module' mod.pk %}">
-                                                    <input class="btn btn-info pointer" type="submit" value="Download Module worksheet"/>
-                                                </form>
-                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:import_module' mod.pk %}">
-                                                    <input class="btn btn-info pointer" type="submit" value="Upload Module Grades"/>
-                                                </form>
-                                                <form style="display: inline-block; margin-bottom: 0;" action="{% url 'importer:export_student_to_module' mod.pk %}">
-                                                    <input class="btn btn-primary pointer" type="submit" value="Download Student worksheet"/>
-                                                </form>
-                                                <form style="display: inline-block; margin-bottom: 0" action="{% url 'importer:import_student_to_module' mod.pk %}">
-                                                    <input class="btn btn-primary pointer" type="submit" value="Upload Students"/>
-                                                </form>
+
+
+                                            <div class="card-header bg-white">
+                                                <div class="row">
+                                                    <div class="col-lg-4">
+                                                        <div class="card">
+                                                            <div class="card-header card-margin">
+                                                                <span style="font-size: larger">Module Structure</span>
+                                                                <a href="{% url 'importer:import_module_structure' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload module structure">file_upload</i></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <div class="card">
+                                                            <div class="card-header card-margin">
+                                                                <span style="font-size: larger">Students</span>
+                                                                <a href="{% url 'importer:import_student_to_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload students to module">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_student_to_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download student worksheet">file_download</i></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-4">
+                                                        <div class="card">
+                                                            <div class="card-header card-margin">
+                                                                <span style="font-size: larger">Grades</span>
+                                                                <a href="{% url 'importer:import_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload module grades">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_module' mod.pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module worksheet">file_download</i></a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="card-body">
                                                 <div class="row">
@@ -60,7 +78,10 @@
                                                             <div class="col-lg-6">
                                                         {% endif %}
                                                             <div class="card card-margin">
-                                                                <h6 class="card-header">{{ module_part.name }}</h6>
+                                                                <span class="card-header">{{ module_part }}
+                                                                <a href="{% url 'importer:import_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades to module part">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module part grading sheet">file_download</i></a>
+                                                                </span>
                                                                 <ul class="list-group list-group-flush">
                                                                     {% for test in module_part.test_set.all %}
                                                                         <li class="list-group-item">
@@ -88,7 +109,10 @@
                                     {% for module_part in module_part_list %}
                                         <div class="col-md-6">
                                             <div class="card card-margin">
-                                                <h5 class="card-header">{{ module_part }}</h5>
+                                                <span class="card-header">{{ module_part }}
+                                                <a href="{% url 'importer:import_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades to module part">file_upload</i></a>
+                                                <a href="{% url 'importer:export_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module part grading sheet">file_download</i></a>
+                                                </span>
                                                 <ul class="list-group list-group-flush">
                                                     {% for test in module_part.test_set.all %}
                                                         <li class="list-group-item">
