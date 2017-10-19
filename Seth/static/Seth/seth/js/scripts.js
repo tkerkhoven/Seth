@@ -18,6 +18,15 @@ function BlurEdit() {
 
 $(document).ready(function() {
 
+    $('[id^="collapsePart"').on('show.bs.collapse', function () {
+      var id = $(this).attr("data-id");
+      $("#mp_collapse" + id).find("i").html("arrow_drop_up");
+    })
+    $('[id^="collapsePart"').on('hide.bs.collapse', function () {
+      var id = $(this).attr("data-id");
+      $("#mp_collapse" + id).find("i").html("arrow_drop_down");
+    })
+
     $('[data-toggle="popover"]').each( function() {
       $(this).popover({
                         html : true,
