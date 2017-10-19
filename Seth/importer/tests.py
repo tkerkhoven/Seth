@@ -267,6 +267,10 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
 
         self.assertEqual(response.status_code, 403)
@@ -309,6 +313,10 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -368,6 +376,14 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[other_test.module_part.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
 
         self.assertEqual(response.status_code, 200)
@@ -414,6 +430,10 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
 
         self.assertEqual(response.status_code, 403)
 

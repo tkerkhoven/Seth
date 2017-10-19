@@ -432,6 +432,48 @@ def export_module(request, pk):
                                                                                          module_edition.block),
                                           file_type='xlsx')
 
+@login_required()
+@require_http_methods(["GET"])
+def export_module_part(request, pk):
+    """ Creates an excel sheet that contains all tests that are in a course. Used mainly to download sign off excel sheets.
+
+    :param request: Django request
+    :param pk: Module part ID
+    :return: A file response containing an .xlsx file.
+    """
+
+    module_part = get_object_or_404(ModulePart, pk=pk)
+    module_edition = ModuleEdition.objects.get(modulepart=module_part)
+    person = Person.objects.filter(user=request.user).first()
+
+    # Check if user is a module coordinator.
+    if not is_coordinator_or_teacher_of_module_part(person, module_part):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    students = Person.objects.filter(studying__module_edition=module_edition)
+    tests = Test.objects.filter(module_part=module_part)
+
+    # Pre-fill first few columns.
+    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 1)]
+
+    # Add the module part name and test name for each test if there is enough header room.
+    if COLUMN_TITLE_ROW > 0:
+        table.append(['', 'Test name >'] + [test.name for test in tests])
+
+    # Add machine-readable header row.
+    table.append(['student_id', 'name'] + [test.pk for test in tests])
+
+    # pre-fill student numbers
+    for student in students:
+        table.append([student.university_number, student.name] + [None for _ in range(len(tests))])
+
+    return excel.make_response_from_array(table,
+                                          file_name='Sign-off sheet {} {}-{}.xlsx'.format(module_edition.module.name,
+                                                                                         module_edition.year,
+                                                                                         module_edition.block),
+                                          file_type='xlsx')
+
+
 
 @login_required()
 @require_http_methods(["GET"])

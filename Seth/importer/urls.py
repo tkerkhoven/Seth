@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^$', views.ImporterIndexView.as_view(), name='index'),
     url(r'module/(?P<pk>[0-9]+)/get_workbook$', views.export_module, name='export_module'),
     url(r'test/(?P<pk>[0-9]+)/get_workbook$', views.export_test, name='export_test'),
+    url(r'module_part/(?P<pk>[0-9]+)/get_workbook$', views.export_module_part, name='export_module_part'),
     url(r'module/(?P<pk>[0-9]+)$', views.import_module, name='import_module'),
     url(r'module_part/(?P<pk>[0-9]+)$', views.import_module_part, name='import_module_part'),
     url(r'test/(?P<pk>[0-9]+)$', views.import_test, name='import_test'),
