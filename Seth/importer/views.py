@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
+from django.db import transaction
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
     Http404
 from django.shortcuts import render, redirect, get_object_or_404
@@ -17,7 +18,8 @@ import re
 
 from Grades.exceptions import GradeException
 from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module, Study
-from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule
+from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule, \
+    ImportModuleEditionStructureForm
 
 
 # Create your views here.
@@ -57,6 +59,7 @@ COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def import_module(request, pk):
     """Module import. Use an .xlsx file to submit grades to a module edition
 
@@ -174,6 +177,7 @@ def import_module(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def import_module_part(request, pk):
     """Module part import. Use an .xlsx file to submit grades to a module part
 
@@ -297,6 +301,7 @@ def import_module_part(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def import_test(request, pk):
     """ Test import. Use an .xlsx file to submit grades to a test
 
@@ -531,6 +536,7 @@ def save_grades(grades):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def import_student(request):
     person = Person.objects.filter(user=request.user).first()
 
@@ -613,6 +619,7 @@ def workbook_student_to_module(request, pk):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def import_student_to_module(request, pk):
     """
     Take .xlsx file, as produced by def:export_student_import_format and retrieve all students and metainformation from it.
@@ -712,5 +719,51 @@ def import_student_to_module(request, pk):
         return render(request, 'importer/import-module-student.html',
                       {'form': student_form, 'pk': pk})
 
-# else:
-# return HttpResponseBadRequest('You are not an Admin')
+
+class ModuleStructureImporter(View):
+    """Import to bulk-create Module parts and Tests for a module.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_coordinator_or_assistant_of_module(Person.objects.get(user=request.user), kwargs['pk']):
+            super(ModuleStructureImporter, self).dispatch(self, request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You are not the module coordinator of this module.")
+
+
+    def get(self, request, pk):
+        module_structure_form = ImportModuleEditionStructureForm()
+        return render(request, 'importer/import-module-student.html',
+                      {'form': module_structure_form, 'pk': pk})
+
+    @transaction.atomic
+    def post(self, request, pk):
+        module_edition = get_object_or_404(ModuleEdition, pk)
+
+        student_form = ImportModuleEditionStructureForm(request.POST, request.FILES)
+        if student_form.is_valid():
+            file = request.FILES['file']
+            workbook = file.get_book_dict()
+
+            structure = dict()
+            if len(workbook) != 2:
+                raise SuspiciousOperation("Bad worksheet.")
+
+            for page in workbook.keys():
+                module_part = ModulePart.objects.create(name=workbook[page][0][1], module_edition=module_edition)
+
+                for i in range(1, len(workbook[page])):
+
+                    min_grade = float(workbook[page][2][i])
+                    max_grade = float(workbook[page][3][i])
+
+                    if min_grade == 0 and max_grade == 1:
+                        test_type = 'A'
+                    else:
+                        test_type = 'E'
+
+                    Test.objects.create(name=workbook[page][1][i], module_part=module_part, type=test_type
+                                        , minimum_grade=min_grade, maximum_grade=max_grade)
+        else:
+            raise SuspiciousOperation('Bad POST')
+        redirect('module_management:module_edition_detail', pk)
