@@ -17,7 +17,8 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link
-                                    {% if is_teacher and not is_module_coordinator %} active {% else %} disabled {% endif %}"
+                                    {% if is_teacher and not is_module_coordinator %} active {% endif %}
+                                    {% if not is_module_coordinator %} disabled {% endif %}"
                                     id="teacher-tab" data-toggle="tab" href="#teacher" role="tab" aria-controls="teacher">As teacher</a>
                             </li>
                         </ul>
@@ -112,20 +113,28 @@
                             <div class="tab-pane fade
                                 {% if is_teacher and not is_module_coordinator %}show active{% endif %}" id="teacher" role="tabpanel" aria-labelledby="teacher-tab">
                                 <div class="row">
-                                    {% for module_part in module_part_list %}
+                                    {% for module_part in module_parts_list.module_parts %}
                                         <div class="col-md-6">
                                             <div class="card card-margin">
-                                                <span class="card-header">{{ module_part }}
+                                                <span class="card-header">{{ module_part.name }}
                                                 <a href="{% url 'importer:import_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades to module part">file_upload</i></a>
                                                 <a href="{% url 'importer:export_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module part grading sheet">file_download</i></a>
                                                 </span>
                                                 <ul class="list-group list-group-flush">
-                                                    {% for test in module_part.test_set.all %}
-                                                        <li class="list-group-item">
-                                                            {{ test.name }}
-                                                            <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
-                                                            <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
-                                                        </li>
+                                                    {% for test in module_part.tests %}
+                                                        {% if test.signoff %}
+                                                            <li class="list-group-item" style="background: rgba(0,0,0,.03)">
+                                                                {{ test.name }}
+                                                                <a href="{% url 'importer:import_module_part' test.module_part_pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_module_part_signoff' test.module_part_pk %}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
+                                                            </li>
+                                                         {% else %}
+                                                            <li class="list-group-item">
+                                                                {{ test.name }}
+                                                                <a href="{% url 'importer:import_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i></a>
+                                                                <a href="{% url 'importer:export_test' test.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download template sheet">file_download</i></a>
+                                                            </li>
+                                                        {% endif %}
                                                     {% endfor %}
                                                 </ul>
                                             </div>
