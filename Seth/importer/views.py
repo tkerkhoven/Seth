@@ -47,7 +47,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
             coordinator_or_teacher = True
         if ModulePart.objects.filter(teacher__person__user=self.request.user):
             context['is_teacher'] = True
-            context['module_part_list'] = ModulePart.objects.filter(teacher__person__user=self.request.user)
+            context['module_parts_list'] = self.make_module_parts_context()
             coordinator_or_teacher = True
         if not coordinator_or_teacher:
             raise PermissionDenied('Only module coordinators or teachers can view this page.')
@@ -83,6 +83,32 @@ class ImporterIndexView(LoginRequiredMixin, View):
             context['module_editions'].append(edition)
         return context
 
+    def make_module_parts_context(self):
+        module_parts =  ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
+            'test_set')
+
+        context = dict()
+        context['module_parts'] = []
+        for module_part in module_parts:
+            part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
+            sign_off_assignments = []
+            for test in module_part.test_set.all():
+                if test.type is 'A':
+                    sign_off_assignments.append(test)
+                    continue
+                test_item = {'name': test.name, 'pk': test.pk, 'signoff': False}
+                part['tests'].append(test_item)
+            if sign_off_assignments:
+                soa_line = {'module_part_pk': module_part.pk, 'signoff': True}
+                if len(sign_off_assignments) > 1:
+                    soa_line['name'] =  'S/O assignments {} to {}'.format(sign_off_assignments[0].name,
+                                                              sign_off_assignments[-1].name)
+                else:
+                    soa_line['name'] =  'S/O assignment {}'.format(sign_off_assignments[0].name)
+                part['tests'].append(soa_line)
+            context['module_parts'].append(part)
+
+        return context
 
 COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
