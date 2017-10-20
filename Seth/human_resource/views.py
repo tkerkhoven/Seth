@@ -189,7 +189,7 @@ class DeleteUser(generic.DeleteView):
         user = Person.objects.filter(user=request.user)
         person = Person.objects.get(id=self.kwargs['pk'])
         if person in known_persons(user):
-            return super(PersonDetailView, self).dispatch(request, *args, **kwargs)
+            return super(PersonDetailView, self).dispatch(request, )
         else:
             raise PermissionDenied('You are not allowed to access the details of this user')
 

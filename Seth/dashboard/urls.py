@@ -6,8 +6,8 @@ from . import views
 
 
 urlpatterns = [
-    url(r'^$', views.home, name='home'),
-    url(r'^dashboard/$', views.home, name='home'),
+    url(r'^$', views.DashboardView.as_view(), name='home'),
+    url(r'^dashboard/$', views.DashboardView.as_view(), name='home'),
     url(r'^dashboard/modules/$', views.modules, name='modules'),
     url(r'settings/$', views.settings, name='settings'),
     url(r'^successfully_logged_out/$', views.logged_out, name='logged_out'),
