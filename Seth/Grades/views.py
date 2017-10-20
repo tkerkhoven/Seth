@@ -119,8 +119,8 @@ class GradeView(generic.DetailView):
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
             .filter(module_edition=mod_ed) \
-            .order_by('person_id', 'person__Submitter__test_id', '-person__Submitter__id') \
-            .distinct('person_id', 'person__Submitter__test_id')
+            .order_by('person__id', 'person__Submitter__test__id', '-person__Submitter__id') \
+            .distinct('person__id', 'person__Submitter__test__id')
 
         students = dict()
         temp_dict = dict()

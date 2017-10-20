@@ -17,7 +17,7 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
+        $("#delete_icon").remove();
         $(this).replaceWith(viewableText);
     }
     else {
@@ -42,6 +42,7 @@ function BlurEdit() {
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
         viewableText.attr('data-url', $(this).attr('data-url'));
+        $("#delete_icon").remove();
         $(this).replaceWith(viewableText);
     }
 };
@@ -137,7 +138,15 @@ $(document).ready(function() {
 
       var edit = $("<input type=number max=" + $(this).attr('data-grade-max') +
         " min=" + $(this).attr('data-grade-min') +
-        " step=0.25 data-url=\"" + $(this).find('a').first().attr("data-url") + "\"/>");
+        " step=0.25" +
+        " data-url=\"" + $(this).attr("data-edit-url") + "\"/>" +
+        " <i class=\"material-icons float-right\"" +
+            " id=\"delete_icon\"" +
+            " data-toggle=\"popover\"" +
+            " data-url=\"" + $(this).attr("data-remove-url") + "\">" +
+            "delete_forever" +
+        "</i>"
+      );
       edit.val($(this).find('a').first().html());
       edit.attr('old', $(this).find('a').first().html());
       edit.attr('id', $(this).find('a').first().attr('id'));

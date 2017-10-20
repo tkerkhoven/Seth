@@ -131,8 +131,8 @@
 
                                             {% for test in tests %}
                                             {% with grade=grades|key:test.id|key:0 %}
-                                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                <a id="grade_{{ student }}_{{ test.id }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student %}" title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
+                                            <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student %}">
+                                                <a id="grade_{{ student }}_{{ test.id }}" title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
                                             </td>
                                             {% endwith %}
                                             {% endfor %}
