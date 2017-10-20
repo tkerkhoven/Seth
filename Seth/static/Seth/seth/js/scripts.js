@@ -7,13 +7,44 @@ $(".btn").mouseup(function(){
     $(this).blur();
 });
 
+function csrfSafeMethod(method) {
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
 function BlurEdit() {
     var text = $(this).val();
     var viewableText = $("<a></a>");
-    viewableText.html(text);
-    viewableText.attr('id', $(this).attr('id'));
-    viewableText.attr('title', $(this).attr('title'));
-    $(this).replaceWith(viewableText);
+    if(text == "" || parseInt(text) < $(this).attr("min") || parseInt(text) > $(this).attr("max")) {
+        viewableText.html($(this).attr('old'));
+        viewableText.attr('id', $(this).attr('id'));
+        viewableText.attr('title', $(this).attr('title'));
+        viewableText.attr('data-url', $(this).attr('data-url'));
+        $(this).replaceWith(viewableText);
+    }
+    else {
+        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+        $.ajax({
+          beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+
+          url: $(this).attr('data-url'),
+          data: {
+            'grade': parseInt(text)
+          },
+
+          method: "POST",
+          dataType: 'json'
+        });
+
+        viewableText.html(text);
+        viewableText.attr('id', $(this).attr('id'));
+        viewableText.attr('title', $(this).attr('title'));
+        viewableText.attr('data-url', $(this).attr('data-url'));
+        $(this).replaceWith(viewableText);
+    }
 };
 
 $(document).ready(function() {
@@ -76,14 +107,12 @@ $(document).ready(function() {
       updateColoring();
     });
 
-    /*
-    Grade click change
     $(document).on('click', 'a[id^="grade_"]', function() {
-
       var edit = $("<input type=number max=" + $(this).parent().closest('td').attr('data-grade-max') +
         " min=" + $(this).parent().closest('td').attr('data-grade-min') +
-        " step=0.25/>");
+        " step=0.25 data-url=\"" + $(this).attr("data-url") + "\"/>");
       edit.val($(this).html());
+      edit.attr('old', $(this).html());
       edit.attr('id', $(this).attr('id'));
       edit.attr('title', $(this).attr('title'));
 
@@ -98,7 +127,6 @@ $(document).ready(function() {
       edit.focus();
       edit.blur(BlurEdit)
     });
-    */
 
     $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
         $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
@@ -206,23 +234,6 @@ $(document).ready(function() {
     table.on('draw', function() {
       $('[data-toggle="popover"]').popover();
       updateColoring();
-    })
-
-    $(".expandable").click(function() {
-      name = $(this).attr("data-original-name");
-      $(this).attr("data-original-name", $(this).html())
-      $(this).html(name);
-
-      if($(this).attr("data-expanded") == 0) {
-        $(this).attr("data-expanded", 1);
-        $(this).parent().addClass("dashed");
-        studenttable.columns(".remove").visible(false);
-      }
-      else {
-        $(this).attr("data-expanded", 0);
-        $(this).parent().removeClass("dashed");
-        studenttable.columns('.remove').visible(true);
-      }
     });
 
     $("#lowerNum").bind('keyup mouseup', function () {

@@ -2,6 +2,8 @@
 
 {% block title %}Gradebook{% endblock %}
 
+{% csrf_token %}
+
 {% block content %}
     {% include 'navbar.html' %}
     {% load grade_extras %}
@@ -19,7 +21,7 @@
     }
 
     .min_width {
-        min-width: 150px;
+        min-width: 100px;
     }
 
     .md-36 {
@@ -97,13 +99,13 @@
                                         <tr>
                                             <th class="min_width">Student</th>
                                             {% for module_part in module_parts %}
-                                                <th class="no-sort min_width" colspan="{{ ep_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
+                                                <th class="no-sort" colspan="{{ ep_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
                                             {% endfor %}
                                         </tr>
                                         <tr>
                                             <td></td>
                                             {% for test in tests %}
-                                            <td class="no-sort no-wrap">
+                                            <td class="no-sort no-wrap min_width">
                                                 <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
                                                 {% if test.released %}
                                                 <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>
@@ -125,7 +127,7 @@
                                             {% for test in tests %}
                                             {% with grade=grades|key:test.id|key:0 %}
                                             <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                <a id="grade_{{ student }}_{{ test.id }}" title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
+                                                <a id="grade_{{ student }}_{{ test.id }}" data-url="{% url 'grades:edit' pk=test.id sid=student %}" title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
                                                 {% if grades|key:test.id != 'N/A' %}
                                                 <a id="gradepop_{{ student }}_{{ test.id }}" class="float-right" data-url="{% url 'grades:remove' pk=test.id sid=student %}" data-toggle="popover"><i class="material-icons">arrow_drop_down</i></a>
                                                 {% endif %}
