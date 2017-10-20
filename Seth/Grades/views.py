@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import redirect
+from django.utils import timezone
 from django.views import generic
 import django_excel as excel
 from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
@@ -118,7 +119,7 @@ class GradeView(generic.DetailView):
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
             .filter(module_edition=mod_ed) \
-            .order_by('person_id', 'person__Submitter__test_id', 'person__Submitter__time') \
+            .order_by('person_id', 'person__Submitter__test_id', '-person__Submitter__id') \
             .distinct('person_id', 'person__Submitter__test_id')
 
         students = dict()
@@ -196,7 +197,7 @@ class StudentView(generic.DetailView):
             .prefetch_related('test') \
             .values('grade', 'test') \
             .filter(student=person, test__released=True) \
-            .order_by('test', 'time')
+            .order_by('test', '-id')
 
         # Gather all modules which the person is studying.
         modules = ModuleEdition.objects \
@@ -342,7 +343,7 @@ class ModuleStudentView(generic.DetailView):
             .prefetch_related('test') \
             .values('grade', 'released', 'test') \
             .filter(test__in=tests, student=student) \
-            .order_by('test', 'time')
+            .order_by('test', '-id')
 
         temp_dict = dict()
         context_dict = OrderedDict()
@@ -416,7 +417,7 @@ class ModulePartView(generic.DetailView):
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
             .filter(module_edition__modulepart=module_part) \
-            .order_by('person__Submitter__test', 'person__Submitter__time')
+            .order_by('person__Submitter__test', '-person__Submitter__id')
 
         # Gather all tests in the module part, ordered by the date of examination.
         tests = Test.objects \
@@ -505,7 +506,7 @@ class TestView(generic.DetailView):
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
             .filter(module_edition__modulepart__test=test) \
-            .order_by('person__Submitter__test', 'person__Submitter__time')
+            .order_by('person__Submitter__test', '-person__Submitter__id')
 
         students = dict()
         temp_dict = dict()
@@ -673,15 +674,17 @@ def edit(request, *args, **kwargs):
 
     if request.POST:
         student = kwargs['sid']
-        g = test.grade_set.filter(student=student).last()
-
-        g.grade = request.POST.get('grade', None)
-        g.save()
+        g = test.grade_set.create(student_id=student,
+                              teacher=Person.objects.get(user=user),
+                              test=test,
+                              grade=request.POST.get('grade', None),
+                              description="")
 
         data = {
-            'succeeded': True
+            'grade': g.grade
         }
 
+    print(data['grade'])
     # Return to the page the user came from.
     return JsonResponse(data)
 
@@ -691,7 +694,7 @@ def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
     :param dicts: The queryset to be changed.
     :param students: An empty dictionary to be filled with student information.
     :param temp_dict: An empty dictionary to be filled with grades.
-    :param testallreleased: An empty dictionary to be filled with wether or not a test has all its grades released.
+    :param testallreleased: An empty dictionary to be filled with whether or not a test has all its grades released.
     :return: -
     """
     for d in dicts:
