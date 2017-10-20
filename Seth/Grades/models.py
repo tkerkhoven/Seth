@@ -188,6 +188,8 @@ class Test(models.Model):
     def get_absolute_url(self):
         return reverse('module_management:test_detail', kwargs={'pk': self.pk})
 
+    class Meta:
+        ordering = ['-type', 'id']
 
 class Studying(models.Model):
     person = models.ForeignKey(Person)
