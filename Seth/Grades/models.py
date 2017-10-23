@@ -79,7 +79,7 @@ class ModuleEdition(models.Model):
 
     @property
     def code(self):
-        return '{}-{}-{}'.format(self.year, self.module.code, self.block)
+        return '{}-{}-{}'.format(self.module.code, self.year, self.block)
 
     # Should be the same as BLOCKS
     @property
