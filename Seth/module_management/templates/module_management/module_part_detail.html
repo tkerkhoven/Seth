@@ -107,14 +107,12 @@
                         <tr>
                             <th>Name</th>
                             <th>University Number</th>
-                            <th>Study</th>
                             <th>Role</th>
                         </tr>
                         {% for s in studying %}
                             <tr>
                                 <td>{{ s.person.name }}</td>
                                 <td>{{ s.person.university_number }}</td>
-                                <td>{{ s.study.abbreviation }}</td>
                                 <td>{{ s.role }}</td>
                             </tr>
                         {% endfor %}
