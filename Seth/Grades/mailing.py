@@ -1,6 +1,35 @@
+from django.core import mail
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from Grades.models import *
+
+DOMAIN = 'farm11.ewi.utwente.nl'
+
+def mail_module_edition_participants(module_edition, subject, body):
+    """Sends an email to all students in a module individually. Returns a list of Persons for which the mailing failed.
+
+    :param module_edition: Module edition to mail to.
+    :param subject: Subject line of the email.
+    :param body: Body of email.
+    :return: list of Persons for which emailing failed.
+    """
+    students = Person.objects.filter(studying__module_edition=module_edition)
+
+    failed_mails = []
+
+    for student in students:
+
+        connection = mail.get_connection()
+
+        sent = EmailMessage(
+            to=[student.email],
+            subject=subject,
+            body=body,
+            connection=connection
+        ).send()
+        if sent == 0:
+            failed_mails.append(student)
+    return failed_mails
 
 def make_mail_grade_released(person, coordinator, grade=None, test=None):
     """ Generates an EmailMessage that notifies the Person of his grade being released.
