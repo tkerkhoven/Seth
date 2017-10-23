@@ -22,7 +22,7 @@ def mail_module_edition_participants(module_edition, subject, body):
         connection = mail.get_connection()
 
         sent = EmailMessage(
-            from_email='noreply_seth@farm11.ewi.utwente.nl',
+            from_email='noreply_seth@{}'.format(DOMAIN),
             to=[student.email],
             subject=subject,
             body=body,
@@ -48,7 +48,7 @@ def make_mail_grade_released(person, coordinator, grade=None, test=None):
     module_edition = test.module_part.module_edition
 
     email = EmailMultiAlternatives(
-        from_email='noreply_seth@farm11.ewi.utwente.nl',
+        from_email='noreply_seth@{}'.format(DOMAIN),
         to=(person.email,),
         subject='[SETH] {} ({}-{}) Grade released: {}'.format(module_edition.module.name, module_edition.year,
                                                               module_edition.block, test.name),
@@ -87,7 +87,7 @@ def make_mail_grade_retracted(person, coordinator, grade=None, test=None):
     module_edition = test.module_part.module_edition
 
     email = EmailMultiAlternatives(
-        from_email='noreply_seth@farm11.ewi.utwente.nl',
+        from_email='noreply_seth@{}'.format(DOMAIN),
         to=(person.email,),
         subject='[SETH] {} ({}-{}) Grade retracted: {}'.format(module_edition.module.name, module_edition.year,
                                                               module_edition.block, test.name),
