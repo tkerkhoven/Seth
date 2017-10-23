@@ -97,7 +97,7 @@ class ModuleEdition(models.Model):
         return reverse('module_management:module_edition_detail', kwargs={'pk': self.pk})
 
     def __str__(self):
-        return '{} ({})'.format(self.module.name, self.code)
+        return '{} ({}-{})'.format(self.module.name, self.year, self.block)
 
     class Meta:
         unique_together = (('year', 'module', 'block'),)

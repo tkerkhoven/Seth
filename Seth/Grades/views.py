@@ -2,13 +2,19 @@ from collections import OrderedDict
 from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
-from django.views import generic
+from django.views import generic, View
 import django_excel as excel
-from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
+from django.views.generic import FormView
+
+from Grades import mailing
+from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted, mail_module_edition_participants
+from dashboard.forms import EmailPreviewForm
+from permission_utils import is_coordinator_or_teacher_of_test, is_coordinator_of_module
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study
 
 
@@ -188,97 +194,83 @@ class StudentView(generic.DetailView):
         person = Person.objects.get(id=self.kwargs['pk'])
 
         module_parts_dict = dict()
-        test_dict = dict()
-        assign_dict = dict()
-        remove_cols = dict()
+        tests_dict = dict()
+        grades_dict = dict()
+        assignments_dict = dict()
+        name_override_dict = dict()
 
-        # Gather all connected grade objects to the person.
-        dicts = Grade.objects \
+        grades_list = Grade.objects \
             .prefetch_related('test') \
-            .values('grade', 'test') \
             .filter(student=person, test__released=True) \
-            .order_by('test', '-id')
+            .values('grade', 'test') \
+            .order_by('test_id', '-id') \
+            .distinct('test_id')
 
-        # Gather all modules which the person is studying.
-        modules = ModuleEdition.objects \
-            .filter(studying__person=person)
+        for grade in grades_list:
+            grades_dict[grade['test']] = grade['grade']
 
-        # For each of these modules, gather the module parts and tests.
-        for module_edition in modules:
-            remove_cols[module_edition] = []
+        modules_list = ModuleEdition.objects \
+            .filter(studying__person=person) \
+            .order_by('id')
 
-            module_parts = ModulePart.objects \
-                .filter(module_edition=module_edition, test__released=True) \
-                .order_by('id').distinct()
-
-            module_parts_dict[module_edition] = module_parts
-
-        temp_dict = dict()
-        context_dict = OrderedDict()
-        ep_span = dict()
-        a_span = dict()
-        name_override = dict()
-
-        # Changing the queryset to something more useable.
-        # Makes a dictionary of grades (temp_dict[TEST] = [GRADE])
-        # Due to the ordering, the last grade will be the grade passed to the template (CAN IMPROVE)
-        for d in dicts:
-            temp_dict[d['test']] = d['grade']
-
-        # Sort the dictionary
-        for key in sorted(temp_dict):
-            context_dict[key] = temp_dict[key]
-
-        for module_part in module_parts:
-            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), released=True).distinct('id').count()
-            a_span[module_part] = module_part.test_set.filter(type='A', released=True).distinct('id').count()
-
-            tests = Test.objects \
-                .filter(Q(type='E') | Q(type='P'), module_part=module_part, released=True) \
+        for module in modules_list:
+            module_parts_list = ModulePart.objects \
+                .prefetch_related('test_set') \
+                .filter(module_edition=module, test__released=True) \
                 .order_by('id') \
-                .distinct()
+                .distinct('id')
 
-            assignments = Test.objects \
-                .filter(type='A', module_part=module_part, released=True) \
-                .order_by('id').distinct()
+            for module_part in module_parts_list:
+                tests = module_part.test_set \
+                    .filter(Q(type='E') | Q(type='P'), released=True) \
+                    .order_by('module_part__id','id')
 
-            last_done = False
-            start = None
-            for assignment in assignments:
-                grade = assignment.grade_set.filter(student=person).values('grade').order_by('-time').first()
+                assignments = list(module_part.test_set \
+                    .filter(type='A', released=True) \
+                    .order_by('module_part__id','id'))
 
-                if grade is not None and grade['grade'] == 1.0:
-                    if last_done:
-                        remove_cols[module_edition].append(assignment)
+                tests_dict[module_part] = tests
+
+                streak = 0
+                start = None
+                current = ""
+                remove_list = []
+
+                for assignment in assignments:
+                    if grades_dict[assignment.id] == 1.0:
+                        if streak > 0:
+                            current = str(start.name) + " to " + str(assignment.name)
+                            remove_list.append(assignment)
+                            streak += 1
+                        else:
+                            start = assignment
+                            streak = 1
                     else:
-                        start = assignment
-                    last_done = True
-                else:
-                    if last_done:
-                        remove_cols[module_edition].insert(0, start)
-                        break
-                    start = None
-                    last_done = False
+                        remove_list.append(assignment)
+                        if streak > 0:
+                            if streak > 1:
+                                name_override_dict[start] = current
+                            streak = 0
+                            start = None
 
-            test_dict[module_part] = tests
-            assign_dict[module_part] = assignments.filter(grade__student=person, grade__grade=1.0)
+                if streak > 1:
+                    name_override_dict[start] = current
 
-        for module_edition in modules:
-            if remove_cols[module_edition][0] is not None:
-                name_override[remove_cols[module_edition][0]] = remove_cols[module_edition][0].name + " to " + remove_cols[module_edition][-1].name
-                remove_cols[module_edition] = remove_cols[module_edition][1:]
+                for remove in remove_list:
+                    assignments.remove(remove)
+
+                assignments_dict[module_part] = assignments
+
+            module_parts_dict[module] = module_parts_list
 
         # Add everything to the context
-        context['name_override'] = name_override
-        context['ep_span'] = ep_span
-        context['a_span'] = a_span
-        context['student'] = person
-        context['modules'] = modules
+        context['studentname'] = person.name
+        context['modules'] = modules_list
         context['module_parts'] = module_parts_dict
-        context['tests'] = test_dict
-        context['assignments'] = assign_dict
-        context['gradedict'] = context_dict
-        context['remove_cols'] = remove_cols
+        context['tests'] = tests_dict
+        context['grades'] = grades_dict
+        context['assignments'] = assignments_dict
+        context['name_override'] = name_override_dict
 
         return context
 
@@ -534,6 +526,49 @@ class TestView(generic.DetailView):
         return context
 
 
+
+class EmailPreviewView(FormView):
+    template_name = 'Grades/email_preview.html'
+    form_class = EmailPreviewForm
+
+    # Check permissions
+    def dispatch(self, request, *args, **kwargs):
+        test = get_object_or_404(Test, pk=kwargs['pk'])
+        person = Person.objects.filter(user=self.request.user)
+        if is_coordinator_of_module(person=person, module_edition=test.module_part.module_edition):
+            return super(EmailPreviewView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You are not allowed to send emails to students.")
+
+    def get_initial(self):
+        test = Test.objects.filter(pk=self.kwargs['pk']).prefetch_related('module_part__module_edition__module').first()
+        return {'test': test.pk,
+                'subject': '[SETH] {} ({}-{}) Grade released: {}'.format(test.module_part.module_edition.module.name, test.module_part.module_edition.year,
+                                                              test.module_part.module_edition.block, test.name),
+                'message': 'Dear student, \n\nThe grades for test {} have been released. Go to {} to see your '
+                           'grade.\n\nKind regards,\n\n{}\n\n=======================================\n'
+                           'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
+                           ' grades or any other kinds of information in this system.'.format(test.name, mailing.DOMAIN, Person.objects.get(user=self.request.user).name)}
+
+    def form_valid(self, form):
+        test = get_object_or_404(Test, pk=self.kwargs['pk'])
+        failed = mail_module_edition_participants(
+            module_edition=test.module_part.module_edition,
+            subject=form.cleaned_data['subject'],
+            body=form.cleaned_data['message'])
+        if failed:
+            return HttpResponse('Sending of the email failed for: \n{}'.format(
+                ['{}\t{}\n'.format(student.university_number, student.name) for student in failed]
+            ))
+        else:
+            return redirect('grades:test', test.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super(EmailPreviewView, self).get_context_data(**kwargs)
+        context['pk'] = context['view'].kwargs['pk']
+        return context
+
+
 def export(request, *args, **kwargs):
     """ The view gotten when trying to export grades to .xls format.
     :param request: The HTML request
@@ -673,15 +708,14 @@ def edit(request, *args, **kwargs):
 
     if request.POST:
         student = kwargs['sid']
-        g, created = test.grade_set.get_or_create(student_id=student,
+        g = test.grade_set.create(student_id=student,
                               teacher=Person.objects.get(user=user),
                               test=test,
                               grade=request.POST.get('grade', None),
                               description="")
 
         data = {
-            'grade': g.grade,
-            'created': created
+            'grade': g.grade
         }
 
     # Return to the page the user came from.
