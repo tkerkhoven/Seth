@@ -53,7 +53,7 @@ class ModuleDetailView(generic.DetailView):
         context = super(ModuleDetailView, self).get_context_data(**kwargs)
         user = self.request.user
         context['module_editions'] = ModuleEdition.objects.filter(coordinators__user=user)
-        context['studies'] = Study.objects.filter(modules__moduleedition__in=context['module_editions'])
+        context['studies'] = Study.objects.filter(modules__moduleedition__in=context['module_editions']).distinct()
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -150,7 +150,7 @@ class ModuleEditionCreateView(generic.CreateView):
 
     def get_initial(self):
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest().pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
         return {
             'module': Module.objects.get(pk=pk),
             'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition)
@@ -168,7 +168,7 @@ class ModuleEditionCreateView(generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
 
         if not Person.objects.filter(coordinator__module_edition=latest_module_edition).filter(user=user):
             raise PermissionDenied()
@@ -187,7 +187,7 @@ class ModuleEditionCreateView(generic.CreateView):
         initial = self.get_form_kwargs()['initial']
         data = self.get_form_kwargs()['data']
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('year').pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
 
         module_edition = ModuleEdition(
             module=initial['module'],
