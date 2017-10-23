@@ -334,8 +334,11 @@ class ModuleStudentView(generic.DetailView):
         dicts = Grade.objects \
             .prefetch_related('test') \
             .values('grade', 'released', 'test') \
-            .filter(test__in=tests, student=student) \
-            .order_by('test', 'id')
+            .filter(Q(test__in=tests) | Q(test__in=assignments), student=student) \
+            .order_by('test_id', '-id') \
+            .distinct('test_id')
+
+        print(dicts)
 
         temp_dict = dict()
         context_dict = OrderedDict()
