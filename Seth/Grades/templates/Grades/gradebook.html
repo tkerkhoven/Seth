@@ -2,8 +2,6 @@
 
 {% block title %}Gradebook{% endblock %}
 
-{% csrf_token %}
-
 {% block content %}
     {% include 'navbar.html' %}
     {% load grade_extras %}
@@ -216,11 +214,8 @@
             <p>Are you sure you want to remove this grade?</p>
           </div>
           <div class="modal-footer">
-            <form id="remove_grade_yes" method="POST">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-default" value="Yes" />
-                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-            </form>
+            <button id="remove_grade_yes" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
           </div>
         </div>
       </div>

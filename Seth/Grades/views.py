@@ -639,12 +639,6 @@ def release(request, *args, **kwargs):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
-def signoff(request, *args, **kwargs):
-
-    # Return to the page the user came from.
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
 def remove(request, *args, **kwargs):
 
     user = request.user
@@ -654,12 +648,17 @@ def remove(request, *args, **kwargs):
     if not test:
         raise PermissionDenied()
 
-    if request.POST:
-        student = kwargs['sid']
-        test.grade_set.filter(student=student).delete()
+    data = {}
+
+    student = kwargs['sid']
+    test.grade_set.filter(student=student).delete()
+
+    data = {
+        'deleted': not test.grade_set.filter(student=student).exists()
+    }
 
     # Return to the page the user came from.
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return JsonResponse(data)
 
 def edit(request, *args, **kwargs):
 
@@ -674,17 +673,17 @@ def edit(request, *args, **kwargs):
 
     if request.POST:
         student = kwargs['sid']
-        g = test.grade_set.create(student_id=student,
+        g, created = test.grade_set.get_or_create(student_id=student,
                               teacher=Person.objects.get(user=user),
                               test=test,
                               grade=request.POST.get('grade', None),
                               description="")
 
         data = {
-            'grade': g.grade
+            'grade': g.grade,
+            'created': created
         }
 
-    print(data['grade'])
     # Return to the page the user came from.
     return JsonResponse(data)
 
