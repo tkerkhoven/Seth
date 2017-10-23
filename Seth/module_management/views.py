@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
 from django.http import HttpResponseBadRequest, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
@@ -53,7 +53,7 @@ class ModuleDetailView(generic.DetailView):
         context = super(ModuleDetailView, self).get_context_data(**kwargs)
         user = self.request.user
         context['module_editions'] = ModuleEdition.objects.filter(coordinators__user=user)
-        context['studies'] = Study.objects.filter(modules__moduleedition__in=context['module_editions'])
+        context['studies'] = Study.objects.filter(modules__moduleedition__in=context['module_editions']).distinct()
         return context
 
     def dispatch(self, request, *args, **kwargs):
@@ -116,6 +116,11 @@ class ModuleEditionUpdateView(generic.UpdateView):
     model = ModuleEdition
     fields = ['year', 'block']
 
+    def get_context_data(self, **kwargs):
+        context = super(ModuleEditionUpdateView, self).get_context_data(**kwargs)
+        context['module_edition_override'] = str(ModuleEdition.objects.get(pk=self.kwargs['pk']))
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         user = request.user
@@ -123,14 +128,7 @@ class ModuleEditionUpdateView(generic.UpdateView):
         if not ModuleEdition.objects.filter(coordinators__user=user).filter(pk=pk):
             raise PermissionDenied()
 
-        # Try to dispatch to the right method; if a method doesn't exist,
-        # defer to the error handler. Also defer to the error handler if the
-        # request method isn't on the approved list.
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
-        return handler(request, *args, **kwargs)
+        return super(ModuleEditionUpdateView, self).dispatch(request, *args, **kwargs)
 
 
 class ModuleEditionCreateForm(ModelForm):
@@ -150,7 +148,7 @@ class ModuleEditionCreateView(generic.CreateView):
 
     def get_initial(self):
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest().pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
         return {
             'module': Module.objects.get(pk=pk),
             'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition)
@@ -168,7 +166,7 @@ class ModuleEditionCreateView(generic.CreateView):
     def dispatch(self, request, *args, **kwargs):
         user = request.user
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('start').pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
 
         if not Person.objects.filter(coordinator__module_edition=latest_module_edition).filter(user=user):
             raise PermissionDenied()
@@ -187,7 +185,7 @@ class ModuleEditionCreateView(generic.CreateView):
         initial = self.get_form_kwargs()['initial']
         data = self.get_form_kwargs()['data']
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).latest('year').pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
 
         module_edition = ModuleEdition(
             module=initial['module'],

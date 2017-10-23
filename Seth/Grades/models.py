@@ -1,6 +1,5 @@
-import datetime
-
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -104,6 +103,17 @@ class ModuleEdition(models.Model):
         unique_together = (('year', 'module', 'block'),)
         ordering = ['module', '-year', '-block']
 
+    def validate_unique(self, exclude=None):
+        super(ModuleEdition, self).validate_unique()
+        if ModuleEdition.objects.filter(module=self.module, year=self.year, block=self.block).exists():
+            raise ValidationError(
+                {
+                    NON_FIELD_ERRORS: [
+                        'Module Edition is not unique',
+                    ],
+                }
+            )
+
 
 class ModulePart(models.Model):
     name = models.CharField(max_length=255)
@@ -191,6 +201,7 @@ class Test(models.Model):
     class Meta:
         ordering = ['-type', 'id']
 
+
 class Studying(models.Model):
     person = models.ForeignKey(Person)
     # study = models.ForeignKey(Study)
@@ -201,7 +212,7 @@ class Studying(models.Model):
         unique_together = (('person', 'module_edition'),)
 
     def __str__(self):
-        return '{} - {} ({})'.format(self.person, self.module_edition, self.role)       #, self.study)
+        return '{} - {} ({})'.format(self.person, self.module_edition, self.role)  # , self.study)
 
 
 class Criterion(models.Model):

@@ -1,6 +1,7 @@
 var oldto = 5.5;
 var oldfrom = 5;
 var searchString = "";
+var highlighted = "";
 
 $(".btn").mouseup(function(){
     $(this).blur();
@@ -10,6 +11,22 @@ function csrfSafeMethod(method) {
     return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function BlurEdit() {
     var text = $(this).val();
     var viewableText = $("<a></a>");
@@ -17,33 +34,76 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        $("#delete_icon").remove();
+        $("#remove_grade_a").remove();
+        highlighted = "";
         $(this).replaceWith(viewableText);
     }
     else {
-        var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
-        $.ajax({
-          beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-              xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-          },
+        oldHtml = $(this).attr("old");
 
-          url: $(this).attr('data-url'),
-          data: {
-            'grade': parseInt(text)
-          },
-
-          method: "POST",
-          dataType: 'json'
-        });
-
-        viewableText.html(text);
+        viewableText.html('<i class="material-icons">loop</i>');
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
         viewableText.attr('data-url', $(this).attr('data-url'));
-        $("#delete_icon").remove();
+        $("#remove_grade_a").remove();
+        highlighted = "";
         $(this).replaceWith(viewableText);
+
+        if(text != oldHtml) {
+
+          viewableText.parent().removeClass("success warning error loading");
+          viewableText.parent().addClass("loading");
+
+          var csrftoken = getCookie('csrftoken');
+          $.ajax({
+            beforeSend: function(xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+              }
+            },
+
+            url: $(this).attr('data-url'),
+            data: {
+              'grade': parseInt(text)
+            },
+
+            method: "POST",
+            dataType: 'json',
+
+            success: function(data) {
+              viewableText.parent().attr("data-grade", data.grade);
+              viewableText.html(data.grade);
+
+              if($("#colortoggle").hasClass("coloron")) {
+                updateColoring();
+              }
+              else {
+                viewableText.parent().removeClass("loading");
+              }
+            },
+
+            error: function(data) {
+              viewableText.html(oldHtml);
+
+              if($("#colortoggle").hasClass("coloron")) {
+                updateColoring();
+              }
+              else {
+                viewableText.parent().removeClass("loading");
+              }
+            }
+          });
+        }
+        else {
+          viewableText.html(oldHtml);
+
+          if($("#colortoggle").hasClass("coloron")) {
+            updateColoring();
+          }
+          else {
+            viewableText.parent().removeClass("loading");
+          }
+        }
     }
 };
 
@@ -58,24 +118,59 @@ $(document).ready(function() {
       $("#mp_collapse" + id).find("i").html("arrow_drop_down");
     })
 
-    $('[data-toggle="popover"]').each( function() {
-      $(this).popover({
-                        html : true,
-                        content: '<a id="remove_grade_a" data-url="' + $(this).attr("data-url") + '" data-toggle="modal" data-target="#gradeRemoveModal">' +
-                                   '<i class="material-icons float-right">' +
-                                     'delete_forever' +
-                                   '</i>' +
-                                 '</a>',
-                        placement: "bottom"
-                     });
-    });
+    $("#remove_grade_yes").on("mousedown", function() {
+      var url = $("#remove_grade_yes").attr('data-url');
+      var changeID = $("#remove_grade_yes").attr('data-id');
+      var change = $("#" + changeID).find("a");
 
-    $('#gradeRemoveModal').on('show.bs.modal', function(e) {
-      var url = $(e.relatedTarget).data('url');
-      $(e.currentTarget).find('form[id="remove_grade_yes"]').attr("action", url);
-    });
+      var oldHtml = change.html();
+      change.html('<i class="material-icons">loop</i>');
+      change.parent().removeClass("success warning error loading");
+      change.parent().addClass("loading");
 
-    $('th:has(a.expandable)').addClass('dashed');
+      $.ajax({
+        url:url,
+
+        method: "GET",
+        dataType: "json",
+
+        success: function(data) {
+          if(data.deleted) {
+            change.attr("title", "N/A");
+            change.html("-");
+            change.parent().attr("data-grade", "-");
+
+            if($("#colortoggle").hasClass("coloron")) {
+              updateColoring();
+            }
+            else {
+              change.parent().removeClass("loading");
+            }
+          }
+          else {
+            change.html(oldHtml);
+
+            if($("#colortoggle").hasClass("coloron")) {
+              updateColoring();
+            }
+            else {
+              change.parent().removeClass("loading");
+            }
+          }
+        },
+
+        error: function(data) {
+          change.html(oldHtml);
+
+          if($("#colortoggle").hasClass("coloron")) {
+            updateColoring();
+          }
+          else {
+            change.parent().removeClass("loading");
+          }
+        }
+      });
+    });
 
     $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
       var i = $(this).find("i");
@@ -92,7 +187,7 @@ $(document).ready(function() {
       $(this).addClass("loading");
 
       var ids = $(this).attr('id').split('_');
-      var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+      var csrftoken = getCookie('csrftoken');
       $.ajax({
         beforeSend: function(xhr, settings) {
           if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -116,7 +211,12 @@ $(document).ready(function() {
             i.html("done");
           }
 
-          updateColoring();
+          if($("#colortoggle").hasClass("coloron")) {
+            updateColoring();
+          }
+          else {
+            $(this).removeClass("loading");
+          }
         },
 
         error: function(data) {
@@ -129,39 +229,60 @@ $(document).ready(function() {
             i.html("clear");
           }
 
-          updateColoring();
+          if($("#colortoggle").hasClass("coloron")) {
+            updateColoring();
+          }
+          else {
+            $(this).removeClass("loading");
+          }
         }
       });
     });
 
     $(document).on('click', 'td[id^="gradeid_"]', function() {
+      if(highlighted != $(this).attr("id")) {
 
-      var edit = $("<input type=number max=" + $(this).attr('data-grade-max') +
-        " min=" + $(this).attr('data-grade-min') +
-        " step=0.25" +
-        " data-url=\"" + $(this).attr("data-edit-url") + "\"/>" +
-        " <i class=\"material-icons float-right\"" +
-            " id=\"delete_icon\"" +
-            " data-toggle=\"popover\"" +
-            " data-url=\"" + $(this).attr("data-remove-url") + "\">" +
-            "delete_forever" +
-        "</i>"
-      );
-      edit.val($(this).find('a').first().html());
-      edit.attr('old', $(this).find('a').first().html());
-      edit.attr('id', $(this).find('a').first().attr('id'));
-      edit.attr('title', $(this).find('a').first().attr('title'));
+        highlighted = $(this).attr("id");
+        remove_url = $(this).attr("data-remove-url")
+        var a = $(this).find("a").first();
 
-      edit.keypress(function(event) {
-        if (event.keyCode == 13) {
-          event.preventDefault();
-          edit.blur();
+        var text = "<input type=number max=" + $(this).attr('data-grade-max') +
+          " min=" + $(this).attr('data-grade-min') +
+          " step=0.25" +
+          " old=\"" + a.html() + "\"" +
+          " id=\"" + a.attr("id") + "\"" +
+          " title=\"" + a.attr("title") + "\"" +
+          " data-url=\"" + $(this).attr("data-edit-url") + "\"/>";
+
+        if($(this).attr("data-grade") != "-") {
+          text += " <a id=\"remove_grade_a\">" +
+              "<i class=\"material-icons float-right\">" +
+              "delete_forever" +
+              "</i>" +
+            " </a>";
         }
-      });
 
-      $(this).find('a').first().replaceWith(edit);
-      edit.focus();
-      edit.blur(BlurEdit)
+        edit = $(text);
+        edit.val(a.html());
+
+        edit.keypress(function(event) {
+          if (event.keyCode == 13) {
+            event.preventDefault();
+            edit.blur();
+          }
+        });
+
+        a.replaceWith(edit);
+
+        $("#remove_grade_a").on("mousedown", function() {
+            $("#remove_grade_yes").attr("data-id", highlighted);
+            $("#remove_grade_yes").attr("data-url", remove_url);
+            $("#gradeRemoveModal").modal("show");
+        });
+
+        edit.focus();
+        edit.blur(BlurEdit)
+      }
     });
 
     $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
