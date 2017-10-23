@@ -1,4 +1,5 @@
 {% load widget_tweaks %}
+{{ form.non_field_errors }} {# TODO: check if correct way to show non_field_errors #}
 {% for field in form.visible_fields %}
 {#    {{ field|field_type }}#}
     {% if field.name == "role_teacher" or field.name == "module_part_teacher" %}
