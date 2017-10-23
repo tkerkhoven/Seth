@@ -152,7 +152,7 @@ def import_module(request, pk):
                     if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
                         continue
                     # This is the university number column
-                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'student_id':
+                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'university_number':
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -276,7 +276,7 @@ def import_module_part(request, pk):
                     if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
                         continue
                     # This is the university number column
-                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'student_id':
+                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'university_number':
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -389,7 +389,7 @@ def import_test(request, pk):
             for table in sheet:
                 # Identify columns
                 try:
-                    student_id_field = sheet[table][COLUMN_TITLE_ROW].index('student_id')
+                    student_id_field = sheet[table][COLUMN_TITLE_ROW].index('university_number')
                     grade_field = sheet[table][COLUMN_TITLE_ROW].index('grade')
                     description_field = sheet[table][COLUMN_TITLE_ROW].index('description')
                 except ValueError:
@@ -467,16 +467,21 @@ def export_module(request, pk):
     tests = Test.objects.filter(module_part__module_edition=module_edition)
 
     # Pre-fill first few columns.
-    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 2)]
+    table = [
+                ['Module:', str(module_edition)]+['' for _ in range(len(tests))],
+
+            ] + [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 4)]
 
     # Add the module part name and test name for each test if there is enough header room.
-    if COLUMN_TITLE_ROW > 1:
+    if COLUMN_TITLE_ROW > 2:
         table.append(['', 'Module part >'] + [test.module_part.name for test in tests])
-    if COLUMN_TITLE_ROW > 0:
+    if COLUMN_TITLE_ROW > 1:
         table.append(['', 'Test name >'] + [test.name for test in tests])
+    if COLUMN_TITLE_ROW > 0:
+        table.append(['', 'Grade between >'] + ['{} - {}'.format(test.minimum_grade, test.maximum_grade) for test in tests])
 
     # Add machine-readable header row.
-    table.append(['student_id', 'name'] + [test.pk for test in tests])
+    table.append(['university_number', 'name'] + [test.pk for test in tests])
 
     # pre-fill student numbers
     for student in students:
@@ -508,17 +513,19 @@ def export_module_part(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     students = Person.objects.filter(studying__module_edition=module_edition).values('university_number', 'name')
-    tests = Test.objects.filter(module_part=module_part).values('pk', 'name')
+    tests = Test.objects.filter(module_part=module_part).values('pk', 'name', 'minimum_grade', 'maximum_grade')
 
     # Pre-fill first few columns.
-    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 1)]
+    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 2)]
 
     # Add the module part name and test name for each test if there is enough header room.
-    if COLUMN_TITLE_ROW > 0:
+    if COLUMN_TITLE_ROW > 1:
         table.append(['', 'Test name >'] + [test['name'] for test in tests])
+    if COLUMN_TITLE_ROW > 0:
+        table.append(['', 'Grade between >'] + ['{} - {}'.format(test['minimum_grade'], test['maximum_grade']) for test in tests])
 
     # Add machine-readable header row.
-    table.append(['student_id', 'name'] + [test['pk'] for test in tests])
+    table.append(['university_number', 'name'] + [test['pk'] for test in tests])
 
     # pre-fill student numbers
     for student in students:
@@ -553,14 +560,16 @@ def export_module_part_signoff(request, pk):
     tests = Test.objects.filter(module_part=module_part, type='A').values('pk', 'name')
 
     # Pre-fill first few columns.
-    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 1)]
+    table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 2)]
 
     # Add the module part name and test name for each test if there is enough header room.
-    if COLUMN_TITLE_ROW > 0:
+    if COLUMN_TITLE_ROW > 1:
         table.append(['', 'Test name >'] + [test['name'] for test in tests])
+    if COLUMN_TITLE_ROW > 0:
+        table.append(['', 'Grade between >'] + ['{} - {}'.format(test.minimum_grade, test.maximum_grade) for test in tests])
 
     # Add machine-readable header row.
-    table.append(['student_id', 'name'] + [test['pk'] for test in tests])
+    table.append(['university_number', 'name'] + [test['pk'] for test in tests])
 
     # pre-fill student numbers
     for student in students:
@@ -584,7 +593,7 @@ def export_student_import_format(request):
     :param request: Django request; not used in function
     :return: .xlsx file response, named Import_students.xlsx
     """
-    table = [['Student_id', 'name', 'E-mail', 'role']]
+    table = [['university_number', 'name', 'e-mail', 'role']]
     return excel.make_response_from_array(table, file_name='Import_students', file_type='xlsx')
 
 
@@ -610,10 +619,12 @@ def export_test(request, pk):
                                                                                                    'name')
 
     # Insert padding
-    table = [['', '', '', ''] for _ in range(COLUMN_TITLE_ROW)]
+    table = [
+                [test.name, "", "grade between:", '{} - {}'.format(test.minimum_grade, test.maximum_grade)]
+            ] + [['', '', '', ''] for _ in range(COLUMN_TITLE_ROW - 1)]
 
     # Insert title row
-    table.append(['student_id', 'name', 'grade', 'description'])
+    table.append(['university_number', 'name', 'grade', 'description'])
 
     # Insert student numbers
     for student in students:
@@ -751,7 +762,7 @@ def workbook_student_to_module(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     # Insert column titles
-    table = [['student_id', 'name', 'email', 'role']]
+    table = [['university_number', 'name', 'email', 'role']]
 
     return excel.make_response_from_array(table, file_name='Module import Sheet.xlsx', file_type='xlsx')
 
@@ -785,9 +796,10 @@ def import_student_to_module(request, pk):
             file = request.FILES['file']
             dict = file.get_book_dict()
             students_to_module = dict[list(dict.keys())[0]]
+            print(students_to_module)
             string = ""
             emailpattern = re.compile('e[-]?mail*')
-            if students_to_module[COLUMN_TITLE_ROW][0].lower() == 'student_id' and students_to_module[COLUMN_TITLE_ROW][
+            if students_to_module[COLUMN_TITLE_ROW][0].lower() == 'university_number' and students_to_module[COLUMN_TITLE_ROW][
                 1].lower() == 'name' and emailpattern.match(students_to_module[COLUMN_TITLE_ROW][2].lower()) and \
                             students_to_module[COLUMN_TITLE_ROW][3].lower() == 'role':
                 context = {}
@@ -795,7 +807,7 @@ def import_student_to_module(request, pk):
                 context['studying'] = []
                 context['failed'] = []
 
-                for i in range(COLUMN_TITLE_ROW, len(students_to_module)):
+                for i in range(COLUMN_TITLE_ROW + 1, len(students_to_module)):
                     # Sanitize number input
                     if str(students_to_module[i][0])[0] == 's':
                         username = str(students_to_module[i][0])

@@ -2,13 +2,19 @@ from collections import OrderedDict
 from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
-from django.views import generic
+from django.views import generic, View
 import django_excel as excel
-from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted
+from django.views.generic import FormView
+
+from Grades import mailing
+from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted, mail_module_edition_participants
+from dashboard.forms import EmailPreviewForm
+from permission_utils import is_coordinator_or_teacher_of_test, is_coordinator_of_module
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study
 
 
@@ -517,6 +523,49 @@ class TestView(generic.DetailView):
         # Set whether the user can release/retract grades.
         context['can_release'] = Test.objects.filter(
             module_part__module_edition__coordinators__user=self.request.user).exists()
+        return context
+
+
+
+class EmailPreviewView(FormView):
+    template_name = 'Grades/email_preview.html'
+    form_class = EmailPreviewForm
+
+    # Check permissions
+    def dispatch(self, request, *args, **kwargs):
+        test = get_object_or_404(Test, pk=kwargs['pk'])
+        person = Person.objects.filter(user=self.request.user)
+        if is_coordinator_of_module(person=person, module_edition=test.module_part.module_edition):
+            return super(EmailPreviewView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You are not allowed to send emails to students.")
+
+    def get_initial(self):
+        test = Test.objects.filter(pk=self.kwargs['pk']).prefetch_related('module_part__module_edition__module').first()
+        return {'test': test.pk,
+                'subject': '[SETH] {} ({}-{}) Grade released: {}'.format(test.module_part.module_edition.module.name, test.module_part.module_edition.year,
+                                                              test.module_part.module_edition.block, test.name),
+                'message': 'Dear student, \n\nThe grades for test {} have been released. Go to {} to see your '
+                           'grade.\n\nKind regards,\n\n{}\n\n=======================================\n'
+                           'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
+                           ' grades or any other kinds of information in this system.'.format(test.name, mailing.DOMAIN, Person.objects.get(user=self.request.user).name)}
+
+    def form_valid(self, form):
+        test = get_object_or_404(Test, pk=self.kwargs['pk'])
+        failed = mail_module_edition_participants(
+            module_edition=test.module_part.module_edition,
+            subject=form.cleaned_data['subject'],
+            body=form.cleaned_data['message'])
+        if failed:
+            return HttpResponse('Sending of the email failed for: \n{}'.format(
+                ['{}\t{}\n'.format(student.university_number, student.name) for student in failed]
+            ))
+        else:
+            return redirect('grades:test', test.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super(EmailPreviewView, self).get_context_data(**kwargs)
+        context['pk'] = context['view'].kwargs['pk']
         return context
 
 
