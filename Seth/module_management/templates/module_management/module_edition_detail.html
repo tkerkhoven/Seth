@@ -116,7 +116,7 @@
                 <tr id="row{{ s.person.pk }}">
                     <td>{{ s.person.name }}</td>
                     <td>{{ s.person.university_number }}</td>
-                    <td>{{ s.module_edition.module.study_set.first.abbreviation }}</td>
+                    <td>{{ s.module_edition.module.study_set.first.abbreviation }}</td> {#TODO: This does not seem like the proper way to do this#}
                     <td>{{ s.role }}</td>
                     <td>
 {#                        <a href="{% url 'module_management:user_delete' spk=s.person.pk mpk=moduleedition.pk %}"><i class="material-icons">delete</i></a>#}
