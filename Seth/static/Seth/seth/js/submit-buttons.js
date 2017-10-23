@@ -42,4 +42,8 @@ $(document).ready(function() {
     $("#updateTestSave").on('click', function() {
         $("#updateTestForm").submit();
     });
+
+    $("#sendEmails").on('click', function() {
+        $("#sendEmailForm").submit();
+    });
 });

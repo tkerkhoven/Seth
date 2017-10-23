@@ -55,7 +55,7 @@ class ImporterStressTest(TestCase):
         tests = Test.objects.filter(module_part__module_edition=module_edition)
 
         table = [['' for _ in range(len(tests) + 1)] for _ in range(COLUMN_TITLE_ROW)] + [
-            ['student_id'] + [test.pk for test in tests]]
+            ['university_number'] + [test.pk for test in tests]]
 
         for student in students:
             table.append([student.university_number] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
@@ -107,7 +107,7 @@ class ImporterTest(TestCase):
         tests = Test.objects.filter(module_part__module_edition=module_edition)
 
         table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
-            ['student_id', 'name'] + [test.pk for test in tests]]
+            ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
             table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
@@ -130,7 +130,7 @@ class ImporterTest(TestCase):
         tests = Test.objects.filter(module_part__module_edition=module_edition)
 
         table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
-            ['student_id', 'name'] + [test.pk for test in tests]]
+            ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
             table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
@@ -153,7 +153,7 @@ class ImporterTest(TestCase):
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         table = [['' for _ in range(4)] for _ in range(COLUMN_TITLE_ROW)] + \
-                [['student_id', 'name', 'grade', 'description']]
+                [['university_number', 'name', 'grade', 'description']]
 
         for student in students:
             table.append([student.university_number, student.name, 6, ''])
@@ -173,7 +173,7 @@ class ImporterTest(TestCase):
         module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         table = [['' for _ in range(4)] for _ in range(COLUMN_TITLE_ROW)] + \
-                [['student_id', 'name', 'email', 'role']]
+                [['university_number', 'name', 'email', 'role']]
 
         university_number = 's54321'
 
