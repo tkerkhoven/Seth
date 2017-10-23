@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
 from django.http import HttpResponseBadRequest, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
@@ -116,6 +116,11 @@ class ModuleEditionUpdateView(generic.UpdateView):
     model = ModuleEdition
     fields = ['year', 'block']
 
+    def get_context_data(self, **kwargs):
+        context = super(ModuleEditionUpdateView, self).get_context_data(**kwargs)
+        context['module_edition_override'] = str(ModuleEdition.objects.get(pk=self.kwargs['pk']))
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
         user = request.user
@@ -123,14 +128,7 @@ class ModuleEditionUpdateView(generic.UpdateView):
         if not ModuleEdition.objects.filter(coordinators__user=user).filter(pk=pk):
             raise PermissionDenied()
 
-        # Try to dispatch to the right method; if a method doesn't exist,
-        # defer to the error handler. Also defer to the error handler if the
-        # request method isn't on the approved list.
-        if request.method.lower() in self.http_method_names:
-            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
-        else:
-            handler = self.http_method_not_allowed
-        return handler(request, *args, **kwargs)
+        return super(ModuleEditionUpdateView, self).dispatch(request, *args, **kwargs)
 
 
 class ModuleEditionCreateForm(ModelForm):
