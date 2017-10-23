@@ -1,7 +1,6 @@
 var oldto = 5.5;
 var oldfrom = 5;
 var searchString = "";
-var changed = [];
 
 $(".btn").mouseup(function(){
     $(this).blur();
@@ -18,7 +17,7 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
+        $("#delete_icon").remove();
         $(this).replaceWith(viewableText);
     }
     else {
@@ -43,6 +42,7 @@ function BlurEdit() {
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
         viewableText.attr('data-url', $(this).attr('data-url'));
+        $("#delete_icon").remove();
         $(this).replaceWith(viewableText);
     }
 };
@@ -81,40 +81,76 @@ $(document).ready(function() {
       var i = $(this).find("i");
       if(i.html().trim() == "done") {
         $(this).attr("data-grade", 0.0);
-        i.html("clear");
+        i.html("loop");
       }
       else {
         $(this).attr("data-grade", 1.0);
-        i.html("done");
+        i.html("loop");
       }
+
+      $(this).removeClass("success warning error loading");
+      $(this).addClass("loading");
 
       var ids = $(this).attr('id').split('_');
-      var removed = false;
-
-      if(changed.length > 0) {
-        for( i=changed.length-1; i>=0; i--) {
-          if( changed[i].sid == ids[1] && changed[i].assign == ids[2]) {
-            changed.splice(i,1);
-            removed = true;
-            break;
+      var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+      $.ajax({
+        beforeSend: function(xhr, settings) {
+          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
           }
+        },
+
+        url: $(this).attr('data-url'),
+        data: {
+          'grade': $(this).attr("data-grade")
+        },
+
+        method: "POST",
+        dataType: 'json',
+
+        success: function(data) {
+          if(data.grade == 0) {
+            i.html("clear");
+          }
+          else {
+            i.html("done");
+          }
+
+          updateColoring();
+        },
+
+        error: function(data) {
+          if($(this).attr("data-grade") == 0) {
+            $(this).attr("data-grade", 1.0);
+            i.html("done");
+          }
+          else {
+            $(this).attr("data-grade", 0.0);
+            i.html("clear");
+          }
+
+          updateColoring();
         }
-      }
-
-      if(!removed)
-        changed.push({sid: ids[1], assign: ids[2]});
-
-      updateColoring();
+      });
     });
 
-    $(document).on('click', 'a[id^="grade_"]', function() {
-      var edit = $("<input type=number max=" + $(this).parent().closest('td').attr('data-grade-max') +
-        " min=" + $(this).parent().closest('td').attr('data-grade-min') +
-        " step=0.25 data-url=\"" + $(this).attr("data-url") + "\"/>");
-      edit.val($(this).html());
-      edit.attr('old', $(this).html());
-      edit.attr('id', $(this).attr('id'));
-      edit.attr('title', $(this).attr('title'));
+    $(document).on('click', 'td[id^="gradeid_"]', function() {
+
+      var edit = $("<input type=number max=" + $(this).attr('data-grade-max') +
+        " min=" + $(this).attr('data-grade-min') +
+        " step=0.25" +
+        " data-url=\"" + $(this).attr("data-edit-url") + "\"/>" +
+        " <i class=\"material-icons float-right\"" +
+            " id=\"delete_icon\"" +
+            " data-toggle=\"popover\"" +
+            " data-url=\"" + $(this).attr("data-remove-url") + "\">" +
+            "delete_forever" +
+        "</i>"
+      );
+      edit.val($(this).find('a').first().html());
+      edit.attr('old', $(this).find('a').first().html());
+      edit.attr('id', $(this).find('a').first().attr('id'));
+      edit.attr('title', $(this).find('a').first().attr('title'));
 
       edit.keypress(function(event) {
         if (event.keyCode == 13) {
@@ -123,7 +159,7 @@ $(document).ready(function() {
         }
       });
 
-      $(this).replaceWith(edit);
+      $(this).find('a').first().replaceWith(edit);
       edit.focus();
       edit.blur(BlurEdit)
     });
@@ -391,19 +427,19 @@ jQuery(document).ready(function($) {
       var color = $(this).attr("data-always-color");
 
       if(+grade > ((+data.to)*mult)) {
-        $(this).removeClass("success warning error");
+        $(this).removeClass("success warning error loading");
         $(this).addClass("success");
       }
       else if(+grade >= ((+data.from)*mult)){
-        $(this).removeClass("success warning error");
+        $(this).removeClass("success warning error loading");
         $(this).addClass("warning");
       }
       else if(+grade < ((+data.from)*mult)) {
-        $(this).removeClass("success warning error");
+        $(this).removeClass("success warning error loading");
         $(this).addClass("error");
       }
       else if(grade = 'N' && color == 'True') {
-        $(this).removeClass("success warning error");
+        $(this).removeClass("success warning error loading");
         $(this).addClass("error");
       }
     });
@@ -417,7 +453,7 @@ $('#colortoggle').click(function() {
     $('#coloricon').html("invert_colors");
 
     $('[id^="gradeid_"]').each(function(index) {
-      $(this).removeClass("success warning error");
+      $(this).removeClass("success warning error loading");
     });
   }
   else {
@@ -432,12 +468,15 @@ $('#colortoggle').click(function() {
 function updateColoring() {
   if($("#colortoggle").hasClass("coloron")) {
     $('[id^="gradeid_"]').each(function(index) {
-      $(this).removeClass("success warning error");
+      $(this).removeClass("success warning error loading");
       var color = $(this).attr('data-always-color');
       var grade = $(this).attr("data-grade");
       var mult = $(this).attr("data-grade-max")/10;
 
-      if(+grade > ((+oldto)*mult)) {
+      if($(this).attr("color")) {
+        $(this).addClass($(this).attr("color"));
+      }
+      else if(+grade > ((+oldto)*mult)) {
         $(this).addClass("success");
       }
       else if(+grade >= ((+oldfrom)*mult)){
