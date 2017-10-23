@@ -122,7 +122,7 @@
                                         <tbody>
                                         {% for student,grades in gradedict.items %}
                                         <tr>
-                                            <td>
+                                            <td class="s_class">
                                                 <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
                                                 <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
@@ -207,14 +207,14 @@
         </div>
     </div>
 
-    <div id="gradeRemoveModal" class="modal fade" role="dialog">
+    <div id="gradeModal" class="modal fade" role="dialog">
        <div class="modal-dialog">
          <div class="modal-content">
           <div class="modal-body">
-            <p>Are you sure you want to remove this grade?</p>
+            <p id="modal-p"></p>
           </div>
           <div class="modal-footer">
-            <button id="remove_grade_yes" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
+            <button id="modal_yes" type="button" class="btn btn-primary" data-dismiss="modal">Yes</button>
             <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
           </div>
         </div>

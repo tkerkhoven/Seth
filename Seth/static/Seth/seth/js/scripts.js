@@ -41,68 +41,20 @@ function BlurEdit() {
     else {
         oldHtml = $(this).attr("old");
 
-        viewableText.html('<i class="material-icons">loop</i>');
+        viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
         $("#remove_grade_a").remove();
         highlighted = "";
         $(this).replaceWith(viewableText);
 
         if(text != oldHtml) {
-
-          viewableText.parent().removeClass("success warning error loading");
-          viewableText.parent().addClass("loading");
-
-          var csrftoken = getCookie('csrftoken');
-          $.ajax({
-            beforeSend: function(xhr, settings) {
-              if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-                xhr.setRequestHeader("X-CSRFToken", csrftoken);
-              }
-            },
-
-            url: $(this).attr('data-url'),
-            data: {
-              'grade': parseInt(text)
-            },
-
-            method: "POST",
-            dataType: 'json',
-
-            success: function(data) {
-              viewableText.parent().attr("data-grade", data.grade);
-              viewableText.html(data.grade);
-
-              if($("#colortoggle").hasClass("coloron")) {
-                updateColoring();
-              }
-              else {
-                viewableText.parent().removeClass("loading");
-              }
-            },
-
-            error: function(data) {
-              viewableText.html(oldHtml);
-
-              if($("#colortoggle").hasClass("coloron")) {
-                updateColoring();
-              }
-              else {
-                viewableText.parent().removeClass("loading");
-              }
-            }
-          });
-        }
-        else {
-          viewableText.html(oldHtml);
-
-          if($("#colortoggle").hasClass("coloron")) {
-            updateColoring();
-          }
-          else {
-            viewableText.parent().removeClass("loading");
-          }
+            $("#modal_yes").attr("data-url", $(this).attr("data-url"));
+            $("#modal_yes").attr("v-text", viewableText.attr("id"));
+            $("#modal_yes").attr("text", text);
+            $("#modal_yes").attr("func", "edit");
+            $("#modal-p").html("Are you sure you want to change " + viewableText.parent().siblings(".s_class").first().find("a").first().html() + "'s grade from " + oldHtml + " to " + text + "?");
+            $("#gradeModal").modal("show");
         }
     }
 };
@@ -118,58 +70,81 @@ $(document).ready(function() {
       $("#mp_collapse" + id).find("i").html("arrow_drop_down");
     })
 
-    $("#remove_grade_yes").on("mousedown", function() {
-      var url = $("#remove_grade_yes").attr('data-url');
-      var changeID = $("#remove_grade_yes").attr('data-id');
-      var change = $("#" + changeID).find("a");
+    $("#modal_yes").on("mousedown", function() {
 
-      var oldHtml = change.html();
-      change.html('<i class="material-icons">loop</i>');
-      change.parent().removeClass("success warning error loading");
-      change.parent().addClass("loading");
+      if($("#modal_yes").attr("func") == "remove") {
+          var url = $("#modal_yes").attr('data-url');
+          var changeID = $("#modal_yes").attr('data-id');
+          var change = $("#" + changeID).find("a");
 
-      $.ajax({
-        url:url,
+          var oldHtml = change.html();
+          change.html('<i class="material-icons">loop</i>');
+          change.parent().removeClass("success warning error loading");
+          change.parent().addClass("loading");
 
-        method: "GET",
-        dataType: "json",
+          $.ajax({
+            url:url,
 
-        success: function(data) {
-          if(data.deleted) {
-            change.attr("title", "N/A");
-            change.html("-");
-            change.parent().attr("data-grade", "-");
+            method: "GET",
+            dataType: "json",
 
-            if($("#colortoggle").hasClass("coloron")) {
-              updateColoring();
+            success: function(data) {
+              if(data.deleted) {
+                change.attr("title", "N/A");
+                change.html("-");
+                change.parent().attr("data-grade", "-");
+                updateOrRemoveColoring(change.parent());
+              }
+              else {
+                change.html(oldHtml);
+                updateOrRemoveColoring(change.parent());
+              }
+            },
+
+            error: function(data) {
+              change.html(oldHtml);
+              updateOrRemoveColoring(change.parent());
             }
-            else {
-              change.parent().removeClass("loading");
-            }
-          }
-          else {
-            change.html(oldHtml);
+          });
+      }
+      else if($("#modal_yes").attr("func") == "edit") {
+        viewableText = $("#" + $("#modal_yes").attr("v-text"));
+        text = $("#modal_yes").attr("text");
 
-            if($("#colortoggle").hasClass("coloron")) {
-              updateColoring();
-            }
-            else {
-              change.parent().removeClass("loading");
-            }
-          }
-        },
+        viewableText.html('<i class="material-icons">loop</i>');
+        viewableText.attr('data-url', $("#modal_yes").attr('data-url'));
 
-        error: function(data) {
-          change.html(oldHtml);
+        viewableText.parent().removeClass("success warning error loading");
+        viewableText.parent().addClass("loading");
 
-          if($("#colortoggle").hasClass("coloron")) {
-            updateColoring();
+        var csrftoken = getCookie('csrftoken');
+        $.ajax({
+          beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+
+          url: $(this).attr('data-url'),
+          data: {
+            'grade': parseFloat(text)
+          },
+
+          method: "POST",
+          dataType: 'json',
+
+          success: function(data) {
+            viewableText.parent().attr("data-grade", data.grade);
+            viewableText.html(data.grade);
+            updateOrRemoveColoring(viewableText.parent());
+          },
+
+          error: function(data) {
+            viewableText.html(oldHtml);
+            updateOrRemoveColoring(viewableText.parent());
           }
-          else {
-            change.parent().removeClass("loading");
-          }
-        }
-      });
+        });
+      }
     });
 
     $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
@@ -210,13 +185,7 @@ $(document).ready(function() {
           else {
             i.html("done");
           }
-
-          if($("#colortoggle").hasClass("coloron")) {
-            updateColoring();
-          }
-          else {
-            $(this).removeClass("loading");
-          }
+          updateOrRemoveColoring($(this));
         },
 
         error: function(data) {
@@ -228,13 +197,7 @@ $(document).ready(function() {
             $(this).attr("data-grade", 0.0);
             i.html("clear");
           }
-
-          if($("#colortoggle").hasClass("coloron")) {
-            updateColoring();
-          }
-          else {
-            $(this).removeClass("loading");
-          }
+          updateOrRemoveColoring($(this));
         }
       });
     });
@@ -275,9 +238,11 @@ $(document).ready(function() {
         a.replaceWith(edit);
 
         $("#remove_grade_a").on("mousedown", function() {
-            $("#remove_grade_yes").attr("data-id", highlighted);
-            $("#remove_grade_yes").attr("data-url", remove_url);
-            $("#gradeRemoveModal").modal("show");
+            $("#modal_yes").attr("data-id", highlighted);
+            $("#modal_yes").attr("data-url", remove_url);
+            $("#modal_yes").attr("func", "remove");
+            $("#modal-p").html("Are you sure you want to remove this grade?");
+            $("#gradeModal").modal("show");
         });
 
         edit.focus();
@@ -415,13 +380,6 @@ $(document).ready(function() {
         oldfrom = $(this).val();
       }
       updateColoring();
-    });
-
-    $('#parent').on('change',function(){
-      $('.child').prop('checked',$(this).prop('checked'));
-    });
-    $('.child').on('change',function(){
-      $('#parent').prop('checked',$('.child:checked').length == $('.child').length);
     });
 
     $(".clickable-row").click(function() {
@@ -585,6 +543,15 @@ $('#colortoggle').click(function() {
     updateColoring();
   }
 });
+
+function updateOrRemoveColoring(select) {
+   if($("#colortoggle").hasClass("coloron")) {
+      updateColoring();
+    }
+    else {
+      select.removeClass("loading");
+    }
+}
 
 function updateColoring() {
   if($("#colortoggle").hasClass("coloron")) {

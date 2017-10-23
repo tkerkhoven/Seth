@@ -197,7 +197,7 @@ class StudentView(generic.DetailView):
             .prefetch_related('test') \
             .values('grade', 'test') \
             .filter(student=person, test__released=True) \
-            .order_by('test', '-id')
+            .order_by('test', 'id')
 
         # Gather all modules which the person is studying.
         modules = ModuleEdition.objects \
@@ -230,8 +230,14 @@ class StudentView(generic.DetailView):
             context_dict[key] = temp_dict[key]
 
         for module_part in module_parts:
-            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), released=True).distinct('id').count()
-            a_span[module_part] = module_part.test_set.filter(type='A', released=True).distinct('id').count()
+            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P'), released=True) \
+                .order_by('id') \
+                .distinct('id'). \
+                count()
+            a_span[module_part] = module_part.test_set.filter(type='A', released=True) \
+                .order_by('id') \
+                .distinct('id'). \
+                count()
 
             tests = Test.objects \
                 .filter(Q(type='E') | Q(type='P'), module_part=module_part, released=True) \
@@ -245,7 +251,7 @@ class StudentView(generic.DetailView):
             last_done = False
             start = None
             for assignment in assignments:
-                grade = assignment.grade_set.filter(student=person).values('grade').order_by('-time').first()
+                grade = assignment.grade_set.filter(student=person).values('grade').order_by('id').first()
 
                 if grade is not None and grade['grade'] == 1.0:
                     if last_done:
