@@ -200,7 +200,9 @@ class ModuleEditionCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_edition.save()
 
-        for old_module_part in ModulePart.objects.filter(module_edition=latest_module_edition):
+        old_module_parts = ModulePart.objects.filter(module_edition=latest_module_edition).prefetch_related('test_set')
+        new_module_parts = []
+        for old_module_part in old_module_parts:
             module_part = ModulePart(
                 module_edition=module_edition,
                 name=old_module_part.name
@@ -210,13 +212,17 @@ class ModuleEditionCreateView(generic.CreateView):
             except ValidationError as e:
                 pp = pprint.PrettyPrinter(indent=4, width=120)
                 return HttpResponseBadRequest(pp.pformat(('Module Part is invalid: ', e.message_dict)))
-            module_part.save()
+            new_module_parts.append(module_part)
+        ModulePart.objects.bulk_create(new_module_parts)
 
-            for old_test in Test.objects.filter(module_part=old_module_part.pk).distinct():
+        new_tests = []
+        for i in range(len(old_module_parts)):
+            old_tests = old_module_parts[i].test_set.all()  # Test.objects.filter(module_part=old_module_parts[i].pk).distinct()
+            for old_test in old_tests:
                 test = Test(
                     maximum_grade=old_test.maximum_grade,
                     minimum_grade=old_test.minimum_grade,
-                    module_part=module_part,
+                    module_part=new_module_parts[i],
                     name=old_test.name,
                     released=False,
                     type=old_test.type
@@ -226,20 +232,25 @@ class ModuleEditionCreateView(generic.CreateView):
                 except ValidationError as e:
                     pp = pprint.PrettyPrinter(indent=4, width=120)
                     return HttpResponseBadRequest(pp.pformat(('Test is invalid: ', e.message_dict)))
-                test.save()
+                new_tests.append(test)
+        Test.objects.bulk_create(new_tests)
 
-        for person in initial['coordinators']:
+        new_coordinators = []
+        old_persons = Person.objects.filter(id__in=initial['coordinators']).prefetch_related('coordinator_set')
+        for person in old_persons:
             coordinator = Coordinator(
                 module_edition=module_edition,
                 person=person,
-                is_assistant=Coordinator.objects.get(person=person, module_edition=latest_module_edition).is_assistant
+                # is_assistant=Coordinator.objects.get(person=person, module_edition=latest_module_edition).is_assistant
+                is_assistant=person.coordinator_set.get(module_edition=latest_module_edition).is_assistant
             )
             try:
                 coordinator.full_clean()
             except ValidationError as e:
                 pp = pprint.PrettyPrinter(indent=4, width=120)
                 return HttpResponseBadRequest(pp.pformat(('Coordinator is invalid: ', e.message_dict)))
-            coordinator.save()
+            new_coordinators.append(coordinator)
+        Coordinator.objects.bulk_create(new_coordinators)
 
         return redirect('module_management:module_overview')
 
