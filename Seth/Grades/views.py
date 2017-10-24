@@ -1,21 +1,18 @@
 from collections import OrderedDict
-from django.core import mail
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse
-from django.utils import timezone
 from django.views import generic, View
 import django_excel as excel
 from django.views.generic import FormView
 
 from Grades import mailing
-from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted, mail_module_edition_participants
+from Grades.mailing import mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
-from permission_utils import is_coordinator_or_teacher_of_test, is_coordinator_of_module
-from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator
+from permission_utils import is_coordinator_of_module
+from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study
 
 
 class ModuleView(generic.ListView):
@@ -623,7 +620,7 @@ def export(request, *args, **kwargs):
             table.append(
                 ['{}'.format(u_num), '{}'.format(name), 'N/A', '{}'.format(grade_dict['s' + u_num]), 'N/A', 'N/A']
             )
-        else:
+        else:   # University Number, Student name, Date, Grade, Category, Validity period
             table.append(
                 ['{}'.format(u_num), '{}'.format(name), 'N/A', 'N/A', 'N/A', 'N/A']
             )
