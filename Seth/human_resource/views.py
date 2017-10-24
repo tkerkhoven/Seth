@@ -208,23 +208,18 @@ class CreatePersonNew(generic.FormView):
     success_url = reverse_lazy('human_resource:users')
     form_class = CreateUserForm
 
-    def form_invalid(self, form):
-        print("Wrong")
-
     def form_valid(self, form):
-        personName = form.cleaned_data['name']
-        utNumber = form.cleaned_data['university_number']
+        person_name = form.cleaned_data['name']
+        ut_number = form.cleaned_data['university_number']
         email = form.cleaned_data['email_address']
-        personUser = form.cleaned_data['user']
+        person_user = form.cleaned_data['user']
         if form.cleaned_data['create_teacher']:
             role = form.cleaned_data['role_teacher']
             module_part = form.cleaned_data['module_part_teacher']
             # todo Nieuwe user aanmaken met als username het medewerkersnummer
-            person = Person.objects.get_or_create(name=personName, university_number=utNumber, email=email, user=personUser)[0]
+            person = Person.objects.get_or_create(name=person_name, university_number=ut_number, email=email, user=person_user)[0]
             Teacher.objects.get_or_create(person=person, module_part=module_part, role=role)
-            print("Create teacher")
         else:
-            person = Person.objects.get_or_create(name=personName, university_number=utNumber, email=email, user=personUser)
+            person = Person.objects.get_or_create(name=person_name, university_number=ut_number, email=email, user=person_user)
             print("Don't create teacher")
-        print("right")
         return super(CreatePersonNew, self).form_valid(form)
