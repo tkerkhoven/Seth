@@ -161,6 +161,7 @@ $(document).ready(function() {
       $(this).removeClass("success warning error loading");
       $(this).addClass("loading");
 
+      var t = $(this)
       var ids = $(this).attr('id').split('_');
       var csrftoken = getCookie('csrftoken');
       $.ajax({
@@ -185,7 +186,7 @@ $(document).ready(function() {
           else {
             i.html("done");
           }
-          updateOrRemoveColoring($(this));
+          updateOrRemoveColoring(t);
         },
 
         error: function(data) {
@@ -197,7 +198,7 @@ $(document).ready(function() {
             $(this).attr("data-grade", 0.0);
             i.html("clear");
           }
-          updateOrRemoveColoring($(this));
+          updateOrRemoveColoring(t);
         }
       });
     });
