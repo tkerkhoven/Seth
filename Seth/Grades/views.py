@@ -36,13 +36,12 @@ class ModuleView(generic.ListView):
         user = request.user
 
         # Redirect students
-        studying = Studying.objects.filter(person__user=request.user)
+        studying = Studying.objects.filter(~Q(person__teacher__role='A'), person__user=request.user)
         if studying:
             return redirect('grades:student', studying[0].person.id)
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | (
-            Q(modulepart__teachers__user=user) & Q(modulepart__teacher__role='T'))):
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -58,7 +57,7 @@ class ModuleView(generic.ListView):
     def get_queryset(self):
         user = self.request.user
         module_set = ModuleEdition.objects.filter(
-            Q(coordinators__user=user) | (Q(modulepart__teachers__user=user) & Q(modulepart__teacher__role='T')))
+            Q(coordinators__user=user) | Q(modulepart__teachers__user=user))
         return set(module_set)
 
 
@@ -237,7 +236,7 @@ class StudentView(generic.DetailView):
                 remove_list = []
 
                 for assignment in assignments:
-                    if grades_dict[assignment.id] == 1.0:
+                    if assignment.id in grades_dict and grades_dict[assignment.id] == 1.0:
                         if streak > 0:
                             current = str(start.name) + " to " + str(assignment.name)
                             remove_list.append(assignment)
@@ -337,8 +336,6 @@ class ModuleStudentView(generic.DetailView):
             .filter(Q(test__in=tests) | Q(test__in=assignments), student=student) \
             .order_by('test_id', '-id') \
             .distinct('test_id')
-
-        print(dicts)
 
         temp_dict = dict()
         context_dict = OrderedDict()
