@@ -25,7 +25,8 @@ class DashboardView(View):
         :param request: Django request for authentication
         :return: Redirect to appropriate dashboard (based on type of user)
         """
-        person = Person.objects.get(user=self.request.user)
+        person = Person.objects.filter(user=self.request.user).first()
+
         if pu.is_coordinator_or_assistant(person):
             print(self.make_modules_context())
             context = {
@@ -46,6 +47,8 @@ class DashboardView(View):
             # Todo: Add another dashboard, or create an extension
             studying = Studying.objects.filter(person=person)
             return redirect('grades:student', studying.get(person__user=self.request.user).person.id)
+        else:
+            return redirect('not_in_seth')
 
     def make_modules_context(self):
         module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).prefetch_related(
@@ -105,6 +108,10 @@ class DashboardView(View):
             context['module_parts'].append(part)
 
         return context
+
+@login_required
+def not_in_seth(request):
+    return render(request, 'dashboard/not_in_seth.html')
 
 @login_required
 def modules(request):
