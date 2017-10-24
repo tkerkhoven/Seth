@@ -15,7 +15,7 @@ from Grades import mailing
 from Grades.mailing import make_mail_grade_released, make_mail_grade_retracted, mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
 from permission_utils import is_coordinator_or_teacher_of_test, is_coordinator_of_module
-from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study
+from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator
 
 
 class ModuleView(generic.ListView):
@@ -36,13 +36,12 @@ class ModuleView(generic.ListView):
         user = request.user
 
         # Redirect students
-        studying = Studying.objects.filter(person__user=request.user)
+        studying = Studying.objects.filter(~Q(person__teacher__role='A'), person__user=request.user)
         if studying:
             return redirect('grades:student', studying[0].person.id)
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | (
-            Q(modulepart__teachers__user=user) & Q(modulepart__teacher__role='T'))):
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -58,7 +57,7 @@ class ModuleView(generic.ListView):
     def get_queryset(self):
         user = self.request.user
         module_set = ModuleEdition.objects.filter(
-            Q(coordinators__user=user) | (Q(modulepart__teachers__user=user) & Q(modulepart__teacher__role='T')))
+            Q(coordinators__user=user) | Q(modulepart__teachers__user=user))
         return set(module_set)
 
 
@@ -237,7 +236,7 @@ class StudentView(generic.DetailView):
                 remove_list = []
 
                 for assignment in assignments:
-                    if grades_dict[assignment.id] == 1.0:
+                    if assignment.id in grades_dict and grades_dict[assignment.id] == 1.0:
                         if streak > 0:
                             current = str(start.name) + " to " + str(assignment.name)
                             remove_list.append(assignment)
@@ -334,8 +333,9 @@ class ModuleStudentView(generic.DetailView):
         dicts = Grade.objects \
             .prefetch_related('test') \
             .values('grade', 'released', 'test') \
-            .filter(test__in=tests, student=student) \
-            .order_by('test', '-id')
+            .filter(Q(test__in=tests) | Q(test__in=assignments), student=student) \
+            .order_by('test_id', '-id') \
+            .distinct('test_id')
 
         temp_dict = dict()
         context_dict = OrderedDict()
@@ -409,7 +409,7 @@ class ModulePartView(generic.DetailView):
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
             .filter(module_edition__modulepart=module_part) \
-            .order_by('person__Submitter__test', '-person__Submitter__id')
+            .order_by('person__Submitter__test', 'person__Submitter__id')
 
         # Gather all tests in the module part, ordered by the date of examination.
         tests = Test.objects \
@@ -498,7 +498,7 @@ class TestView(generic.DetailView):
                     'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
                     'person__Submitter__released') \
             .filter(module_edition__modulepart__test=test) \
-            .order_by('person__Submitter__test', '-person__Submitter__id')
+            .order_by('person__Submitter__test', 'person__Submitter__id')
 
         students = dict()
         temp_dict = dict()
@@ -535,7 +535,7 @@ class EmailPreviewView(FormView):
     def dispatch(self, request, *args, **kwargs):
         test = get_object_or_404(Test, pk=kwargs['pk'])
         person = Person.objects.filter(user=self.request.user)
-        if is_coordinator_of_module(person=person, module_edition=test.module_part.module_edition):
+        if is_coordinator_of_module(person, test.module_part.module_edition):
             return super(EmailPreviewView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not allowed to send emails to students.")
@@ -646,29 +646,17 @@ def release(request, *args, **kwargs):
     if not test:
         raise PermissionDenied()
 
-    mail_list = []
-
     if request.POST['rel'] == "False":
         test.released = True
         test.save()
-
-        if 'sendcheck' in request.POST:
-            for grade in test.grade_set.order_by('student_id', 'time').distinct('student_id').all():
-                mail_list.append(make_mail_grade_released(grade.student, user, grade))
         request.session['change'] = 1
+        if 'sendcheck' in request.POST:
+            return redirect('grades:test_send_email', test.id)
+
     else:
         test.released = False
         test.save()
-
-        if 'sendcheck' in request.POST:
-            for grade in test.grade_set.order_by('student_id', 'time').distinct('student_id').all():
-                mail_list.append(make_mail_grade_retracted(grade.student, user, grade))
         request.session['change'] = 2
-
-    if 'sendcheck' in request.POST:
-        # Get a connection and send the mails.
-        connection = mail.get_connection()
-        connection.send_messages(mail_list)
 
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
