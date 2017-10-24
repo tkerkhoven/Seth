@@ -140,8 +140,7 @@ class PersonDetailView(generic.DetailView):
         person = Person.objects.get(id=self.kwargs['pk'])
         data = dict()
         context['person'] = person
-        if person.studying_set.values('study'):
-            context['studies'] = person.studying_set.values('study')[0].values
+        context['studies'] = Studying.objects.filter(person = person);
         return context
 
 

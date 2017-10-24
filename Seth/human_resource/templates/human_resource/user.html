@@ -47,8 +47,6 @@
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">Student/Employer number: <span class="font-italic">{{ person.university_number }}</span></li>
                         <li class="list-group-item">Email address: <span class="font-italic">{{ person.email }}</span></li>
-                        <li class="list-group-item">Start date: <span class="font-italic">{{ person.start }}</span></li>
-                        <li class="list-group-item">End date: <span class="font-italic">{{ person.end }}</span></li>
                     </ul>
                 </div>
             </div>
@@ -60,7 +58,7 @@
                     </h5>
                     <ul class="list-group list-group-flush">
                         {% for study in studies %}
-                            <li class="list-group-item">{{ study }}</li>
+                            <li class="list-group-item">{{ study.module_edition }} - <span class="font-italic">{{ study.role }}</span></li>
                         {% empty %}
                             <li class="list-group-item"><span class="font-italic">This user is not enrolled in any modules</span></li>
                         {% endfor %}
