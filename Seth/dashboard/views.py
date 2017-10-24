@@ -4,6 +4,7 @@ from django.db.models import Count
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views import View
 
 from Grades.models import ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart, Test
@@ -13,8 +14,9 @@ import permission_utils as pu
 from django.core.exceptions import PermissionDenied
 
 
-class DashboardView(LoginRequiredMixin, View):
+class DashboardView(View):
 
+    @method_decorator(login_required)
     def dispatch(self, request, **kwargs):
         """
         Checks the type of logged in user and directs to an appropriate dashboard with relevant information.
