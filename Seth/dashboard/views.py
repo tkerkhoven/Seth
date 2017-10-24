@@ -121,7 +121,7 @@ def modules(request):
     :param request: Django request for authentication
     :return: Redirect to module (edition) overview
     """
-    person = Person.objects.get(user=request.user)
+    person = Person.objects.filter(user=request.user).first()
     if pu.is_coordinator_or_assistant(person):
         context = {
             'modules': ModuleEdition.objects.filter(coordinator__person=person)
