@@ -44,7 +44,7 @@
                 {% else %}
                     No persons found!
                 {% endif %}
-                <form id="addUser" action="create-user/" method="get">{% csrf_token %}
+                <form id="addUser" action="{% url 'human_resource:create_person' %}" method="get">{% csrf_token %}
                     <!--{{ form.as_p }}-->
 {#                    <input class="btn btn-secondary" type="submit" value="Create new User">#}
                 </form>

@@ -200,9 +200,8 @@ class CreatePerson(generic.CreateView):
     fields = '__all__'
 
     def dispatch(self, request, *args, **kwargs):
-        user = Person.objects.filter(user=request.user).first()
-        person = Person.objects.filter(id=self.kwargs['pk']).first()
-        if person in known_persons(user):
+        person = Person.objects.filter(user=request.user).first()
+        if pu.is_coordinator(person):
             return super(CreatePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to create a user.')
@@ -215,6 +214,13 @@ class CreatePersonNew(generic.FormView):
     template_name = 'human_resource/person_form.html'
     success_url = reverse_lazy('human_resource:users')
     form_class = CreateUserForm
+
+    def dispatch(self, request, *args, **kwargs):
+        person = Person.objects.filter(user=request.user).first()
+        if pu.is_coordinator(person):
+            return super(CreatePersonNew, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not allowed to create a user.')
 
     def form_valid(self, form):
         person_name = form.cleaned_data['name']
