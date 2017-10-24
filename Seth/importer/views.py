@@ -163,7 +163,7 @@ def import_module(request, pk):
                                 pk=sheet[table][COLUMN_TITLE_ROW][title_index])
                             if test:
                                 if not test.filter(module_part__module_edition=module_edition):
-                                    raise SuspiciousOperation("Attempt to register grades for a test that is not part "
+                                    return HttpResponseBadRequest("Attempt to register grades for a test that is not part "
                                                               "of this module.")
                                 test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
                         except ValueError:
@@ -181,10 +181,10 @@ def import_module(request, pk):
                             pass
 
                 if university_number_field is None:
-                    raise SuspiciousOperation('excel file misses required header: \"student_id\"')
+                    return HttpResponseBadRequest('excel file misses required header: \"university_number\"')
 
                 # The current user's Person is the corrector of the grades.
-                teacher = Person.objects.get(user=request.user)
+                teacher = Person.objects.filter(user=request.user).first()
 
                 grades = []
 
@@ -201,13 +201,13 @@ def import_module(request, pk):
                         invalid_students.append(row[university_number_field])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
                 if [student for student in invalid_students if student is not '']:
-                    raise SuspiciousOperation(
+                    return HttpResponseBadRequest(
                         'Students {} are not enrolled in this module. '
                         'Enroll these students first before retrying.'.format(invalid_students))
 
                 # Make Grades
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:  # Walk horizontally over table
-                    student = Person.objects.filter(university_number=row[university_number_field])[0]
+                    student = Person.objects.filter(university_number=row[university_number_field]).first()
                     # check if this is not an empty line, else continue.
                     if student:
                         for test_column in test_rows.keys():
@@ -223,7 +223,7 @@ def import_module(request, pk):
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:gradebook', pk)
         else:
-            raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel file. Are you'
+            return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file. Are you'
                                       'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
                                       'using that instead.')
     else:  # GET request
@@ -287,7 +287,7 @@ def import_module_part(request, pk):
                                 pk=sheet[table][COLUMN_TITLE_ROW][title_index])
                             if test:
                                 if not test.filter(module_part=module_part):
-                                    raise SuspiciousOperation("Attempt to register grades for a test that is not part "
+                                    return HttpResponseBadRequest("Attempt to register grades for a test that is not part "
                                                               "of this module.")
                                 test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
                         except ValueError:
@@ -305,10 +305,10 @@ def import_module_part(request, pk):
                             pass
 
                 if university_number_field is None:
-                    raise SuspiciousOperation('excel file misses required header: \"student_id\"')
+                    return HttpResponseBadRequest('excel file misses required header: \"university_number\"')
 
                 # The current user's Person is the corrector of the grades.
-                teacher = Person.objects.get(user=request.user)
+                teacher = Person.objects.filter(user=request.user).first()
 
                 grades = []
 
@@ -325,13 +325,13 @@ def import_module_part(request, pk):
                         invalid_students.append(row[university_number_field])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
                 if [student for student in invalid_students if student is not '']:
-                    raise SuspiciousOperation(
+                    return HttpResponseBadRequest(
                         'Students {} are not enrolled in this module. '
                         'Enroll these students first before retrying.'.format(invalid_students))
 
                 # Make Grades
                 for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:  # Walk horizontally over table
-                    student = Person.objects.filter(university_number=row[university_number_field])[0]
+                    student = Person.objects.filter(university_number=row[university_number_field]).first()
                     # check if this is not an empty line, else continue.
                     if student:
                         for test_column in test_rows.keys():
@@ -347,7 +347,7 @@ def import_module_part(request, pk):
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:module_part', pk)
         else:
-            raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel file. Are you'
+            return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file. Are you'
                                       'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
                                       'using that instead.')
     else:  # GET request
@@ -393,11 +393,11 @@ def import_test(request, pk):
                     grade_field = sheet[table][COLUMN_TITLE_ROW].index('grade')
                     description_field = sheet[table][COLUMN_TITLE_ROW].index('description')
                 except ValueError:
-                    raise SuspiciousOperation('One of the required fields [student_id, grade, description] could'
+                    return HttpResponseBadRequest('One of the required fields [student_id, grade, description] could'
                                               ' not be found.')
 
                 # The current user's Person is the corrector of the grades.
-                teacher = Person.objects.get(user=request.user)
+                teacher = Person.objects.filter(user=request.user).first()
 
                 # Check excel file for invalid students
                 invalid_students = []
@@ -407,11 +407,11 @@ def import_test(request, pk):
                         invalid_students.append(row[0])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
                 if [student for student in invalid_students if student is not '']:
-                    raise SuspiciousOperation(
+                    return HttpResponseBadRequest(
                         'Students {} are not enrolled in this module. '
                         'Enroll these students first before retrying.'.format(invalid_students))
                 elif invalid_students:
-                    raise SuspiciousOperation(
+                    return HttpResponseBadRequest(
                         'There are grades or description fields in this excel sheet that do not have a student number '
                         'filled in. Please check the contents of your excel file for stale values in rows.'
                     )
@@ -434,7 +434,7 @@ def import_test(request, pk):
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:test', pk)
         else:
-            raise SuspiciousOperation('Bad POST')
+            return HttpResponseBadRequest('Bad POST')
     else:
         if Test.objects.filter(pk=pk):
             form = TestGradeUploadForm()
@@ -442,7 +442,7 @@ def import_test(request, pk):
                           {'test': Test.objects.get(pk=pk), 'form': form, 'pk': pk})
 
         else:
-            raise SuspiciousOperation('Test does not exist')
+            return HttpResponseBadRequest('Test does not exist')
 
 
 @login_required()
@@ -652,7 +652,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
         float(grade)
     except ValueError:
         raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
-                             .format(grade, student, test))  # Probably a typo, give an error.
+                             .format(grade, student.name, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
@@ -690,6 +690,13 @@ def save_grades(grades):
 @require_http_methods(["GET", "POST"])
 @transaction.atomic
 def import_student(request):
+    """ Disabled function to import students into the system.
+    :param request:
+    :return:
+    """
+    # Disable this view.
+    raise PermissionDenied
+
     person = Person.objects.filter(user=request.user).first()
 
     if not is_coordinator_or_assistant(person):
@@ -732,7 +739,7 @@ def import_student(request):
                     string += "-----------------------------------------<br>"
                 return HttpResponse(string)
             else:
-                raise SuspiciousOperation("Incorrect xls-format")
+                return HttpResponseBadRequest("Incorrect xls-format")
 
         else:
             raise SuspiciousOperation('Bad POST')
@@ -812,11 +819,11 @@ def import_student_to_module(request, pk):
                     if str(students_to_module[i][0])[0] == 's':
                         username = str(students_to_module[i][0])
                     elif str(students_to_module[i][0])[0] == 'm':
-                        raise SuspiciousOperation('Trying to add an employee as a student to a module.')
+                        return HttpResponseBadRequest('Trying to add an employee as a student to a module.')
                     elif int(students_to_module[i][0]) > 0:
                         username = 's{}'.format(str(students_to_module[i][0]))
                     else:
-                        raise SuspiciousOperation('{} is not a student number.'.format(students_to_module[i][0]))
+                        return HttpResponseBadRequest('{} is not a student number.'.format(students_to_module[i][0]))
                     user, created = User.objects.get_or_create(
                         username=username,
                         defaults={
@@ -862,7 +869,7 @@ def import_student_to_module(request, pk):
                 # print(startpattern.match(students_to_module[0][3].lower()))
                 # print(students_to_module[0][4].lower() == 'study')
                 # print(students_to_module[0][5].lower() == 'role')
-                raise SuspiciousOperation("Incorrect xls-format")
+                return HttpResponseBadRequest("Incorrect xls-format")
         else:
             raise SuspiciousOperation('Bad POST')
 
@@ -900,7 +907,7 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
             structure = dict()
 
             for page in workbook.keys():
-                module_part = ModulePart.objects.create(name=workbook[page][0][1], module_edition=module_edition)
+                module_part = ModulePart.objects.get_or_create(name=workbook[page][0][1], module_edition=module_edition)
 
                 for i in range(1, len(workbook[page][0])):
 
@@ -912,9 +919,15 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
                     else:
                         test_type = 'E'
 
-                    Test.objects.create(name=workbook[page][1][i], module_part=module_part, type=test_type
-                                        , minimum_grade=min_grade, maximum_grade=max_grade)
+                    test = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
+                                               defaults={'type': test_type,
+                                                         'minimum_grade': min_grade,
+                                                         'maximum_grade': max_grade})
+                    test.type = test_type
+                    test.minimum_grade = min_grade
+                    test.maximum_grade = max_grade
+                    test.save()
         else:
-            raise SuspiciousOperation('Bad POST')
+            return HttpResponseBadRequest('Bad POST')
 
         return redirect('module_management:module_edition_detail', pk)
