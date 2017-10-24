@@ -639,7 +639,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             self.client.get(url_1, follow=True)
 
     def test_queries_all(self):
@@ -799,7 +799,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(self.url_1, follow=True)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
     def test_queries_independent(self):
@@ -811,7 +811,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(self.url_1, follow=True)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
     def test_queries_dependent(self):
@@ -823,7 +823,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(self.url_1, follow=True)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
     def test_queries_all(self):
@@ -836,7 +836,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(self.url_1, follow=True)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
 
@@ -2272,24 +2272,43 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_contents(self):
+        """Currently broken, probably related to the response being a JsonResponse"""
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
+
+        name = Person.objects.get(pk=self.pk_1).name
+        number = Person.objects.get(pk=self.pk_1).university_number
+        pk = Person.objects.get(pk=self.pk_1).pk
+        code = ModuleEdition.objects.get(pk=self.pk_2).code
+        module_name = ModuleEdition.objects.get(pk=self.pk_2).module.name
 
         response = self.client.get(self.url_1, follow=True)
         self.assertEqual(response.status_code, 200)
         # self.assertTemplateUsed(response, self.template)
 
-        self.assertEqual(response.context['person'], Person.objects.get(pk=self.pk_1))
-        self.assertEqual(response.context['module'], ModuleEdition.objects.get(pk=self.pk_2))
+        self.assertEqual(response.context['person_name'], name)
+        self.assertEqual(response.context['person_number'], number)
+        self.assertEqual(response.context['person_pk'], pk)
+        self.assertEqual(response.context['module_code'], code)
+        self.assertEqual(response.context['module_name'], module_name)
         self.assertTrue(response.context['success'])
+
+        name = Person.objects.get(pk=self.pk_4).name
+        number = Person.objects.get(pk=self.pk_4).university_number
+        pk = Person.objects.get(pk=self.pk_4).pk
+        code = ModuleEdition.objects.get(pk=self.pk_2).code
+        module_name = ModuleEdition.objects.get(pk=self.pk_2).module.name
 
         response = self.client.get(self.url_3)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.template)
+        # self.assertTemplateUsed(response, self.template)
 
-        self.assertEqual(response.context['person'], Person.objects.get(pk=self.pk_4))
-        self.assertEqual(response.context['module'], ModuleEdition.objects.get(pk=self.pk_2))
+        self.assertEqual(response.context['person_name'], name)
+        self.assertEqual(response.context['person_number'], number)
+        self.assertEqual(response.context['person_pk'], pk)
+        self.assertEqual(response.context['module_code'], code)
+        self.assertEqual(response.context['module_name'], module_name)
         self.assertTrue(response.context['failure'])
 
     def test_deletion(self):
