@@ -103,7 +103,7 @@ class PersonsView(generic.ListView):
     """
     Gives a generic.ListView of all relevant Persons to the logged in user.
     """
-    template_name = 'human_resource/users.html'
+    template_name = 'human_resource/persons.html'
     model = Person
     person = None
 
@@ -125,7 +125,7 @@ class PersonDetailView(generic.DetailView):
     """
     Gives a generic.DetailView of a specific Person relevant to the logged in user.
     """
-    template_name = 'human_resource/user.html'
+    template_name = 'human_resource/person.html'
     model = Person
 
     def dispatch(self, request, *args, **kwargs):
