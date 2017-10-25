@@ -30,8 +30,7 @@
                     </thead>
                     <tbody>
                         {% for person in persons %}
-                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:user' pk=person.pk%}">
-{#                            <td> <a href="{% url 'human_resource:user' pk=person.pk %}"> {{ person.pk }}</a></td>#}
+                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=person.pk%}">
                             <td> {{ person.university_number }} </td>
                             <td> {{ person.name }} </td>
                         </tr>
@@ -44,7 +43,7 @@
                 {% else %}
                     No persons found!
                 {% endif %}
-                <form id="addUser" action="create-user/" method="get">{% csrf_token %}
+                <form id="addUser" action="{% url 'human_resource:create_person' %}" method="get">{% csrf_token %}
                     <!--{{ form.as_p }}-->
 {#                    <input class="btn btn-secondary" type="submit" value="Create new User">#}
                 </form>
