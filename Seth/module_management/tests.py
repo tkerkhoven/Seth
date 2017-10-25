@@ -345,7 +345,7 @@ class ModuleManagementModuleListTests(TestCase):
         response = self.client.get(reverse('module_management:module_overview'))
 
         self.assertEqual(response.resolver_match.func.__name__, ModuleListView.as_view().__name__)
-        self.assertTemplateUsed(response, 'module_management/module_overview2.html')
+        self.assertTemplateUsed(response, 'module_management/module_overview.html')
 
         self.assertQuerysetEqual(response.context['module_list'],
                                  get_list_from_queryset(Module.objects.filter(moduleedition__coordinators__user=user).distinct()))
