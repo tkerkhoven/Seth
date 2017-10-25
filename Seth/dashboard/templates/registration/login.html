@@ -1,44 +1,52 @@
 {% extends "base.html" %}
 
 {% block title %}
-Login
+Sign in
 {% endblock %}
 
 {% block content %}
 
-{#<form method="post" action="{% url 'login' %}">#}
-{#{% csrf_token %}#}
-{#<table>#}
-{#<tr>#}
-{#    <td>{{ form.username.label_tag }}</td>#}
-{#    <td>{{ form.username }}</td>#}
-{#</tr>#}
-{#<tr>#}
-{#    <td>{{ form.password.label_tag }}</td>#}
-{#    <td>{{ form.password }}</td>#}
-{#</tr>#}
-{#</table>#}
-{##}
-{#<input type="submit" value="login" />#}
-{#<input type="hidden" name="next" value="{{ next }}" />#}
-{#</form>#}
-
-{# Assumes you setup the password_reset view in your URLconf #}
-{#<p><a href="{% url 'password_reset' %}">Lost password?</a></p>#}
 <div class="container">
+    <div style="padding-top: 32px; padding-bottom: 32px; margin-bottom:32px;" class="row justify-content-center rad-grad-bg">
+        <div class="col-lg-6">
+            <div class="text-center">
+                <span style="color: white;" class="align-top display-4">Seth - Sign in</span>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-5">
+            {% if next %}
+                {% if user.is_authenticated %}
+                <div class="alert alert-danger text-center" role="alert">
+                    Your account does not have access to this page.
+                    To proceed, please sign in with an account that has accesss
+                </div>
+                {% else %}
+                <div class="alert alert-danger text-center" role="alert">
+                    Please sign in with your university credentials to see this page
+                </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    Please sign in with your university credentials.
+                </div>
+            {% endif %}
+        </div>
+    </div>
     <div class="row justify-content-center">
         <div class="col-lg-4">
             <div class="card">
-                <div class="card-header">Login</div>
+{#                <div class="card-header">Login</div>#}
                 <div class="card-body">
-                    {% if next %}
-                        {% if user.is_authenticated %}
-                        <p class="text-danger">Your account doesn't have access to this page. To proceed,
-                        please login with an account that has access.</p>
-                        {% else %}
-                        <p class="text-danger">Please login to see this page.</p>
-                        {% endif %}
-                    {% endif %}
+{#                    {% if next %}#}
+{#                        {% if user.is_authenticated %}#}
+{#                        <p class="text-danger">Your account doesn't have access to this page. To proceed,#}
+{#                        please sign in with an account that has access.</p>#}
+{#                        {% else %}#}
+{#                        <p class="text-danger">Please sign in with your university credentials to see this page.</p>#}
+{#                        {% endif %}#}
+{#                    {% endif %}#}
                     <form method="post" action="{% url 'login' %}">
                         {% csrf_token %}
                         <div class="input-group">
@@ -51,16 +59,31 @@ Login
                             <input name="{{ form.password.html_name }}" type="password" class="form-control" placeholder="Password" id="{{ form.password.id_for_label }}" aria-describedby="lock_addon"/>
                         </div>
                         <br>
-                        <input class="btn btn-secondary btn-block" type="submit" value="Login"/>
+                        <input class="btn btn-primary btn-block" type="submit" value="Login"/>
                         <input type="hidden" name="next" value="{{ next }}"/>
                     </form>
-                    <p><a href="{% url 'password_reset' %}">Lost password?</a> </p>
-                    {% if form.errors %}
-                        <p style="color: red">Your username and password didn't match. Please try again.</p>
-                    {% endif %}
+{#                    {% if form.errors %}#}
+{#                        <p style="color: red">Your username and password didn't match. Please try again.</p>#}
+{#                    {% endif %}#}
                 </div>
             </div>
         </div>
     </div>
+    <div style="margin-top: 16px" class="row justify-content-center">
+        <div class="col-lg-4">
+            {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    Incorrect username or password.
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
+
+<script>
+    document.body.id = "login-container";
+</script>
 {% endblock %}
