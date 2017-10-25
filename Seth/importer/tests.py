@@ -588,8 +588,7 @@ class ImporterTest(TestCase):
     def test_student_import(self):
         module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
-        table = [['' for _ in range(4)] for _ in range(COLUMN_TITLE_ROW)] + \
-                [['university_number', 'name', 'email', 'role']]
+        table = [['university_number', 'name', 'email', 'role']]
 
         university_number = 's54321'
 
