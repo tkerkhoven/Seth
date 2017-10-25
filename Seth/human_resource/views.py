@@ -183,7 +183,7 @@ class DeletePerson(generic.DeleteView):
     """
     model = Person
     template_name = 'human_resource/person_confirm_delete.html'
-    success_url = reverse_lazy('human_resource:users')
+    success_url = reverse_lazy('human_resource:persons')
 
     def dispatch(self, request, *args, **kwargs):
         user = Person.objects.filter(user=request.user).first()
