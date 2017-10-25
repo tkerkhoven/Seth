@@ -35,16 +35,12 @@ class DashboardView(View):
             }
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
-            # Todo: Add another dashboard, or create an extension
             return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
-            # Todo: Add another dashboard, or create an extension
             return render(request, 'dashboard/teacher_index.html')
         if pu.is_teaching_assistant(person):
-            # Todo: Add another dashboard, or create an extension
             return render(request, 'dashboard/ta_index.html')
         if pu.is_student(person):
-            # Todo: Add another dashboard, or create an extension
             studying = Studying.objects.filter(person=person)
             return redirect('grades:student', studying.get(person__user=self.request.user).person.id)
         else:
