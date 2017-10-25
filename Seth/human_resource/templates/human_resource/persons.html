@@ -30,8 +30,7 @@
                     </thead>
                     <tbody>
                         {% for person in persons %}
-                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:user' pk=person.pk%}">
-{#                            <td> <a href="{% url 'human_resource:user' pk=person.pk %}"> {{ person.pk }}</a></td>#}
+                        <tr class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=person.pk%}">
                             <td> {{ person.university_number }} </td>
                             <td> {{ person.name }} </td>
                         </tr>

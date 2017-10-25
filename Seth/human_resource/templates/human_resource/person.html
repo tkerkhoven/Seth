@@ -10,10 +10,10 @@
                 <nav class="navbar navbar-expand-lg navbar-light title-bar">
                     <h3 class="display-4">{{ person.name }}</h3>
                     <ul class="navbar-nav mr-auto"></ul>
-                    <a id="updateUserLink" href="#">
+                    <a href="{% url 'human_resource:update_person' person.pk %}">
                         <i class="material-icons md-36 text-info" data-toggle="tooltip" data-placement="bottom" title="Edit person">mode_edit</i>
                     </a>
-                    <a id="removeUserLink" href="#">
+                    <a href="{% url 'human_resource:remove_person' person.pk %}">
                         <i class="material-icons md-36 text-danger" data-toggle="tooltip" data-placement="bottom" title="Delete person">delete_forever</i>
                     </a>
                 </nav>
@@ -83,12 +83,4 @@
             </div>
         </div>
     </div>
-    <form id="updateUser" action="update-user/" method="get">{% csrf_token %}
-        <!--{{ form }}-->
-        {#                  <input class="btn btn-secondary" type="submit" value="Edit">#}
-    </form>
-    <form id="removeUser" action="remove-user/" method="get">{% csrf_token %}
-        <!--{{ form }}-->
-        {#                  <input class="btn btn-secondary" type="submit" value="Remove">#}
-    </form>
 {% endblock %}

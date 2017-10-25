@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UserUpdateForm, CreateUserForm
+from .forms import UpdatePersonForm, CreatePersonForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import prefetch_related_objects
 from django.db.models.query import EmptyQuerySet
@@ -150,9 +150,9 @@ class UpdatePerson(generic.UpdateView):
     Gives a generic.UpdateView of a specific Person relevant to the logged in user.
     """
     model = Person
-    template_name = 'human_resource/person/update-user.html'
+    template_name = 'human_resource/person/update-person.html'
     # template_name_suffix = '/update-user'
-    form_class = UserUpdateForm
+    form_class = UpdatePersonForm
 
     def dispatch(self, request, *args, **kwargs):
         user = Person.objects.filter(user=request.user).first()
@@ -163,7 +163,7 @@ class UpdatePerson(generic.UpdateView):
             raise PermissionDenied('You are not allowed to access the details of this user')
 
     def get_success_url(self):
-        return reverse_lazy('human_resource:user', args=(self.object.id,))
+        return reverse_lazy('human_resource:person', args=(self.object.id,))
 
     def get_absolute_url(self):
         return u'/human_resource/user/%d' % self.id
@@ -213,7 +213,7 @@ class CreatePerson(generic.CreateView):
 class CreatePersonNew(generic.FormView):
     template_name = 'human_resource/person_form.html'
     success_url = reverse_lazy('human_resource:users')
-    form_class = CreateUserForm
+    form_class = CreatePersonForm
 
     def dispatch(self, request, *args, **kwargs):
         person = Person.objects.filter(user=request.user).first()
