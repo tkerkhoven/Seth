@@ -87,6 +87,14 @@ hr {
   }
 }
 
+.card-columns {
+  &.teacher-cards {
+    -webkit-column-count: 2;
+    -moz-column-count: 2;
+    column-count: 2;
+  }
+}
+
 #login-container {
   background-image: url(../../images/login-bg-2.jpg);
   height: 100%;

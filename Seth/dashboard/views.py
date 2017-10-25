@@ -28,23 +28,30 @@ class DashboardView(View):
         person = Person.objects.filter(user=self.request.user).first()
 
         if pu.is_coordinator_or_assistant(person):
-            print(self.make_modules_context())
+            # print(self.make_modules_context())
             context = {
                 'modules': self.make_modules_context()['module_editions'],
-                'time': get_current_date()
+                'time': get_current_date(),
+                'person': Person.objects.filter(user=request.user)[0]
             }
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
-            # Todo: Add another dashboard, or create an extension
-            return HttpResponse("You are a study adviser, but your dashboard is yet to be implemented")
+            return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
-            # Todo: Add another dashboard, or create an extension
-            return HttpResponse("You are a teacher, but your dashboard is yet to be implemented")
+            print(self.make_module_parts_context()['module_parts'])
+            context = {
+                'module_parts': self.make_module_parts_context()['module_parts'],
+                'person': Person.objects.filter(user=request.user)[0]
+            }
+            return render(request, 'dashboard/teacher_index.html', context)
         if pu.is_teaching_assistant(person):
-            # Todo: Add another dashboard, or create an extension
-            return HttpResponse("You are a teaching assistant, but your dashboard is yet to be implemented")
+            print(Person.objects.filter(user=request.user))
+            context = {
+                'module_parts': self.make_module_parts_context()['module_parts'],
+                'person': Person.objects.filter(user=request.user)[0]
+            }
+            return render(request, 'dashboard/ta_index.html', context)
         if pu.is_student(person):
-            # Todo: Add another dashboard, or create an extension
             studying = Studying.objects.filter(person=person)
             return redirect('grades:student', studying.get(person__user=self.request.user).person.id)
         else:
@@ -89,7 +96,7 @@ class DashboardView(View):
         context = dict()
         context['module_parts'] = []
         for module_part in module_parts:
-            part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
+            part = {'name': module_part.name, 'pk': module_part.pk, 'module_edition': module_part.module_edition, 'tests': []}
             sign_off_assignments = []
             for test in module_part.test_set.all():
                 if test.type is 'A':
@@ -130,10 +137,6 @@ def modules(request):
     else:
         # Todo: Add other usertypes
         return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
-
-
-def student(request):
-    return render(request, 'dashboard/student_index.html')
 
 
 def logged_out(request):
