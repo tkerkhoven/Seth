@@ -128,10 +128,6 @@ def modules(request):
         return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
 
 
-def student(request):
-    return render(request, 'dashboard/student_index.html')
-
-
 def logged_out(request):
     """
     Logs the user out and directs to logged out portal
