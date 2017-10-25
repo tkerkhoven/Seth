@@ -651,8 +651,11 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
     try:
         float(grade)
     except ValueError:
-        raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
-                             .format(grade, student.name, test))  # Probably a typo, give an error.
+        if test.type == 'A':
+            grade = 1
+        else:
+            raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
+                                 .format(grade, student.name, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
