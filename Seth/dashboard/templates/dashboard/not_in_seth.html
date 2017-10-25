@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Not in Seth
+{% endblock %}
+
+{% block content %}
+    {% include 'navbar.html' with active_page="dashboard" %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h3 class="display-3">Not in Seth</h3>
+                <hr>
+                <p>
+                    You have not been registered in Seth. This means that you are not participating in any modules that
+                    use Seth for their grade administration. If you see this page even though you are enrolled into one
+                    such module, please contact your module coordinator.
+                </p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

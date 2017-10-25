@@ -33,7 +33,7 @@
               <button type="button" class="btn dropdown-toggle nav-button pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="material-icons md-light md-36">account_circle</i>
               </button>
-              <div class="dropdown-menu dropdown-menu-left">
+              <div id="user-dropdown" class="dropdown-menu dropdown-menu-left">
                   {% if user.is_authenticated %}
                   <h6 class="dropdown-header">Current user: {{ user.username }}</h6>
                   <div class="dropdown-divider"></div>

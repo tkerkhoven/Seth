@@ -184,7 +184,7 @@ def import_module(request, pk):
                     return HttpResponseBadRequest('excel file misses required header: \"university_number\"')
 
                 # The current user's Person is the corrector of the grades.
-                teacher = Person.objects.get(user=request.user)
+                teacher = Person.objects.filter(user=request.user).first()
 
                 grades = []
 
@@ -308,7 +308,7 @@ def import_module_part(request, pk):
                     return HttpResponseBadRequest('excel file misses required header: \"university_number\"')
 
                 # The current user's Person is the corrector of the grades.
-                teacher = Person.objects.get(user=request.user)
+                teacher = Person.objects.filter(user=request.user).first()
 
                 grades = []
 
@@ -397,7 +397,7 @@ def import_test(request, pk):
                                               ' not be found.')
 
                 # The current user's Person is the corrector of the grades.
-                teacher = Person.objects.get(user=request.user)
+                teacher = Person.objects.filter(user=request.user).first()
 
                 # Check excel file for invalid students
                 invalid_students = []
