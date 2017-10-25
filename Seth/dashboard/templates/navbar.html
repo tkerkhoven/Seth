@@ -9,7 +9,7 @@
                     <a class="nav-link" href="{% url 'home' %}">Home<span class="sr-only">(current)</span></a>
                 </li>
                 {% if grades_installed %}
-                    {% if  is_module_coordinator or is_teacher or is_adviser or is_mc_assistant %}
+                    {% if  is_module_coordinator or is_teacher or is_adviser or is_mc_assistant or is_ta %}
                     <li class="nav-item {% if active_page == "gradebook" %}active{% endif %}">
                         <a class="nav-link" href="{% url 'grades:modules' %}">Grades<span class="sr-only">(current)</span></a>
                     </li>

@@ -28,7 +28,7 @@ class DashboardView(View):
         person = Person.objects.filter(user=self.request.user).first()
 
         if pu.is_coordinator_or_assistant(person):
-            print(self.make_modules_context())
+            # print(self.make_modules_context())
             context = {
                 'modules': self.make_modules_context()['module_editions'],
                 'time': get_current_date()
@@ -36,13 +36,13 @@ class DashboardView(View):
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
             # Todo: Add another dashboard, or create an extension
-            return HttpResponse("You are a study adviser, but your dashboard is yet to be implemented")
+            return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
             # Todo: Add another dashboard, or create an extension
-            return HttpResponse("You are a teacher, but your dashboard is yet to be implemented")
+            return render(request, 'dashboard/teacher_index.html')
         if pu.is_teaching_assistant(person):
             # Todo: Add another dashboard, or create an extension
-            return HttpResponse("You are a teaching assistant, but your dashboard is yet to be implemented")
+            return render(request, 'dashboard/ta_index.html')
         if pu.is_student(person):
             # Todo: Add another dashboard, or create an extension
             studying = Studying.objects.filter(person=person)

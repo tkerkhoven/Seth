@@ -18,12 +18,14 @@ def permissions(request):
         context['is_adviser'] = False
         if Coordinator.objects.filter(person__user=request.user):
             context['is_module_coordinator'] = True
-        if Teacher.objects.filter(person__user=request.user).filter(role="Teacher"):
+        if Teacher.objects.filter(person__user=request.user).filter(role='T'):
             context['is_teacher'] = True
-        if Teacher.objects.filter(person__user=request.user).filter(role="Teaching Assistant"):
+        if Teacher.objects.filter(person__user=request.user).filter(role='A'):
+            context['is_teacher'] = True
             context['is_ta'] = True
         if Coordinator.objects.filter(person__user=request.user).filter(is_assistant=True):
             context['is_mc_assistant'] = True
         if Study.objects.filter(advisers__user=request.user):
             context['is_adviser'] = True
+        print(context)
     return context

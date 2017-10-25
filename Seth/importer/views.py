@@ -37,16 +37,16 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         context = dict()
-        context['is_module_coordinator'] = False
-        context['is_teacher'] = False
+        # context['is_module_coordinator'] = False
+        # context['is_teacher'] = False
         coordinator_or_teacher = False
 
         if ModuleEdition.objects.filter(coordinators__user=self.request.user):
-            context['is_module_coordinator'] = True
+            # context['is_module_coordinator'] = True
             context['module_editions_list'] = self.make_modules_context()
             coordinator_or_teacher = True
         if ModulePart.objects.filter(teacher__person__user=self.request.user):
-            context['is_teacher'] = True
+            # context['is_teacher'] = True
             context['module_parts_list'] = self.make_module_parts_context()
             coordinator_or_teacher = True
         if not coordinator_or_teacher:
