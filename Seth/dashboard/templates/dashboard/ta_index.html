@@ -8,8 +8,50 @@
 
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-lg-6">
-                <h1 class="display-4">There is nothing here yet</h1>
+            <div class="col-lg-12 text-center">
+                <span class="display-4">Welcome teaching assistant</span>
+            </div>
+        </div>
+    <hr>
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="card-columns teacher-cards">
+                    {% for module_part in module_parts %}
+                        <div class="card">
+                            <h6 class="card-header">{{ module_part.name }} - {{ module_part.module_edition }}
+                                <a href="{% url 'importer:import_module_part' module_part.pk %}">
+                                    <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i>
+                                </a>
+                            </h6>
+                            <ul class="list-group list-group-flush">
+                                {% for test in module_part.tests %}
+                                    {% if not test.signoff %}
+                                        <li class="list-group-item">
+                                            {{ test.name }} - <a href="{% url 'grades:test' test.pk %}"><span class="font-italic">
+                                            {{ test.num_grades }} grade{% if test.num_grades != 1 %}s{% endif %}
+                                        </span></a>
+                                        {% if test.released %}
+                                            <i class="material-icons float-right text-success" data-toggle="tooltip" data-placement="bottom" title="Released">check_circle</i>
+                                        {% else %}
+                                            <i class="material-icons float-right text-danger" data-toggle="tooltip" data-placement="bottom" title="Not released">cancel</i>
+                                        {% endif %}
+                                        </li>
+                                    {% else %}
+                                        <li class="list-group-item" style="background: rgba(0,0,0,.03)">
+                                            {{ test.name }} - <a href="{% url 'grades:module_part' pk=test.module_part_pk %}"><span class="font-italic"> Assignments
+                                            </span></a>
+                                            {% if test.released %}
+                                                <i class="material-icons float-right text-success" data-toggle="tooltip" data-placement="bottom" title="Released">check_circle</i>
+                                            {% else %}
+                                                <i class="material-icons float-right text-danger" data-toggle="tooltip" data-placement="bottom" title="Not released">cancel</i>
+                                            {% endif %}
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

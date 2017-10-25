@@ -27,5 +27,4 @@ def permissions(request):
             context['is_mc_assistant'] = True
         if Study.objects.filter(advisers__user=request.user):
             context['is_adviser'] = True
-        print(context)
     return context

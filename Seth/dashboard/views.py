@@ -37,9 +37,16 @@ class DashboardView(View):
         if pu.is_study_adviser(person):
             return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
-            return render(request, 'dashboard/teacher_index.html')
+            print(self.make_module_parts_context()['module_parts'])
+            context = {
+                'module_parts': self.make_module_parts_context()['module_parts']
+            }
+            return render(request, 'dashboard/teacher_index.html', context)
         if pu.is_teaching_assistant(person):
-            return render(request, 'dashboard/ta_index.html')
+            context = {
+                'module_parts': self.make_module_parts_context()['module_parts']
+            }
+            return render(request, 'dashboard/ta_index.html', context)
         if pu.is_student(person):
             studying = Studying.objects.filter(person=person)
             return redirect('grades:student', studying.get(person__user=self.request.user).person.id)
@@ -85,7 +92,7 @@ class DashboardView(View):
         context = dict()
         context['module_parts'] = []
         for module_part in module_parts:
-            part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
+            part = {'name': module_part.name, 'pk': module_part.pk, 'module_edition': module_part.module_edition, 'tests': []}
             sign_off_assignments = []
             for test in module_part.test_set.all():
                 if test.type is 'A':

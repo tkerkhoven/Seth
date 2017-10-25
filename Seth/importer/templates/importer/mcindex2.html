@@ -10,11 +10,12 @@
                 <div class="card card-margin">
                     <div class="card-header card-header-tabs">
                         <ul class="nav nav-tabs" id="card-tabs" role="tablist">
+                            {% if is_module_coordinator %}
                             <li class="nav-item">
-                                <a class="nav-link
-                                    {% if is_module_coordinator %} active {% else %} disabled {% endif %}"
+                                <a class="nav-link active"
                                     id="module-coordinator-tab" data-toggle="tab" href="#module_coordinator" role="tab" aria-controls="module_coordinator" aria-expanded="true">As module coordinator</a>
                             </li>
+                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link
                                     {% if is_teacher and not is_module_coordinator %} active {% endif %}
