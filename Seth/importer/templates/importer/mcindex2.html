@@ -10,11 +10,12 @@
                 <div class="card card-margin">
                     <div class="card-header card-header-tabs">
                         <ul class="nav nav-tabs" id="card-tabs" role="tablist">
+                            {% if is_module_coordinator %}
                             <li class="nav-item">
-                                <a class="nav-link
-                                    {% if is_module_coordinator %} active {% else %} disabled {% endif %}"
+                                <a class="nav-link active"
                                     id="module-coordinator-tab" data-toggle="tab" href="#module_coordinator" role="tab" aria-controls="module_coordinator" aria-expanded="true">As module coordinator</a>
                             </li>
+                            {% endif %}
                             <li class="nav-item">
                                 <a class="nav-link
                                     {% if is_teacher and not is_module_coordinator %} active {% endif %}
@@ -32,10 +33,7 @@
                                         <div class="card">
                                             <div class="card-header">
                                                 <span class="display-5">{{ mod.name }}</span>
-
                                             </div>
-
-
                                             <div class="card-header bg-white">
                                                 <div class="row">
                                                     <div class="col-lg-4">
@@ -116,7 +114,7 @@
                                     {% for module_part in module_parts_list.module_parts %}
                                         <div class="col-md-6">
                                             <div class="card card-margin">
-                                                <span class="card-header">{{ module_part.name }}
+                                                <span class="card-header font-weight-bold">{{ module_part.name }} - {{ module_part.module_edition }}
                                                 <a href="{% url 'importer:import_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades to module part">file_upload</i></a>
                                                 <a href="{% url 'importer:export_module_part' module_part.pk%}"><i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Download module part grading sheet">file_download</i></a>
                                                 </span>

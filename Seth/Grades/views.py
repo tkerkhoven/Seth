@@ -531,7 +531,7 @@ class EmailPreviewView(FormView):
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         test = get_object_or_404(Test, pk=kwargs['pk'])
-        person = Person.objects.filter(user=self.request.user)
+        person = Person.objects.filter(user=self.request.user).first()
         if is_coordinator_of_module(person, test.module_part.module_edition):
             return super(EmailPreviewView, self).dispatch(request, *args, **kwargs)
         else:

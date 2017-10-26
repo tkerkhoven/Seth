@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UserUpdateForm, CreateUserForm
+from .forms import UpdatePersonForm, CreatePersonForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import prefetch_related_objects
 from django.db.models.query import EmptyQuerySet
@@ -103,12 +103,12 @@ class PersonsView(generic.ListView):
     """
     Gives a generic.ListView of all relevant Persons to the logged in user.
     """
-    template_name = 'human_resource/users.html'
+    template_name = 'human_resource/persons.html'
     model = Person
     person = None
 
     def dispatch(self, request, *args, **kwargs):
-        self.person = Person.objects.filter(user=request.user)
+        self.person = Person.objects.filter(user=request.user).first()
         if pu.is_coordinator_or_assistant(self.person) or pu.is_teacher(self.person) or pu.is_study_adviser(
                 self.person):
             return super(PersonsView, self).dispatch(request, *args, **kwargs)
@@ -125,11 +125,11 @@ class PersonDetailView(generic.DetailView):
     """
     Gives a generic.DetailView of a specific Person relevant to the logged in user.
     """
-    template_name = 'human_resource/user.html'
+    template_name = 'human_resource/person.html'
     model = Person
 
     def dispatch(self, request, *args, **kwargs):
-        user = Person.objects.filter(user=request.user)
+        user = Person.objects.filter(user=request.user).first()
         person = Person.objects.get(id=self.kwargs['pk'])
         if person in known_persons(user):
             return super(PersonDetailView, self).dispatch(request, *args, **kwargs)
@@ -138,38 +138,38 @@ class PersonDetailView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(PersonDetailView, self).get_context_data(**kwargs)
-        person = Person.objects.get(id=self.kwargs['pk'])
+        person = Person.objects.filter(id=self.kwargs['pk']).first()
         data = dict()
         context['person'] = person
         context['studies'] = Studying.objects.filter(person=person)
         return context
 
 
-class UpdateUser(generic.UpdateView):
+class UpdatePerson(generic.UpdateView):
     """
     Gives a generic.UpdateView of a specific Person relevant to the logged in user.
     """
     model = Person
-    template_name = 'human_resource/person/update-user.html'
+    template_name = 'human_resource/person/update-person.html'
     # template_name_suffix = '/update-user'
-    form_class = UserUpdateForm
+    form_class = UpdatePersonForm
 
     def dispatch(self, request, *args, **kwargs):
-        user = Person.objects.filter(user=request.user)
-        person = Person.objects.get(id=self.kwargs['pk'])
+        user = Person.objects.filter(user=request.user).first()
+        person = Person.objects.filter(id=self.kwargs['pk']).first()
         if person in known_persons(user):
-            return super(UpdateUser, self).dispatch(request, *args, **kwargs)
+            return super(UpdatePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to access the details of this user')
 
     def get_success_url(self):
-        return reverse_lazy('human_resource:user', args=(self.object.id,))
+        return reverse_lazy('human_resource:person', args=(self.object.id,))
 
     def get_absolute_url(self):
         return u'/human_resource/user/%d' % self.id
 
     def get_initial(self):
-        initial = super(UpdateUser, self).get_initial()
+        initial = super(UpdatePerson, self).get_initial()
         return initial
 
         # def get_object(self, queryset=None):
@@ -177,19 +177,19 @@ class UpdateUser(generic.UpdateView):
         #     return obj
 
 
-class DeleteUser(generic.DeleteView):
+class DeletePerson(generic.DeleteView):
     """
     Gives a generic.Deleteview of a specific Person relevant to the logged in user.
     """
     model = Person
     template_name = 'human_resource/person_confirm_delete.html'
-    success_url = reverse_lazy('human_resource:users')
+    success_url = reverse_lazy('human_resource:persons')
 
     def dispatch(self, request, *args, **kwargs):
-        user = Person.objects.filter(user=request.user)
-        person = Person.objects.get(id=self.kwargs['pk'])
+        user = Person.objects.filter(user=request.user).first()
+        person = Person.objects.filter(id=self.kwargs['pk']).first()
         if person in known_persons(user):
-            return super(DeleteUser, self).dispatch(request, *args, **kwargs)
+            return super(DeletePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to delete this user.')
 
@@ -199,6 +199,13 @@ class CreatePerson(generic.CreateView):
     template_name = 'human_resource/person_form.html'
     fields = '__all__'
 
+    def dispatch(self, request, *args, **kwargs):
+        person = Person.objects.filter(user=request.user).first()
+        if pu.is_coordinator(person):
+            return super(CreatePerson, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not allowed to create a user.')
+
     def get_success_url(self):
         return reverse_lazy('human_resource:user', args=(self.object.id,))
 
@@ -206,7 +213,14 @@ class CreatePerson(generic.CreateView):
 class CreatePersonNew(generic.FormView):
     template_name = 'human_resource/person_form.html'
     success_url = reverse_lazy('human_resource:users')
-    form_class = CreateUserForm
+    form_class = CreatePersonForm
+
+    def dispatch(self, request, *args, **kwargs):
+        person = Person.objects.filter(user=request.user).first()
+        if pu.is_coordinator(person):
+            return super(CreatePersonNew, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied('You are not allowed to create a user.')
 
     def form_valid(self, form):
         person_name = form.cleaned_data['name']

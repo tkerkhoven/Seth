@@ -18,7 +18,7 @@
                     <a href="#" id="updateModulePartSave" data-toggle="tooltip" data-placement="bottom" title="Save">
                         <i class="material-icons md-36 title-bar text-info">save</i>
                     </a>
-                    <a href="#" onclick="history.back()" data-toggle="tooltip" data-placement="bottom" title="Cancel">
+                    <a href="{% url 'module_management:module_part_detail' modulepart.pk %}" data-toggle="tooltip" data-placement="bottom" title="Cancel">
                         <i class="material-icons md-36 title-bar">clear</i>
                     </a>
                 </nav>

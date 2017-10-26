@@ -8,44 +8,58 @@
                 <li class="nav-item {% if active_page == "dashboard" %}active{% endif %}">
                     <a class="nav-link" href="{% url 'home' %}">Home<span class="sr-only">(current)</span></a>
                 </li>
-                {% if grades_installed and module_coordinator %}
-                <li class="nav-item {% if active_page == "gradebook" %}active{% endif %}">
-                    <a class="nav-link" href="{% url 'grades:modules' %}">Grades<span class="sr-only">(current)</span></a>
-                </li>
+                {% if grades_installed %}
+                    {% if  is_module_coordinator or is_teacher or is_adviser or is_mc_assistant or is_ta %}
+                    <li class="nav-item {% if active_page == "gradebook" %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'grades:modules' %}">Grades<span class="sr-only">(current)</span></a>
+                    </li>
+                    {% endif %}
                 {% endif %}
-                {% if importer_installed and module_coordinator %}
-                <li class="nav-item {% if active_page == "importer" %}active{% endif %}">
-                    <a class="nav-link" href="{% url 'importer:index' %}">Importer<span class="sr-only">(current)</span></a>
-                </li>
+                {% if importer_installed %}
+                    {% if  is_module_coordinator or is_teacher or is_ta or is_mc_assistant %}
+                    <li class="nav-item {% if active_page == "importer" %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'importer:index' %}">Importer<span class="sr-only">(current)</span></a>
+                    </li>
+                    {% endif %}
                 {% endif %}
-                {% if module_management_installed and module_coordinator %}
-                <li class="nav-item {% if active_page == "module_management" %}active{% endif %}">
-                    <a class="nav-link" href="{% url 'module_management:module_overview' %}">Module Management<span class="sr-only">(current)</span></a>
-                </li>
+                {% if module_management_installed  %}
+                    {% if is_module_coordinator or is_mc_assistant %}
+                    <li class="nav-item {% if active_page == "module_management" %}active{% endif %}">
+                        <a class="nav-link" href="{% url 'module_management:module_overview' %}">Module Management<span class="sr-only">(current)</span></a>
+                    </li>
+                    {% endif %}
                 {% endif %}
-                {% if hr_installed and module_coordinator %}
-                <li class="nav-item {% if active_page == "human_resource" %}active{% endif %}">
-                    <a class="nav-link" href="{%  url 'human_resource:users' %}">Human Resources<span class="sr-only">(current)</span></a>
-                </li>
+                {% if hr_installed %}
+                    {% if is_module_coordinator or is_mc_assistant %}
+                    <li class="nav-item {% if active_page == "human_resource" %}active{% endif %}">
+                        <a class="nav-link" href="{%  url 'human_resource:persons' %}">Human Resources<span class="sr-only">(current)</span></a>
+                    </li>
+                    {% endif %}
                 {% endif %}
             </ul>
-           <div class="btn-group">
-              <button type="button" class="btn dropdown-toggle nav-button pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="material-icons md-light md-36">account_circle</i>
-              </button>
-              <div id="user-dropdown" class="dropdown-menu dropdown-menu-left">
-                  {% if user.is_authenticated %}
-                  <h6 class="dropdown-header">Current user: {{ user.username }}</h6>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="#">Your profile [pending deletion]</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{% url 'settings' %}">Settings</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-                  {% else %}
-                  <a class="dropdown-item" href="{% url 'login' %}">Log in</a>
-                  {% endif %}
-              </div>
-            </div>
+{#        Dropdown for a user, for settings and such. Not needed ATM. But don't delete! #}
+{#           <div class="btn-group">#}
+{#              <button type="button" class="btn dropdown-toggle nav-button pointer" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
+{#                <i class="material-icons md-light md-36">account_circle</i>#}
+{#              </button>#}
+{#              <div id="user-dropdown" class="dropdown-menu dropdown-menu-left">#}
+{#                  {% if user.is_authenticated %}#}
+{#                  <h6 class="dropdown-header">Current user: {{ user.username }}</h6>#}
+{#                  <div class="dropdown-divider"></div>#}
+{#                  <a class="dropdown-item" href="#">Your profile [pending deletion]</a>#}
+{#                  <div class="dropdown-divider"></div>#}
+{#                  <a class="dropdown-item" href="{% url 'settings' %}">Settings</a>#}
+{#                  <div class="dropdown-divider"></div>#}
+{#                  <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>#}
+{#                  {% else %}#}
+{#                  <a class="dropdown-item" href="{% url 'login' %}">Log in</a>#}
+{#                  {% endif %}#}
+{#              </div>#}
+{#            </div>#}
+             {% if user.is_authenticated %}
+                 <a href="{% url 'logout' %}" data-toggle="tooltip" data-placement="bottom" title="Logout"><i class="fa fa-sign-out fa-24 text-white" aria-hidden="true"></i></a>
+             {% else %}
+                 <a href="{% url 'login' %}" data-toggle="tooltip" data-placement="bottom" title="Go to login"><i class="fa fa-sign-in fa-24" aria-hidden="true"></i></a>
+             {% endif %}
         </div>
     </nav>
