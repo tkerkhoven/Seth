@@ -12,7 +12,7 @@ from Grades import mailing
 from Grades.mailing import mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
 from permission_utils import is_coordinator_of_module
-from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study
+from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator
 
 
 class ModuleView(generic.ListView):
@@ -38,7 +38,8 @@ class ModuleView(generic.ListView):
             return redirect('grades:student', studying[0].person.id)
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user)):
+
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user) | Q(module__study__advisers__user=user)):
             raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
@@ -54,7 +55,7 @@ class ModuleView(generic.ListView):
     def get_queryset(self):
         user = self.request.user
         module_set = ModuleEdition.objects.filter(
-            Q(coordinators__user=user) | Q(modulepart__teachers__user=user))
+            Q(coordinators__user=user) | Q(modulepart__teachers__user=user) | Q(module__study__advisers__user=user))
         return set(module_set)
 
 
@@ -72,7 +73,7 @@ class GradeView(generic.DetailView):
         user = request.user
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user),
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user) | Q(module__study__advisers__user=user),
                                             id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -98,7 +99,7 @@ class GradeView(generic.DetailView):
         # If they don't have a test, they won't be included in the queryset.
         module_parts = ModulePart.objects \
             .prefetch_related('test_set') \
-            .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user),
+            .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user) | Q(module_edition__module__study__advisers__user=self.request.user),
                     Q(module_edition=mod_ed), Q(test__isnull=False)) \
             .order_by('id').distinct()
 
@@ -188,6 +189,7 @@ class GradeView(generic.DetailView):
         context['testallreleased'] = testallreleased
         context['mod_name'] = Module.objects.values('name').get(moduleedition=mod_ed)['name']
         context['tests'] = tests
+        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists()
 
         return context
 
@@ -320,8 +322,7 @@ class ModuleStudentView(generic.DetailView):
         user = request.user
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) |
-            Q(modulepart__teachers__user=user),
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | Q(modulepart__teachers__user=user) | Q(module__study__advisers__user=user),
                                             id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -347,7 +348,7 @@ class ModuleStudentView(generic.DetailView):
         module_parts = ModulePart.objects \
             .prefetch_related('test_set') \
             .filter(
-            Q(module_edition__coordinators__user=self.request.user) | (Q(teachers__user=user) & Q(teacher__role='T')),
+            Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=user) | Q(module_edition__module__study__advisers__user=user),
             Q(module_edition=mod_ed), Q(test__isnull=False)) \
             .order_by('id').distinct()
 
@@ -395,6 +396,7 @@ class ModuleStudentView(generic.DetailView):
         context['tests'] = tests
         context['assignments'] = assignments
         context['gradedict'] = context_dict
+        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists()
 
         return context
 
@@ -413,7 +415,7 @@ class ModulePartView(generic.DetailView):
         user = request.user
 
         # Check if the user is a module coordinator or a teacher
-        if not ModulePart.objects.filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user),
+        if not ModulePart.objects.filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user) | Q(module_edition__module__study__advisers__user=user),
                                          id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -458,7 +460,7 @@ class ModulePartView(generic.DetailView):
         grade_dict = OrderedDict()
 
         # Changing the queryset to something more useable.
-        QuerySetChanger(dicts, students, temp_dict, testallreleased)
+        QuerySetChanger(dicts, grade_dict, testallreleased)
 
         # Sorts the dictionary
         for key in sorted(temp_dict):
@@ -471,6 +473,8 @@ class ModulePartView(generic.DetailView):
         context['testallreleased'] = testallreleased
         context['tests'] = tests
         context['assignments'] = assignments
+        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition__modulepart=module_part).exists()
+
         return context
 
 
@@ -490,7 +494,7 @@ class TestView(generic.DetailView):
 
         # Check if the user is a module coordinator or a teacher
         if not Test.objects.filter(
-                        Q(module_part__module_edition__coordinators__user=user) | Q(module_part__teachers__user=user),
+                        Q(module_part__module_edition__coordinators__user=user) | Q(module_part__teachers__user=user) | Q(module_part__module_edition__module__study__advisers__user=user),
                 id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -555,6 +559,7 @@ class TestView(generic.DetailView):
         # Set whether the user can release/retract grades.
         context['can_release'] = Test.objects.filter(
             module_part__module_edition__coordinators__user=self.request.user).exists()
+        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition__modulepart__test=test).exists()
         return context
 
 

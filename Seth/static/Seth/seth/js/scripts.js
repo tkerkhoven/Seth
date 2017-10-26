@@ -164,6 +164,10 @@ $(document).ready(function() {
     });
 
     $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
+      if($("#can_edit").html().trim() == "False") {
+        return;
+      }
+
       var i = $(this).find("i");
       if(i.html().trim() == "done") {
         $(this).attr("data-grade", 0.0);
@@ -220,6 +224,10 @@ $(document).ready(function() {
     });
 
     $(document).on('click', 'td[id^="gradeid_"]', function() {
+      if($("#can_edit").html().trim() == "False") {
+        return;
+      }
+
       if(highlighted != $(this).attr("id")) {
 
         highlighted = $(this).attr("id");
