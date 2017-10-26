@@ -64,7 +64,7 @@ class DashboardView(View):
         context = dict()
         context['module_editions'] = []
         for module_edition in module_editions:
-            edition = {'name': module_edition.module.name, 'pk': module_edition.pk, 'module_parts': []}
+            edition = {'name': module_edition.module.name, 'pk': module_edition.pk, 'code': module_edition.code, 'module_parts': []}
             for module_part in module_edition.modulepart_set.all():
                 part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
                 sign_off_assignments = []
