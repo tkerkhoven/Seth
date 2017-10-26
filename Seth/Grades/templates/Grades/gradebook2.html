@@ -64,7 +64,7 @@
                     <p><strong>{{ error_message }}</strong></p>
                 {% endif %}
 
-                {% if grades_exam %}
+                {% if gradedict %}
 
                     <div id="accordion" role="tablist">
                       <div class="card">
@@ -109,8 +109,8 @@
                             <div class="tab-content" id="card-tab-content">
                                 <div class="tab-pane fade show active" id="tests_projects" role="tabpanel" aria-labelledby="tp-tab">
 
-                                    <div class="table-overflow">
-                                        <table id="gradebook" data-url="{% url 'grades:get' pk=mod_ed.id %}" data-skip-to-row="1" class="table table-striped table-bordered table-responsive">
+                                    <div class="table-overflow" ng-app="gradeApp">
+                                        <table id="gradeboo2k" data-url="{% url 'grades:get' pk=mod_ed.id %}" ng-controller="studentController" data-skip-to-row="1" class="table table-striped table-bordered table-responsive">
                                         <thead>
                                         <tr>
                                             <th class="nowrap">Student</th>
@@ -133,74 +133,24 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-                                        {% for student,grades in grades_exam.items %}
-                                        <tr>
-                                            <td class="s_class norap">
-                                                <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
-                                                <p style="display: none">{{ roledict|key:student }}</p>
+                                        {% verbatim %}
+                                        <tr ng-repeat="student in students">
+                                            <td>
+                                                student
                                             </td>
 
-                                            {% for grade in grades %}
-                                            <td id="gradeid_{{ student|key:0 }}_{{ grade|key:1 }}" data-grade="{{ grade|key:0|round }}" data-grade-min="{{ grade|key:4 }}" data-grade-max="{{ grade|key:3 }}" data-edit-url="{% url 'grades:edit' pk=grade|key:1 sid=student|key:0 %}" data-remove-url="{% url 'grades:remove' pk=grade|key:1 sid=student|key:0 %}">
-                                                <a id="grade_{{ student|key:0 }}_{{ grade|key:1 }}" title="{% if grade|key:0  != '-' %}{{ grade|key:0 }}{% else %}N/A{% endif %}">{{ grade|key:0|round }}</a>
+                                            <td>
+                                                grade
                                             </td>
-                                            {% endfor %}
                                         </tr>
-                                        {% endfor %}
+                                        {% endverbatim %}
                                         </tbody>
                                         </table>
                                     </div>
                                 </div>
                                 <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="a-tab">
                                     <div class="table-overflow">
-                                        <table id="assignment_table" data-skip-to-row="1" class="table table-striped table-bordered table-responsive">
-                                        <thead>
-                                        <tr>
-                                            <th class="nowrap">Student</th>
-                                            {% for module_part in module_parts %}
-                                            {% if a_span|key:module_part != 0 %}
-                                                <th class="no-sort" colspan="{{ a_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
-                                            {% endif %}
-                                            {% endfor %}
-                                        </tr>
-                                        <tr>
-                                            <td class="nowrap"></td>
-                                            {% for assignment in assignments %}
-                                            <td class="no-sort">
-                                                <a href="{% url 'grades:test' pk=assignment.id %}">{{ assignment.name }}</a>
-                                                {% if assignment.released %}
-                                                <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>
-                                                {% else %}
-                                                <i class="material-icons float-right text-danger" title="The grades in this test have not been released">cancel</i>
-                                                {% endif %}
-                                            </td>
-                                            {% endfor %}
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {% for student,grades in grades_assi.items %}
-                                        <tr>
-                                            <td class="nowrap">
-                                                <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
-                                                <p style="display: none">{{ roledict|key:student }}</p>
-                                            </td>
 
-                                            {% for grade in grades %}
-                                            <td id="gradeid_{{ student|key:1 }}_{{ grade|key:1 }}" data-url="{% url 'grades:edit' pk=grade|key:1 sid=student|key:0 %}" data-always-color="True" data-grade="{{ grade|key:0 }}" data-grade-min="{{ grade|key:3 }}" data-grade-max="{{ grade|key:2 }}">
-
-                                                <i class="material-icons md-18">
-                                                    {% if grade|key:0 == 1 %}
-                                                        done
-                                                    {% else %}
-                                                        clear
-                                                    {% endif %}
-                                                </i>
-                                            </td>
-                                            {% endfor %}
-                                        </tr>
-                                        {% endfor %}
-                                        </tbody>
-                                        </table>
                                     </div>
                                 </div>
                             </div>

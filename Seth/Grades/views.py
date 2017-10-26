@@ -115,28 +115,63 @@ class GradeView(generic.DetailView):
         # It returns a dictionary of values, denoted by the .values().
         # It filters the queryset by filtering on students which are following the specified module edition.
         # It orders the result by the person id and further order it on the test id of the grades.
-        dicts = Studying.objects \
-            .prefetch_related('person', 'person__Submitter') \
-            .values('person', 'person__name', 'person__university_number',
-                    'person__Submitter', 'person__Submitter__grade', 'person__Submitter__test',
-                    'person__Submitter__released') \
-            .filter(module_edition=mod_ed) \
-            .order_by('person__id', 'person__Submitter__test__id', '-person__Submitter__id') \
-            .distinct('person__id', 'person__Submitter__test__id')
+        query_result = Grade.objects.raw(
+            "SELECT\
+            S.person_id, P.name, P.university_number, T.module_part_id, T.maximum_grade, T.minimum_grade, T.id AS test_id, T.type, G.grade, G.id\
+            FROM \"Grades_test\" T\
+            FULL OUTER JOIN (\
+                SELECT person_id\
+                FROM \"Grades_studying\"\
+                WHERE module_edition_id = %s\
+            ) AS S\
+            ON TRUE\
+            LEFT JOIN (\
+                SELECT DISTINCT ON (test_id, student_id)\
+                id, test_id, student_id, grade\
+                FROM \"Grades_grade\"\
+                WHERE test_id IN (\
+                    SELECT id\
+                    FROM \"Grades_test\"\
+                    WHERE module_part_id IN (\
+                        SELECT id\
+                        FROM \"Grades_modulepart\"\
+                        WHERE module_edition_id = %s\
+                    )\
+                )\
+                ORDER BY student_id, test_id, id DESC\
+            ) AS G\
+            ON G.test_id = T.id AND G.student_id = S.person_id\
+            FULL OUTER JOIN \"Grades_person\" P ON P.id = S.person_id\
+            WHERE  module_part_id IN (\
+                SELECT id\
+                FROM \"Grades_modulepart\"\
+                WHERE module_edition_id = %s\
+            ) ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC;",
+            [mod_ed.id, mod_ed.id, mod_ed.id]
+        )
 
-        students = dict()
-        temp_dict = dict()
+        student_grades_exam = dict()
+        student_grades_assi = dict()
+        for student in query_result:
+            key = (student.person_id, student.name, student.university_number)
+
+            if not key in student_grades_exam.keys():
+                student_grades_exam[key] = []
+            if not key in student_grades_assi.keys():
+                student_grades_assi[key] = []
+
+            if not student.grade and (student.type == 'E' or student.type == 'P'):
+                student_grades_exam[key].append(("-", student.test_id, student.maximum_grade, student.minimum_grade))
+            elif not student.grade:
+                student_grades_assi[key].append(("-", student.test_id, student.maximum_grade, student.minimum_grade))
+            elif (student.type == 'E' or student.type == 'P'):
+                student_grades_exam[key].append((student.grade, student.test_id, student.maximum_grade, student.minimum_grade))
+            else:
+                student_grades_assi[key].append((student.grade, student.test_id, student.maximum_grade, student.minimum_grade))
+
         testallreleased = dict()
-        grade_dict = OrderedDict()
         ep_span = dict()
         a_span = dict()
-
-        # Changing the queryset to something more easily usable.
-        QuerySetChanger(dicts, students, temp_dict, testallreleased)
-
-        # Sort the dictionary of grade information.
-        for key in sorted(temp_dict):
-            grade_dict[key] = temp_dict[key]
 
         for module_part in module_parts:
             ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
@@ -146,9 +181,9 @@ class GradeView(generic.DetailView):
         context['ep_span'] = ep_span
         context['a_span'] = a_span
         context['mod_ed'] = mod_ed
-        context['gradedict'] = grade_dict
+        context['grades_exam'] = student_grades_exam
+        context['grades_assi'] = student_grades_assi
         context['assignments'] = assignments
-        context['studentdict'] = students
         context['module_parts'] = module_parts
         context['testallreleased'] = testallreleased
         context['mod_name'] = Module.objects.values('name').get(moduleedition=mod_ed)['name']
@@ -285,8 +320,8 @@ class ModuleStudentView(generic.DetailView):
         user = request.user
 
         # Check if the user is a module coordinator or a teacher
-        if not ModuleEdition.objects.filter(Q(coordinators__user=user) | (
-            Q(modulepart__teachers__user=user) & Q(modulepart__teacher__role='T')),
+        if not ModuleEdition.objects.filter(Q(coordinators__user=user) |
+            Q(modulepart__teachers__user=user),
                                             id=self.kwargs['pk']):
             raise PermissionDenied()
 
@@ -503,7 +538,7 @@ class TestView(generic.DetailView):
         grade_dict = OrderedDict()
 
         # Changing the queryset to something more useable.
-        QuerySetChanger(dicts, students, temp_dict, testallreleased)
+        QuerySetChanger(dicts, grade_dict, testallreleased)
 
         # Sorts the dicitonary.
         for key in sorted(temp_dict):
@@ -531,7 +566,7 @@ class EmailPreviewView(FormView):
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         test = get_object_or_404(Test, pk=kwargs['pk'])
-        person = Person.objects.filter(user=self.request.user).first()
+        person = Person.objects.filter(user=self.request.user)
         if is_coordinator_of_module(person, test.module_part.module_edition):
             return super(EmailPreviewView, self).dispatch(request, *args, **kwargs)
         else:
@@ -622,7 +657,7 @@ def export(request, *args, **kwargs):
             )
         else:   # University Number, Student name, Date, Grade, Category, Validity period
             table.append(
-                ['{}'.format(u_num), '{}'.format(name), 'N/A', 'N/A', 'N/A', 'N/A']
+                ['{}'.format(u_num), '{}'.format(name), 'N/A', 'NVD', 'N/A', 'N/A']
             )
 
     return excel.make_response_from_array(table, file_name='{} MODXX {} {}.xlsx'
@@ -680,6 +715,7 @@ def remove(request, *args, **kwargs):
     # Return to the page the user came from.
     return JsonResponse(data)
 
+
 def edit(request, *args, **kwargs):
 
     user = request.user
@@ -707,7 +743,25 @@ def edit(request, *args, **kwargs):
     return JsonResponse(data)
 
 
-def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
+def get(request, *args, **kwargs):
+    user = request.user
+
+    mod_ed = ModuleEdition.objects.prefetch_related('modulepart_set').get(coordinators__user=user, id=kwargs['pk'])
+    if not mod_ed:
+        raise PermissionDenied()
+
+    data = []
+
+    for mod_part in ModulePart.objects.filter(module_edition=mod_ed):
+        data.append(mod_part.id)
+
+    print(data)
+
+    # Return to the page the user came from.
+    return JsonResponse(data, safe=False)
+
+
+def QuerySetChanger(dicts, grade_dict, testallreleased=None):
     """ Change a queryset to something more useable.
     :param dicts: The queryset to be changed.
     :param students: An empty dictionary to be filled with student information.
@@ -716,20 +770,14 @@ def QuerySetChanger(dicts, students, temp_dict, testallreleased=None):
     :return: -
     """
     for d in dicts:
-        student = d['person']
+        student = (d['person'], d['person__name'], d['person__university_number'])
         test = d['person__Submitter__test']
 
-        if student not in students.keys():
-            students[student] = dict()
-        if student not in temp_dict.keys():
-            temp_dict[student] = dict()
-
-        # Create the student dictionary.
-        students[student]['name'] = d['person__name']
-        students[student]['pid'] = d['person__university_number']
+        if student not in grade_dict.keys():
+            grade_dict[student] = dict()
 
         # Create the grade dictionary.
-        temp_dict[student][test] = (
+        grade_dict[student][test] = (
             d['person__Submitter__grade'], d['person__Submitter__released'])
 
         # Create the test released dictionary.

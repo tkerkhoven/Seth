@@ -17,4 +17,5 @@ urlpatterns = [
     url(r'^release/(?P<pk>([0-9]+))/$', login_required(views.release), name='release'),
     url(r'^remove/(?P<pk>([0-9]+))/(?P<sid>([0-9]+))/$', login_required(views.remove), name='remove'),
     url(r'^edit/(?P<pk>([0-9]+))/(?P<sid>([0-9]+))/$', login_required(views.edit), name='edit'),
+    url(r'^get/(?P<pk>([0-9]+))/$', login_required(views.get), name='get'),
 ]
