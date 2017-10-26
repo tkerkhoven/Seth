@@ -20,6 +20,10 @@
     }
     </style>
 
+    <div id="can_edit" style="display: none">
+        {{ can_edit }}
+    </div>
+
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
@@ -96,10 +100,10 @@
                             <tr>
                                 {% with grade=grades|key:test.id|key:0 %}
                                 <td>
-                                    <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
+                                    <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
                                     <p style="display: none">{{ roledict|key:student }}</p>
                                 </td>
-                                <td id="gradeid_{{ student }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student %}">
+                                <td id="gradeid_{{ student }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student|key:0 %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student|key:0 %}">
                                     <a title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
                                 </td>
                                 {% endwith %}

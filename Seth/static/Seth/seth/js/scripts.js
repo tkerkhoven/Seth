@@ -59,6 +59,22 @@ function BlurEdit() {
     }
 };
 
+var gradeApp = angular.module("gradeApp", []);
+
+gradeApp.controller('studentController', function($scope,$http) {
+    url = $("#gradeboo2k").attr("data-url")
+
+    $.ajax({
+        url: url,
+        method: "GET",
+        dataType: "json",
+        success: function(data) {
+            console.log(data)
+            $scope.students = data
+        }
+    });
+});
+
 $(document).ready(function() {
 
     $('[id^="collapsePart"').on('show.bs.collapse', function () {
@@ -148,6 +164,10 @@ $(document).ready(function() {
     });
 
     $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
+      if($("#can_edit").html().trim() == "False") {
+        return;
+      }
+
       var i = $(this).find("i");
       if(i.html().trim() == "done") {
         $(this).attr("data-grade", 0.0);
@@ -204,6 +224,10 @@ $(document).ready(function() {
     });
 
     $(document).on('click', 'td[id^="gradeid_"]', function() {
+      if($("#can_edit").html().trim() == "False") {
+        return;
+      }
+
       if(highlighted != $(this).attr("id")) {
 
         highlighted = $(this).attr("id");
@@ -211,8 +235,9 @@ $(document).ready(function() {
         var a = $(this).find("a").first();
 
         var text = "<input type=number max=" + $(this).attr('data-grade-max') +
+          " class=\"grade-input\"" +
           " min=" + $(this).attr('data-grade-min') +
-          " step=0.25" +
+          " step=0.1" +
           " old=\"" + a.html() + "\"" +
           " id=\"" + a.attr("id") + "\"" +
           " title=\"" + a.attr("title") + "\"" +
@@ -256,12 +281,8 @@ $(document).ready(function() {
     } );
 
     var table = $('#gradebook').DataTable({
-      "ordering": true,
-      "order": [[0, 'asc']],
-      "columnDefs": [{
-        orderable: false,
-        targets: "no-sort"
-      }],
+      "ordering": false,
+      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
 
       drawCallback: function(settings){
         var api = this.api();
@@ -273,12 +294,8 @@ $(document).ready(function() {
     });
 
     var assignmenttable = $('#assignment_table').DataTable({
-      "ordering": true,
-      "order": [[0, 'asc']],
-      "columnDefs": [
-        {orderable: false, targets: "no-sort"},
-        {visible: false, targets: "remove"}
-      ],
+      "ordering": false,
+      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
 
       drawCallback: function(settings){
         var api = this.api();
