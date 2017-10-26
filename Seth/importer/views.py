@@ -60,7 +60,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
         context = dict()
         context['module_editions'] = []
         for module_edition in module_editions:
-            edition = {'name': module_edition.module.name, 'pk': module_edition.pk, 'module_parts': []}
+            edition = {'name': module_edition, 'pk': module_edition.pk, 'module_parts': []}
             for module_part in module_edition.modulepart_set.all():
                 part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
                 sign_off_assignments = []
@@ -90,7 +90,7 @@ class ImporterIndexView(LoginRequiredMixin, View):
         context = dict()
         context['module_parts'] = []
         for module_part in module_parts:
-            part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
+            part = {'name': module_part.name, 'pk': module_part.pk, 'module_edition': module_part.module_edition, 'tests': []}
             sign_off_assignments = []
             for test in module_part.test_set.all():
                 if test.type is 'A':

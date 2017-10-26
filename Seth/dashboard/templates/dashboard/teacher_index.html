@@ -17,12 +17,12 @@
             <div class="col-lg-12">
                 <div class="card-columns teacher-cards">
                     {% for module_part in module_parts %}
-                        <div class="card">
-                            <h6 class="card-header">{{ module_part.name }} - {{ module_part.module_edition }}
+                        <div class="card card-margin">
+                            <div class="card-header font-weight-bold">{{ module_part.name }} - {{ module_part.module_edition }}
                                 <a href="{% url 'importer:import_module_part' module_part.pk %}">
                                     <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i>
                                 </a>
-                            </h6>
+                            </div>
                             <ul class="list-group list-group-flush">
                                 {% for test in module_part.tests %}
                                     {% if not test.signoff %}
