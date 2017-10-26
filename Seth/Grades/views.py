@@ -117,42 +117,43 @@ class GradeView(generic.DetailView):
         # It filters the queryset by filtering on students which are following the specified module edition.
         # It orders the result by the person id and further order it on the test id of the grades.
         query_result = Grade.objects.raw(
-            "SELECT\
-            S.person_id, P.name, P.university_number, T.module_part_id, T.maximum_grade, T.minimum_grade, T.id AS test_id, T.type, G.grade, G.id\
-            FROM \"Grades_test\" T\
-            FULL OUTER JOIN (\
-                SELECT person_id\
-                FROM \"Grades_studying\"\
-                WHERE module_edition_id = %s\
-            ) AS S\
-            ON TRUE\
-            LEFT JOIN (\
-                SELECT DISTINCT ON (test_id, student_id)\
-                id, test_id, student_id, grade\
-                FROM \"Grades_grade\"\
-                WHERE test_id IN (\
-                    SELECT id\
-                    FROM \"Grades_test\"\
-                    WHERE module_part_id IN (\
-                        SELECT id\
-                        FROM \"Grades_modulepart\"\
-                        WHERE module_edition_id = %s\
-                    )\
-                )\
-                ORDER BY student_id, test_id, id DESC\
-            ) AS G\
-            ON G.test_id = T.id AND G.student_id = S.person_id\
-            FULL OUTER JOIN \"Grades_person\" P ON P.id = S.person_id\
-            WHERE  module_part_id IN (\
-                SELECT id\
-                FROM \"Grades_modulepart\"\
-                WHERE module_edition_id = %s\
-            ) ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC;",
+            "SELECT "
+            "S.person_id, P.name, P.university_number, T.module_part_id, T.minimum_grade, T.maximum_grade, T.id AS test_id, T.type, G.grade, G.id "
+            "FROM \"Grades_test\" T "
+            "FULL OUTER JOIN ( "
+                "SELECT person_id "
+                "FROM \"Grades_studying\" "
+                "WHERE module_edition_id = 1 "
+            ") AS S "
+            "ON TRUE "
+            "LEFT JOIN ( "
+                "SELECT DISTINCT ON (test_id, student_id) "
+                "id, test_id, student_id, grade "
+                "FROM \"Grades_grade\" "
+                "WHERE test_id IN ( "
+                    "SELECT id "
+                    "FROM \"Grades_test\" "
+                    "WHERE module_part_id IN ( "
+                        "SELECT id "
+                        "FROM \"Grades_modulepart\" "
+                        "WHERE module_edition_id = 1 "
+                    ") "
+                ") "
+                "ORDER BY student_id, test_id, id DESC "
+            ") AS G "
+            "ON G.test_id = T.id AND G.student_id = S.person_id "
+            "FULL OUTER JOIN \"Grades_person\" P "
+            "ON P.id = S.person_id "
+            "WHERE  module_part_id IN ( "
+                "SELECT id "
+                "FROM \"Grades_modulepart\" "
+                "WHERE module_edition_id = 1 "
+            ") ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC;",
             [mod_ed.id, mod_ed.id, mod_ed.id]
         )
 
-        student_grades_exam = dict()
-        student_grades_assi = dict()
+        student_grades_exam = OrderedDict()
+        student_grades_assi = OrderedDict()
         for student in query_result:
             key = (student.person_id, student.name, student.university_number)
 
