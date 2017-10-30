@@ -31,9 +31,23 @@
                 {% endif %}
 
                 {% if student %}
-                    <h1 class="display-4">{{ student.name }}</h1>
-                    <h2 clsss="display-5">{{student.university_number }}</h2>
+                    <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                        <h1 class="display-4">{{ student.name }}</h1>
+
+                        <ul class="navbar-nav mr-auto"></ul>
+
+                        <a href="{% url 'human_resource:person' student.pk %}" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Student detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                    </nav>
+                    <h2 class="display-5">{{ student.university_number }}</h2>
                     <hr>
+                    <nav aria-label="breadcrumb" role="navigation">
+                      <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'grades:gradebook' mod_ed.pk %}">{{ mod_ed.module.name }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ student.name }}</li>
+                      </ol>
+                    </nav>
 
                     <div id="accordion" role="tablist">
                       <div class="card">
