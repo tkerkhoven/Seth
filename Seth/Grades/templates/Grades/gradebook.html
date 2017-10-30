@@ -72,11 +72,6 @@
                        title="Edit module edition"><i class="material-icons md-36 title-bar">find_in_page</i></a>
                 </nav>
                 <hr>
-                <nav aria-label="breadcrumb" role="navigation">
-                  <ol class="breadcrumb">
-                    <li class="breadcrumb-item active" aria-current="page">{{ mod_name }}</li>
-                  </ol>
-                </nav>
 
                 {% if error_message %}
                     <p><strong>{{ error_message }}</strong></p>
@@ -155,7 +150,7 @@
                                         <tbody>
                                         {% for student,grades in grades_exam.items %}
                                         <tr>
-                                            <td class="s_class norap">
+                                            <td class="s_class nowrap">
                                                 <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
                                                 <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
