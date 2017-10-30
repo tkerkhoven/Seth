@@ -42,6 +42,12 @@
                     </nav>
                     <h2 class="display-5">{{ student.university_number }}</h2>
                     <hr>
+                    <nav aria-label="breadcrumb" role="navigation">
+                      <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'grades:gradebook' mod_ed.pk %}">{{ mod_ed.module.name }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ student.name }}</li>
+                      </ol>
+                    </nav>
 
                     <div id="accordion" role="tablist">
                       <div class="card">

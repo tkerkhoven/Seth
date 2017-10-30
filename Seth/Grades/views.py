@@ -395,6 +395,7 @@ class ModuleStudentView(generic.DetailView):
         context['student'] = student
         context['module_parts'] = module_parts
         context['tests'] = tests
+        context['mod_ed'] = mod_ed
         context['assignments'] = assignments
         context['gradedict'] = context_dict
         context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists()

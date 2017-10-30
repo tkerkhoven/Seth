@@ -42,6 +42,12 @@
                            title="Module part detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
                     </nav>
                     <hr>
+                    <nav aria-label="breadcrumb" role="navigation">
+                      <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'grades:gradebook' module_part.module_edition.pk %}">{{ module_part.module_edition.module.name }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ module_part.name }}</li>
+                      </ol>
+                    </nav>
 
                     <div id="accordion" role="tablist">
                       <div class="card">

@@ -71,6 +71,12 @@
                        data-placement="bottom"
                        title="Edit module edition"><i class="material-icons md-36 title-bar">find_in_page</i></a>
                 </nav>
+                <hr>
+                <nav aria-label="breadcrumb" role="navigation">
+                  <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">{{ mod_name }}</li>
+                  </ol>
+                </nav>
 
                 {% if error_message %}
                     <p><strong>{{ error_message }}</strong></p>

@@ -43,6 +43,14 @@
                     </nav>
                     <hr>
 
+                    <nav aria-label="breadcrumb" role="navigation">
+                      <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'grades:gradebook' test.module_part.module_edition.pk %}">{{ test.module_part.module_edition.module.name }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'grades:module_part' test.module_part.pk %}">{{ test.module_part.name }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ test.name }}</li>
+                      </ol>
+                    </nav>
+
                     {% if can_export %}
                     <form action="{% url 'grades:export' test.id %}">
                         <input class="btn btn-secondary" type="submit" value="Export to .xls" />
