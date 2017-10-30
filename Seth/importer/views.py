@@ -557,7 +557,7 @@ def export_module_part_signoff(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     students = Person.objects.filter(studying__module_edition=module_edition).values('university_number', 'name')
-    tests = Test.objects.filter(module_part=module_part, type='A').values('pk', 'name')
+    tests = Test.objects.filter(module_part=module_part, type='A').values('pk', 'name', 'minimum_grade', 'maximum_grade')
 
     # Pre-fill first few columns.
     table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 2)]
@@ -566,7 +566,7 @@ def export_module_part_signoff(request, pk):
     if COLUMN_TITLE_ROW > 1:
         table.append(['', 'Test name >'] + [test['name'] for test in tests])
     if COLUMN_TITLE_ROW > 0:
-        table.append(['', 'Grade between >'] + ['{} - {}'.format(test.minimum_grade, test.maximum_grade) for test in tests])
+        table.append(['', 'Grade between >'] + ['{} - {}'.format(test['minimum_grade'], test['maximum_grade']) for test in tests])
 
     # Add machine-readable header row.
     table.append(['university_number', 'name'] + [test['pk'] for test in tests])
@@ -931,3 +931,27 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
             return HttpResponseBadRequest('Bad POST')
 
         return redirect('module_management:module_edition_detail', pk)
+
+
+def export_module_structure(request, pk):
+    """ Returns an excel sheet which can be used to upload the module structure.
+
+    :param request: Django request
+    :param pk: Module edition primary key
+    :return: Excel worksheet as response.
+    """
+    # Check if user is a module coordinator.
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    # Insert column titles
+    table = [
+        ['Module part:', '<<example>>', '', '(Duplicate this page for each module part)'],
+        ['Test:', '<<example test>>', '<<example signoff>>', ''],
+        ['Min. grade', '1', '0', ''],
+        ['Max. grade', '10', '1', '']
+    ]
+
+    return excel.make_response_from_array(table, file_name='Module Structure {}.xlsx'.format(module_edition), file_type='xlsx')
