@@ -93,7 +93,9 @@
                                         <thead>
                                         <tr>
                                             {% for module_part in module_parts %}
-                                                <th colspan="{{ ep_span|key:module_part }}"> {{ module_part.name }} </th>
+                                            {% if module_part.num_ep != 0 %}
+                                                <th colspan="{{ module_part.num_ep }}"> {{ module_part.name }} </th>
+                                            {% endif %}
                                             {% endfor %}
                                         </tr>
 
@@ -131,8 +133,8 @@
                                         <thead>
                                         <tr>
                                             {% for module_part in module_parts %}
-                                            {% if a_span|key:module_part != 0 %}
-                                                <th class="no-sort" colspan="{{ a_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
+                                            {% if module_part.num_a != 0 %}
+                                                <th class="no-sort" colspan="{{ module_part.num_a }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
                                             {% endif %}
                                             {% endfor %}
                                         </tr>

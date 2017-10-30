@@ -280,22 +280,10 @@ $(document).ready(function() {
         $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
     } );
 
-    var table = $('#gradebook').DataTable({
-      "ordering": false,
-      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-
-      drawCallback: function(settings){
-        var api = this.api();
-
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
-    });
-
     var assignmenttable = $('#assignment_table').DataTable({
       "ordering": false,
       "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+      "scrollX": true,
 
       drawCallback: function(settings){
         var api = this.api();
@@ -310,6 +298,7 @@ $(document).ready(function() {
       "ordering": false,
       "paging": false,
       "searching": false,
+      "scrollX": true,
 
       drawCallback: function(settings){
         var api = this.api();
@@ -324,6 +313,7 @@ $(document).ready(function() {
       "ordering": false,
       "paging": false,
       "searching": false,
+      "scrollX": true,
       "columnDefs": [
         {visible: false, targets: "remove"}
       ],
@@ -367,11 +357,6 @@ $(document).ready(function() {
     });
 
     assignmenttable.on('draw', function() {
-      $('[data-toggle="popover"]').popover();
-      updateColoring();
-    });
-
-    table.on('draw', function() {
       $('[data-toggle="popover"]').popover();
       updateColoring();
     });

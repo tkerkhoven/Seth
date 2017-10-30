@@ -72,11 +72,6 @@
                        title="Edit module edition"><i class="material-icons md-36 title-bar">find_in_page</i></a>
                 </nav>
                 <hr>
-                <nav aria-label="breadcrumb" role="navigation">
-                  <ol class="breadcrumb">
-                    <li class="breadcrumb-item active" aria-current="page">{{ mod_name }}</li>
-                  </ol>
-                </nav>
 
                 {% if error_message %}
                     <p><strong>{{ error_message }}</strong></p>
@@ -133,7 +128,9 @@
                                         <tr>
                                             <th class="nowrap">Student</th>
                                             {% for module_part in module_parts %}
-                                                <th class="no-sort" colspan="{{ ep_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
+                                            {% if module_part.num_ep != 0 %}
+                                                <th class="no-sort" colspan="{{ module_part.num_ep }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
+                                            {% endif %}
                                             {% endfor %}
                                         </tr>
                                         <tr>
@@ -153,7 +150,7 @@
                                         <tbody>
                                         {% for student,grades in grades_exam.items %}
                                         <tr>
-                                            <td class="s_class norap">
+                                            <td class="s_class nowrap">
                                                 <a href="{% url 'grades:modstudent' pk=mod_ed.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
                                                 <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
@@ -176,8 +173,8 @@
                                         <tr>
                                             <th class="nowrap">Student</th>
                                             {% for module_part in module_parts %}
-                                            {% if a_span|key:module_part != 0 %}
-                                                <th class="no-sort" colspan="{{ a_span|key:module_part }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
+                                            {% if module_part.num_a != 0 %}
+                                                <th class="no-sort" colspan="{{ module_part.num_a }}"><a href="{% url 'grades:module_part' pk=module_part.id %}"> {{ module_part.name }} </a></th>
                                             {% endif %}
                                             {% endfor %}
                                         </tr>
