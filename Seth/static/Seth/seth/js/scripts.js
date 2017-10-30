@@ -283,6 +283,7 @@ $(document).ready(function() {
     var table = $('#gradebook').DataTable({
       "ordering": false,
       "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+      "scrollX": true,
 
       drawCallback: function(settings){
         var api = this.api();
@@ -296,6 +297,7 @@ $(document).ready(function() {
     var assignmenttable = $('#assignment_table').DataTable({
       "ordering": false,
       "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+      "scrollX": true,
 
       drawCallback: function(settings){
         var api = this.api();
@@ -310,6 +312,7 @@ $(document).ready(function() {
       "ordering": false,
       "paging": false,
       "searching": false,
+      "scrollX": true,
 
       drawCallback: function(settings){
         var api = this.api();
@@ -324,6 +327,7 @@ $(document).ready(function() {
       "ordering": false,
       "paging": false,
       "searching": false,
+      "scrollX": true,
       "columnDefs": [
         {visible: false, targets: "remove"}
       ],

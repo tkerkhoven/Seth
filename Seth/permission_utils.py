@@ -12,6 +12,10 @@ def is_coordinator_of_module(person, module_edition):
     result = Coordinator.objects.filter(person=person, module_edition=module_edition, is_assistant=False)
     return result.count() > 0
 
+def u_is_coordinator_of_module(user, module_edition):
+    result = Coordinator.objects.filter(person__user=user, module_edition=module_edition, is_assistant=False)
+    return result.count() > 0
+
 
 def is_teacher(person):
     result = Teacher.objects.filter(person=person, role='T')

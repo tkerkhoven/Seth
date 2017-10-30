@@ -1,6 +1,10 @@
 from collections import OrderedDict
+
+import time
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Case, IntegerField
+from django.db.models import Q, Count, Sum
+from django.db.models import When
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404
@@ -11,7 +15,7 @@ from django.views.generic import FormView
 from Grades import mailing
 from Grades.mailing import mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
-from permission_utils import is_coordinator_of_module
+from permission_utils import is_coordinator_of_module, u_is_coordinator_of_module
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator
 
 
@@ -105,11 +109,11 @@ class GradeView(generic.DetailView):
 
         # Gather all tests the user is allowed to see, ordered by the ID of their respective module part.
         tests = Test.objects \
-            .filter(Q(type='E') | Q(type='P'), module_part__in=module_parts) \
+            .filter(Q(type='E') | Q(type='P'), module_part__module_edition=mod_ed) \
             .order_by('module_part__id').distinct()
 
         assignments = Test.objects \
-            .filter(type='A', module_part__in=module_parts) \
+            .filter(type='A', module_part__module_edition=mod_ed) \
             .order_by('module_part__id').distinct()
 
         # Gather all important information about students and their grades.
@@ -172,16 +176,16 @@ class GradeView(generic.DetailView):
                 student_grades_assi[key].append((student.grade, student.test_id, student.maximum_grade, student.minimum_grade))
 
         testallreleased = dict()
-        ep_span = dict()
-        a_span = dict()
 
-        for module_part in module_parts:
-            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
-            a_span[module_part] = module_part.test_set.filter(type='A').count()
+        module_parts = ModulePart.objects \
+            .filter(id__in=module_parts) \
+            .annotate(
+            num_ep=Sum(
+                Case(When(Q(test__type='E') | Q(test__type='P'), then=1), default=0, output_field=IntegerField()))) \
+            .annotate(
+            num_a=Sum(Case(When(test__type='A', then=1), default=0, output_field=IntegerField())))
 
         # Add everything to the context.
-        context['ep_span'] = ep_span
-        context['a_span'] = a_span
         context['mod_ed'] = mod_ed
         context['grades_exam'] = student_grades_exam
         context['grades_assi'] = student_grades_assi
@@ -373,8 +377,6 @@ class ModuleStudentView(generic.DetailView):
 
         temp_dict = dict()
         context_dict = OrderedDict()
-        ep_span = dict()
-        a_span = dict()
 
         # Changing the queryset to something more useable.
         # Creates a dictionary of grades (temp_dict[TEST] = (GRADE, RELEASED)
@@ -385,20 +387,21 @@ class ModuleStudentView(generic.DetailView):
         for key in sorted(temp_dict):
             context_dict[key] = temp_dict[key]
 
-        for module_part in module_parts:
-            ep_span[module_part] = module_part.test_set.filter(Q(type='E') | Q(type='P')).count()
-            a_span[module_part] = module_part.test_set.filter(type='A').count()
+        module_parts = ModulePart.objects \
+            .filter(id__in=module_parts) \
+            .annotate(
+                num_ep=Sum(Case(When(Q(test__type='E') | Q(test__type='P'), then=1), default=0, output_field=IntegerField()))) \
+            .annotate(
+                num_a=Sum(Case(When(test__type='A', then=1), default=0, output_field=IntegerField())))
 
         # Add everything to the context.
-        context['ep_span'] = ep_span
-        context['a_span'] = a_span
         context['student'] = student
         context['module_parts'] = module_parts
         context['tests'] = tests
         context['mod_ed'] = mod_ed
         context['assignments'] = assignments
         context['gradedict'] = context_dict
-        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists()
+        context['can_edit'] = u_is_coordinator_of_module(user, mod_ed)
 
         return context
 

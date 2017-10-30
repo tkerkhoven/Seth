@@ -1,0 +1,33 @@
+{% for section, timings in template_timings.items %}
+<h4>{{ section|title }}</h4>
+<table>
+    <thead>
+        <tr>
+        <th>Name</th>
+        <th>Average</th>
+        <th>Times</th>
+        <th>Total time</th>
+        <th>Min</th>
+        <th>Max</th>
+        <th>Queries</th>
+        <th>Query Duration</th>
+        </tr>
+    <thead>
+    <tbody>
+        {% with timings|dictsortreversed:"avg" as results %}
+            {% for result in results %}
+            <tr class="{% cycle 'djDebugOdd' 'djDebugEven' %}">
+            <td>{{ result.name }}</td>
+            <td>{{ result.avg|floatformat }} ms</td>
+            <td>{{ result.count }}</td>
+            <td>{{ result.total|floatformat }} ms</td>
+            <td>{{ result.min|floatformat }} ms</td>
+            <td>{{ result.max|floatformat }} ms</td>
+            <td>{{ result.queries }}</td>
+            <td>{{ result.query_duration|floatformat }} ms {% if result.sql_percentage %} ({{ result.sql_percentage }}) {% endif %}</td>
+            </tr>
+            {% endfor %}
+        {% endwith %}
+    </tbody>
+</table>
+{% endfor %}
