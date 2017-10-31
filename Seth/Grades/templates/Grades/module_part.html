@@ -19,6 +19,10 @@
     }
     </style>
 
+    <div id="can_edit" style="display: none">
+        {{ can_edit }}
+    </div>
+
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
@@ -28,8 +32,22 @@
                 {% endif %}
 
                 {% if module_part %}
-                    <h2 class="display-4"> {{ module_part.name }} </h2>
+                    <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                        <h1 class="display-3">{{ module_part.name }}</h1>
+
+                        <ul class="navbar-nav mr-auto"></ul>
+
+                        <a href="{% url 'module_management:module_part_detail' module_part.pk %}" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Module part detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                    </nav>
                     <hr>
+                    <nav aria-label="breadcrumb" role="navigation">
+                      <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'grades:gradebook' module_part.module_edition.pk %}">{{ mod_name }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ module_part.name }}</li>
+                      </ol>
+                    </nav>
 
                     <div id="accordion" role="tablist">
                       <div class="card">
@@ -90,12 +108,12 @@
                                         {% for student,grades in gradedict.items %}
                                             <tr>
                                                 <td class="s_class">
-                                                    <a href="{% url 'grades:modstudent' pk=module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
+                                                    <a href="{% url 'grades:modstudent' pk=module_part.module_edition.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
                                                     <p style="display: none">{{ roledict|key:student }}</p>
                                                 </td>
                                                 {% for test in tests %}
                                                 {% with grade=grades|key:test.id|key:0 %}
-                                                    <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student %}">
+                                                    <td id="gradeid_{{ student }}_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student|key:0 %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student|key:0 %}">
                                                         <a title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
                                                     </td>
                                                 {% endwith %}
@@ -128,13 +146,13 @@
                                         {% for student,grades in gradedict.items %}
                                         <tr>
                                             <td>
-                                                <a href="{% url 'grades:modstudent' pk=module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
+                                                <a href="{% url 'grades:modstudent' pk=module_part.module_edition.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:1 }})</a>
                                                 <p style="display: none">{{ roledict|key:student }}</p>
                                             </td>
 
                                             {% for assignment in assignments %}
                                             {% with grade=grades|key:assignment.id|key:0 %}
-                                            <td id="gradeid_{{ student }}_{{ assignment.id }}" data-url="{% url 'grades:edit' pk=assignment.id sid=student %}" data-always-color="True" data-grade="{{ grade }}" data-grade-min="{{ assignment.minimum_grade }}" data-grade-max="{{ assignment.maximum_grade }}">
+                                            <td id="gradeid_{{ student }}_{{ assignment.id }}" data-url="{% url 'grades:edit' pk=assignment.id sid=student|key:0 %}" data-always-color="True" data-grade="{{ grade }}" data-grade-min="{{ assignment.minimum_grade }}" data-grade-max="{{ assignment.maximum_grade }}">
 
                                                 <!-- <input id="grade_input_{{ student }}_{{ assignment.id }}" type="checkbox" -->
                                                 <i class="material-icons">

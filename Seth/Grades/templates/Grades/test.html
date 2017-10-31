@@ -20,6 +20,10 @@
     }
     </style>
 
+    <div id="can_edit" style="display: none">
+        {{ can_edit }}
+    </div>
+
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
@@ -28,9 +32,24 @@
                 {% endif %}
 
                 {% if test %}
+                    <nav class="navbar navbar-expand-lg navbar-light title-bar">
+                        <h1 class="display-3">{{ test.name }}</h1>
 
-                    <h3 class="display-4"> {{ test.name }} </h3>
+                        <ul class="navbar-nav mr-auto"></ul>
+
+                        <a href="{% url 'module_management:test_detail' test.pk %}" data-toggle="tooltip"
+                           data-placement="bottom"
+                           title="Test detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                    </nav>
                     <hr>
+
+                    <nav aria-label="breadcrumb" role="navigation">
+                      <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'grades:gradebook' test.module_part.module_edition.pk %}">{{ test.module_part.module_edition.module.name }}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'grades:module_part' test.module_part.pk %}">{{ test.module_part.name }}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ test.name }}</li>
+                      </ol>
+                    </nav>
 
                     {% if can_export %}
                     <form action="{% url 'grades:export' test.id %}">
@@ -96,10 +115,10 @@
                             <tr>
                                 {% with grade=grades|key:test.id|key:0 %}
                                 <td>
-                                    <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student %}">{{ studentdict|key:student|key:'name' }} ({{ studentdict|key:student|key:'pid' }})</a>
+                                    <a href="{% url 'grades:modstudent' pk=test.module_part.module_edition.id sid=student|key:0 %}">{{ student|key:1 }} ({{ student|key:2 }})</a>
                                     <p style="display: none">{{ roledict|key:student }}</p>
                                 </td>
-                                <td id="gradeid_{{ student }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student %}">
+                                <td id="gradeid_{{ student }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}" data-edit-url="{% url 'grades:edit' pk=test.id sid=student|key:0 %}" data-remove-url="{% url 'grades:remove' pk=test.id sid=student|key:0 %}">
                                     <a title="{% if grades|key:test.id != 'N/A' %}{{ grade }}{% else %}N/A{% endif %}">{{ grade|round }}</a>
                                 </td>
                                 {% endwith %}
