@@ -21,11 +21,11 @@
                 </nav>
                 <hr class="remove-top-margin">
                 {% if persons %}
-                <table id="personTable" class="table table-hover table-bordered table-responsive">
+                <table id="personTable" class="table table-hover table-bordered table-responsive" data-skip-to-row="0">
                     <thead>
                         <tr>
                             <th>Student/Employer number</th>
-                            <th>Full name<input style="float: right;" type="text" id="searchInput" placeholder="Search..."></th>
+                            <th>Full name<input style="float: right;" type="text" id="searchInput" data-target="#personTable" placeholder="Search..."></th>
                         </tr>
                     </thead>
                     <tbody>

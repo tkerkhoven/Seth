@@ -28,7 +28,6 @@ class DashboardView(View):
         person = Person.objects.filter(user=self.request.user).first()
 
         if pu.is_coordinator_or_assistant(person):
-            # print(self.make_modules_context())
             context = {
                 'modules': self.make_modules_context()['module_editions'],
                 'time': get_current_date(),
@@ -60,7 +59,6 @@ class DashboardView(View):
     def make_modules_context(self):
         module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).prefetch_related(
             'modulepart_set__test_set')
-        tests = Test.objects.filter(module_part__module_edition__coordinator__person__user=self.request.user).annotate(num_grades=Count('grade__student', distinct=True))
         context = dict()
         context['module_editions'] = []
         for module_edition in module_editions:
@@ -68,12 +66,12 @@ class DashboardView(View):
             for module_part in module_edition.modulepart_set.all():
                 part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
                 sign_off_assignments = []
-                for test in module_part.test_set.all():
+                for test in module_part.test_set.annotate(num_grades=Count('grade__student', distinct=True)).all():
                     if test.type is 'A':
                         sign_off_assignments.append(test)
                         continue
 
-                    test_item = {'name': test.name, 'pk': test.pk, 'signoff': False, 'num_grades': tests.get(pk=test.pk).num_grades, 'released': test.released}
+                    test_item = {'name': test.name, 'pk': test.pk, 'signoff': False, 'num_grades': test.num_grades, 'released': test.released}
                     part['tests'].append(test_item)
                 if sign_off_assignments:
                     soa_line = {'module_part_pk': module_part.pk, 'signoff': True, 'released': True}
