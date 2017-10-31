@@ -127,7 +127,7 @@ class GradeView(generic.DetailView):
             "FULL OUTER JOIN ( "
                 "SELECT person_id "
                 "FROM \"Grades_studying\" "
-                "WHERE module_edition_id = 1 "
+                "WHERE module_edition_id = %s "
             ") AS S "
             "ON TRUE "
             "LEFT JOIN ( "
@@ -140,7 +140,7 @@ class GradeView(generic.DetailView):
                     "WHERE module_part_id IN ( "
                         "SELECT id "
                         "FROM \"Grades_modulepart\" "
-                        "WHERE module_edition_id = 1 "
+                        "WHERE module_edition_id = %s "
                     ") "
                 ") "
                 "ORDER BY student_id, test_id, id DESC "
@@ -151,7 +151,7 @@ class GradeView(generic.DetailView):
             "WHERE  module_part_id IN ( "
                 "SELECT id "
                 "FROM \"Grades_modulepart\" "
-                "WHERE module_edition_id = 1 "
+                "WHERE module_edition_id = %s "
             ") ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC;",
             [mod_ed.id, mod_ed.id, mod_ed.id]
         )
@@ -159,6 +159,8 @@ class GradeView(generic.DetailView):
         student_grades_exam = OrderedDict()
         student_grades_assi = OrderedDict()
         for student in query_result:
+            if student.person_id is None:
+                continue
             key = (student.person_id, student.name, student.university_number)
 
             if not key in student_grades_exam.keys():
@@ -187,6 +189,7 @@ class GradeView(generic.DetailView):
 
         # Add everything to the context.
         context['mod_ed'] = mod_ed
+        context['gradecheck'] = student_grades_exam or student_grades_assi
         context['grades_exam'] = student_grades_exam
         context['grades_assi'] = student_grades_assi
         context['assignments'] = assignments
