@@ -215,8 +215,8 @@ class StudentView(generic.DetailView):
         user = request.user
 
         # Check if the user has a Studying object, identifying them as a student.
-        if not Studying.objects.filter(person__user=user, person__id=self.kwargs['pk']) or\
-            Study.objects.filter(advisers__user=user, modules__module_edition__studying__person__id=self.kwargs['pk']):
+        if not (Studying.objects.filter(person__user=user, person__id=self.kwargs['pk']) or\
+            Study.objects.filter(advisers__user=user, modules__moduleedition__studying__person__id=self.kwargs['pk'])):
                 raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
