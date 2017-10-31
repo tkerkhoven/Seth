@@ -478,6 +478,7 @@ class ModulePartView(generic.DetailView):
         context['module_part'] = module_part
         context['testallreleased'] = testallreleased
         context['tests'] = tests
+        context['mod_name'] = module_part.module_edition.module.name
         context['assignments'] = assignments
         context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition__modulepart=module_part).exists()
 
