@@ -17,7 +17,7 @@
 {#            </div>#}
 {#        </div>#}
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-12 text-center">
                 <h3 class="display-5">
                     Are you sure you want to delete "{{ object }}"?
                 </h3>
@@ -25,12 +25,12 @@
         </div>
         <hr>
         <div class="row justify-content-center">
-            <div class="col-lg-4">
+            <div class="col-lg-4 text-center">
                 <form action="" method="post">{% csrf_token %}
 {#                    <p class="display-5">Are you sure you want to delete "{{ object }}"?</p>#}
 {#                    <hr>#}
                     <input class="btn btn-danger pointer" type="submit" value="Confirm" />
-                    <input onclick="history.back()" class="btn btn-secondary pointer" type="button" value="Cancel" />
+                    <input onclick="window.location = '{% url 'human_resource:person' pk=object.pk %}'" class="btn btn-secondary pointer" type="button" value="Cancel" />
                 </form>
             </div>
         </div>

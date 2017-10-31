@@ -14,7 +14,7 @@ from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coord
 
 
 class ModuleListView(generic.ListView):
-    template_name = 'module_management/module_overview2.html'
+    template_name = 'module_management/module_overview.html'
     context_object_name = 'module_list'
 
     def get_queryset(self):
