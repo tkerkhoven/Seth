@@ -276,91 +276,6 @@ $(document).ready(function() {
       }
     });
 
-    $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
-        $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
-    } );
-
-    var assignmenttable = $('#assignment_table').DataTable({
-      "ordering": false,
-      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-      "scrollX": true,
-
-      drawCallback: function(settings){
-        var api = this.api();
-
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
-    });
-
-    var studenttable = $('#studentbook').DataTable({
-      "ordering": false,
-      "paging": false,
-      "searching": false,
-      "scrollX": true,
-
-      drawCallback: function(settings){
-        var api = this.api();
-
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
-    });
-
-    var studenttable = $('#studentbook_assignments').DataTable({
-      "ordering": false,
-      "paging": false,
-      "searching": false,
-      "scrollX": true,
-      "columnDefs": [
-        {visible: false, targets: "remove"}
-      ],
-
-      drawCallback: function(settings){
-        var api = this.api();
-
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
-    });
-
-    studenttable.on('draw', function() {
-      studenttable.columns('.remove').each(function() {
-        ($(this).visible(false));
-      });
-    });
-
-    var testtable = $('#testbook').DataTable({
-      "paging": false,
-      "ordering": true,
-      "order": [[1, 'asc']],
-      "columnDefs": [{
-        orderable: false,
-        targets: "no-sort"
-      }],
-
-      drawCallback: function(settings){
-        var api = this.api();
-
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
-    });
-
-    testtable.on('draw', function() {
-      $('[data-toggle="popover"]').popover();
-      updateColoring();
-    });
-
-    assignmenttable.on('draw', function() {
-      $('[data-toggle="popover"]').popover();
-      updateColoring();
-    });
-
     $("#lowerNum").bind('keyup mouseup', function () {
       if(+$(this).val() <= +$("#upperNum").val()) {
         oldfrom = $(this).val();
@@ -399,15 +314,17 @@ $(document).ready(function() {
         buttonText: "<i class='material-icons'>event</i>"
     });
 
-
-    $("#searchInput").on('keyup', function() {
-       var input, filter, table, tr, tdNumber, tdName, i;
-        input = $("#searchInput")[0];
+    function searchTable(searchInput, target2=null) {
+        var input, filter, table, tr, tdNumber, tdName, i;
+        input = $(searchInput)[0];
         filter = input.value.toLowerCase();
-        table = $("#personTable")[0];
+        table = $($(searchInput).data("target"))[0];
         tr = table.getElementsByTagName("tr");
 
         for (i=0; i < tr.length; i++) {
+            if (i <= $($(searchInput).data("target")).data("skip-to-row")) {
+                continue;
+            }
             tdNumber = tr[i].getElementsByTagName("td")[0];
             tdName = tr[i].getElementsByTagName("td")[1];
             if (tdNumber || tdName) {
@@ -417,6 +334,32 @@ $(document).ready(function() {
                     tr[i].style.display = "none";
                 }
             }
+        }
+
+        if(target2 != null) {
+            table = $(target2)[0];
+            tr = table.getElementsByTagName("tr");
+
+            for (i=0; i < tr.length; i++) {
+                if (i <= $(target2).data("skip-to-row")) {
+                    continue;
+                }
+                tdNumber = tr[i].getElementsByTagName("td")[0];
+                tdName = tr[i].getElementsByTagName("td")[1];
+                if (tdNumber || tdName) {
+                    if (tdNumber.innerHTML.toLowerCase().indexOf(filter) > -1 || tdName.innerHTML.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    }
+
+    $("#searchInput").on('keyup', function() {
+        if($(this).data("target2") != "") {
+            searchTable(this, $(this).data("target2"));
         }
     });
 

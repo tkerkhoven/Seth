@@ -15,7 +15,7 @@ from django.views.generic import FormView
 from Grades import mailing
 from Grades.mailing import mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
-from permission_utils import is_coordinator_of_module, u_is_coordinator_of_module
+from permission_utils import is_coordinator_of_module, u_is_coordinator_of_module, is_study_adviser_of_study
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator
 
 
@@ -212,8 +212,9 @@ class StudentView(generic.DetailView):
         user = request.user
 
         # Check if the user has a Studying object, identifying them as a student.
-        if not Studying.objects.filter(person__user=user, person__id=self.kwargs['pk']):
-            raise PermissionDenied()
+        if not Studying.objects.filter(person__user=user, person__id=self.kwargs['pk']) or\
+            Study.objects.filter(advisers__user=user, modules__module_edition__studying__person__id=self.kwargs['pk']):
+                raise PermissionDenied()
 
         # Try to dispatch to the right method; if a method doesn't exist,
         # defer to the error handler. Also defer to the error handler if the
@@ -477,6 +478,7 @@ class ModulePartView(generic.DetailView):
         context['module_part'] = module_part
         context['testallreleased'] = testallreleased
         context['tests'] = tests
+        context['mod_name'] = module_part.module_edition.module.name
         context['assignments'] = assignments
         context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition__modulepart=module_part).exists()
 
