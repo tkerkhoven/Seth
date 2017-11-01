@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.db import transaction
+from django.db.utils import IntegrityError
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
     Http404
 from django.shortcuts import render, redirect, get_object_or_404
@@ -19,7 +20,7 @@ import re
 from Grades.exceptions import GradeException
 from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module, Study
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule, \
-    ImportModuleEditionStructureForm
+    ImportModuleEditionStructureForm, COLUMN_TITLE_ROW
 
 
 # Create your views here.
@@ -110,7 +111,6 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
         return context
 
-COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
 
 
 @login_required
@@ -140,6 +140,7 @@ def import_module(request, pk):
         form = GradeUploadForm(request.POST, request.FILES)
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
+            title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
 
                 test_rows = dict()
@@ -147,12 +148,12 @@ def import_module(request, pk):
                 university_number_field = None
 
                 # Detect university_number and test columns
-                for title_index in range(0, len(sheet[table][COLUMN_TITLE_ROW])):
+                for title_index in range(0, len(sheet[table][title_row])):
                     # Ignore empty column titles
-                    if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
+                    if sheet[table][title_row][title_index] == '':
                         continue
                     # This is the university number column
-                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'university_number':
+                    if str(sheet[table][title_row][title_index]).lower() == 'university_number':
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -160,20 +161,20 @@ def import_module(request, pk):
                         # search by ID
                         try:
                             test = Test.objects.filter(
-                                pk=sheet[table][COLUMN_TITLE_ROW][title_index])
+                                pk=sheet[table][title_row][title_index])
                             if test:
                                 if not test.filter(module_part__module_edition=module_edition):
                                     return HttpResponseBadRequest("Attempt to register grades for a test that is not part "
                                                               "of this module.")
-                                test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
+                                test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                         except ValueError:
                             pass  # Not an int.
                         # search by name
                         if Test.objects.filter(
-                                name=sheet[table][COLUMN_TITLE_ROW][title_index]
+                                name=sheet[table][title_row][title_index]
                         ).filter(module_part__module_edition=pk):
                             test_rows[title_index] = Test.objects.filter(
-                                name=sheet[table][COLUMN_TITLE_ROW][title_index]
+                                name=sheet[table][title_row][title_index]
                             ).filter(module_part__module_edition=pk)[0].pk  # pk of Test
 
                         # Attempt to ignore test altogether.
@@ -191,11 +192,11 @@ def import_module(request, pk):
                 # Retrieve Test object beforehand to validate permissions on tests and speed up Grade creation
                 tests = dict()
                 for test_column in test_rows.keys():
-                    tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
+                    tests[test_column] = Test.objects.get(pk=sheet[table][title_row][test_column])
 
                 # Check excel file for invalid students
                 invalid_students = []
-                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                for row in sheet[table][(title_row + 1):]:
                     if not Studying.objects.filter(person__university_number=row[university_number_field]).filter(
                             module_edition=pk):
                         invalid_students.append(row[university_number_field])
@@ -206,7 +207,7 @@ def import_module(request, pk):
                         'Enroll these students first before retrying.'.format(invalid_students))
 
                 # Make Grades
-                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:  # Walk horizontally over table
+                for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
                     student = Person.objects.filter(university_number=row[university_number_field]).first()
                     # check if this is not an empty line, else continue.
                     if student:
@@ -261,9 +262,10 @@ def import_module_part(request, pk):
         raise PermissionDenied('You are not allowed to do this.')
 
     if request.method == "POST":
-        form = ImportModuleEditionStructureForm(request.POST, request.FILES)
+        form = GradeUploadForm(request.POST, request.FILES)
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
+            title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
 
                 test_rows = dict()
@@ -271,12 +273,12 @@ def import_module_part(request, pk):
                 university_number_field = None
 
                 # Detect university_number and test columns
-                for title_index in range(0, len(sheet[table][COLUMN_TITLE_ROW])):
+                for title_index in range(0, len(sheet[table][title_row])):
                     # Ignore empty column titles
-                    if sheet[table][COLUMN_TITLE_ROW][title_index] == '':
+                    if sheet[table][title_row][title_index] == '':
                         continue
                     # This is the university number column
-                    if str(sheet[table][COLUMN_TITLE_ROW][title_index]).lower() == 'university_number':
+                    if str(sheet[table][title_row][title_index]).lower() == 'university_number':
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -284,20 +286,20 @@ def import_module_part(request, pk):
                         # search by ID
                         try:
                             test = Test.objects.filter(
-                                pk=sheet[table][COLUMN_TITLE_ROW][title_index])
+                                pk=sheet[table][title_row][title_index])
                             if test:
                                 if not test.filter(module_part=module_part):
                                     return HttpResponseBadRequest("Attempt to register grades for a test that is not part "
                                                               "of this module.")
-                                test_rows[title_index] = sheet[table][COLUMN_TITLE_ROW][title_index]  # pk of Test
+                                test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                         except ValueError:
                             pass  # Not an int.
                         # search by name
                         if Test.objects.filter(
-                                name=sheet[table][COLUMN_TITLE_ROW][title_index]
+                                name=sheet[table][title_row][title_index]
                         ).filter(module_part__module_edition=module_edition):
                             test_rows[title_index] = Test.objects.filter(
-                                name=sheet[table][COLUMN_TITLE_ROW][title_index]
+                                name=sheet[table][title_row][title_index]
                             ).filter(module_part__module_edition=module_edition)[0].pk  # pk of Test
 
                         # Attempt to ignore test altogether.
@@ -315,11 +317,11 @@ def import_module_part(request, pk):
                 # Retrieve Test object beforehand to validate permissions on tests and speed up Grade creation
                 tests = dict()
                 for test_column in test_rows.keys():
-                    tests[test_column] = Test.objects.get(pk=sheet[table][COLUMN_TITLE_ROW][test_column])
+                    tests[test_column] = Test.objects.get(pk=sheet[table][title_row][test_column])
 
                 # Check excel file for invalid students
                 invalid_students = []
-                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                for row in sheet[table][(title_row + 1):]:
                     if not Studying.objects.filter(person__university_number=row[university_number_field]).filter(
                             module_edition=module_edition):
                         invalid_students.append(row[university_number_field])
@@ -330,7 +332,7 @@ def import_module_part(request, pk):
                         'Enroll these students first before retrying.'.format(invalid_students))
 
                 # Make Grades
-                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:  # Walk horizontally over table
+                for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
                     student = Person.objects.filter(university_number=row[university_number_field]).first()
                     # check if this is not an empty line, else continue.
                     if student:
@@ -386,12 +388,13 @@ def import_test(request, pk):
         if form.is_valid():
 
             sheet = request.FILES['file'].get_book_dict()
+            title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
                 # Identify columns
                 try:
-                    student_id_field = sheet[table][COLUMN_TITLE_ROW].index('university_number')
-                    grade_field = sheet[table][COLUMN_TITLE_ROW].index('grade')
-                    description_field = sheet[table][COLUMN_TITLE_ROW].index('description')
+                    student_id_field = sheet[table][title_row].index('university_number')
+                    grade_field = sheet[table][title_row].index('grade')
+                    description_field = sheet[table][title_row].index('description')
                 except ValueError:
                     return HttpResponseBadRequest('One of the required fields [student_id, grade, description] could'
                                               ' not be found.')
@@ -401,7 +404,7 @@ def import_test(request, pk):
 
                 # Check excel file for invalid students
                 invalid_students = []
-                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                for row in sheet[table][(title_row + 1):]:
                     if not Studying.objects.filter(person__university_number=row[0]).filter(
                             module_edition=test.module_part.module_edition_id):
                         invalid_students.append(row[0])
@@ -417,7 +420,7 @@ def import_test(request, pk):
                     )
 
                 grades = []
-                for row in sheet[table][(COLUMN_TITLE_ROW + 1):]:
+                for row in sheet[table][(title_row + 1):]:
                     try:
                         student = Person.objects.get(university_number=row[student_id_field])
                         # check if this is not an empty line, else continue.
@@ -557,7 +560,7 @@ def export_module_part_signoff(request, pk):
         raise PermissionDenied('You are not the module coordinator for this course.')
 
     students = Person.objects.filter(studying__module_edition=module_edition).values('university_number', 'name')
-    tests = Test.objects.filter(module_part=module_part, type='A').values('pk', 'name')
+    tests = Test.objects.filter(module_part=module_part, type='A').values('pk', 'name', 'minimum_grade', 'maximum_grade')
 
     # Pre-fill first few columns.
     table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW - 2)]
@@ -566,7 +569,7 @@ def export_module_part_signoff(request, pk):
     if COLUMN_TITLE_ROW > 1:
         table.append(['', 'Test name >'] + [test['name'] for test in tests])
     if COLUMN_TITLE_ROW > 0:
-        table.append(['', 'Grade between >'] + ['{} - {}'.format(test.minimum_grade, test.maximum_grade) for test in tests])
+        table.append(['', 'Grade between >'] + ['{} - {}'.format(test['minimum_grade'], test['maximum_grade']) for test in tests])
 
     # Add machine-readable header row.
     table.append(['university_number', 'name'] + [test['pk'] for test in tests])
@@ -885,7 +888,7 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
 
     def dispatch(self, request, *args, **kwargs):
         module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
-        if is_coordinator_or_assistant_of_module(Person.objects.get(user=self.request.user), module_edition):
+        if is_coordinator_or_assistant_of_module(Person.objects.filter(user=self.request.user).first(), module_edition):
             return super(ModuleStructureImporter, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not the module coordinator of this module.")
@@ -899,35 +902,98 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
     def post(self, request, pk):
         module_edition = get_object_or_404(ModuleEdition, pk=pk)
 
+        tests_in_sheet = []
+        module_parts_in_sheet = []
+
+
         student_form = ImportModuleEditionStructureForm(request.POST, request.FILES)
         if student_form.is_valid():
-            file = request.FILES['file']
-            workbook = file.get_book_dict()
+            try:
+                with transaction.atomic():
+                    file = request.FILES['file']
+                    workbook = file.get_book_dict()
 
-            structure = dict()
+                    structure = dict()
 
-            for page in workbook.keys():
-                module_part = ModulePart.objects.get_or_create(name=workbook[page][0][1], module_edition=module_edition)
+                    for page in workbook.keys():
+                        module_part, mp_created = ModulePart.objects.get_or_create(name=workbook[page][0][1], module_edition=module_edition)
+                        module_parts_in_sheet.append(module_part.pk)
 
-                for i in range(1, len(workbook[page][0])):
 
-                    min_grade = float(workbook[page][2][i])
-                    max_grade = float(workbook[page][3][i])
+                        for i in range(1, len(workbook[page][0])):
 
-                    if min_grade == 0 and max_grade == 1:
-                        test_type = 'A'
-                    else:
-                        test_type = 'E'
+                            min_grade = float(workbook[page][2][i])
+                            max_grade = float(workbook[page][3][i])
 
-                    test = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
-                                               defaults={'type': test_type,
-                                                         'minimum_grade': min_grade,
-                                                         'maximum_grade': max_grade})
-                    test.type = test_type
-                    test.minimum_grade = min_grade
-                    test.maximum_grade = max_grade
-                    test.save()
+                            if min_grade == 0 and max_grade == 1:
+                                test_type = 'A'
+                            else:
+                                test_type = 'E'
+
+                            test, test_created = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
+                                                       defaults={'type': test_type,
+                                                                 'minimum_grade': min_grade,
+                                                                 'maximum_grade': max_grade})
+                            test.type = test_type
+                            test.minimum_grade = min_grade
+                            test.maximum_grade = max_grade
+                            test.save()
+                            tests_in_sheet.append(test.pk)
+                            # Collect module parts and tests that cannot be deleted, because they contain Grades.
+                        old_tests = []
+                        old_module_parts = []
+
+                    for test in Test.objects.filter(module_part__module_edition=module_edition).exclude(
+                            pk__in=tests_in_sheet):
+                        if not Grade.objects.filter(test=test):
+                            test.delete()
+                        else:
+                            old_tests.append(test)
+                    for module_part in ModulePart.objects.filter(module_edition=module_edition).exclude(
+                            pk__in=module_parts_in_sheet):
+                        if not Grade.objects.filter(test__module_part=module_part):
+                            module_part.delete()
+                        else:
+                            old_module_parts.append(module_part)
+                    if len(old_tests) > 0 or len(old_module_parts) > 0:
+                        raise IntegrityError("Some modules that should be removed have grades.")
+            except IntegrityError:
+                return render(request, 'importer/module_structure_import_error.html',
+                              context={'old_tests': old_tests, 'old_module_parts': old_module_parts})
+
         else:
             return HttpResponseBadRequest('Bad POST')
 
+
+
+
+            # return render(request, 'importer/module_structure_import_error.html',
+            #               context={'old_tests': old_tests, 'old_module_parts': old_module_parts})
+
+
+
         return redirect('module_management:module_edition_detail', pk)
+
+
+def export_module_structure(request, pk):
+    """ Returns an excel sheet which can be used to upload the module structure.
+
+    :param request: Django request
+    :param pk: Module edition primary key
+    :return: Excel worksheet as response.
+    """
+    # Check if user is a module coordinator.
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    # Insert column titles
+    table = [
+        ['Module part:', '<<example>>', '', '(Duplicate this page for each module part)'],
+        ['Test:', '<<example test>>', '<<example signoff>>', ''],
+        ['Min. grade', '1', '0', ''],
+        ['Max. grade', '10', '1', '']
+    ]
+
+    return excel.make_response_from_array(table, file_name='Module Structure {}.xlsx'.format(module_edition), file_type='xlsx')
