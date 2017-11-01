@@ -77,7 +77,7 @@
                     <p><strong>{{ error_message }}</strong></p>
                 {% endif %}
 
-                {% if grades_exam %}
+                {% if gradecheck %}
 
                     <div id="accordion" role="tablist">
                       <div class="card">
@@ -223,7 +223,7 @@
                         </div>
                     </div>
                 {% else %}
-                    <p>No students are available.</p>
+                    <p>No students are available. You can add students to this module <a href="{% url 'importer:import_student_to_module' moduleedition.pk %}">here</a>.</p>
                 {% endif %}
             </div>
         </div>
