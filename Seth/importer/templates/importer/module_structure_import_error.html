@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Module structure import error{% endblock %}
+
+{% block content %}
+    {% include 'navbar.html' with active_page="importer" %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h2>Error wile importing module structure</h2>
+                <p> These objects could not be deleted from the module, because they contain grades. No changes have been made. If module parts or grades simply need to be renamed, please rename them via Module Management (use the link below). </p>
+                {% if old_module_parts %}
+                    <h3>Module parts:</h3>
+                    <ul>
+                        {% for module_part in old_module_parts %}
+                            <li><a href="{% url 'module_management:module_part_detail' module_part.pk %}">{{ module_part }}</a></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if old_tests %}
+                    <h3>Tests:</h3>
+                    <ul>
+                        {% for test in old_tests %}
+                            <li><a href="{% url 'module_management:test_detail' test.pk %}">{{ test }}</a></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
