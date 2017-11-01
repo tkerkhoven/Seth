@@ -1,3 +1,4 @@
+import re
 from collections import OrderedDict
 
 import time
@@ -8,6 +9,7 @@ from django.db.models import When
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404
+from django.urls import reverse
 from django.views import generic, View
 import django_excel as excel
 from django.views.generic import FormView
@@ -16,7 +18,7 @@ from Grades import mailing
 from Grades.mailing import mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
 from permission_utils import is_coordinator_of_module, u_is_coordinator_of_module, is_study_adviser_of_study
-from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator
+from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator, Teacher
 
 
 class ModuleView(generic.ListView):
@@ -102,82 +104,22 @@ class GradeView(generic.DetailView):
         # It is also filtered on the specific module edition of this page and whether or not the given part has a test.
         # If they don't have a test, they won't be included in the queryset.
         module_parts = ModulePart.objects \
-            .prefetch_related('test_set') \
-            .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user) | Q(module_edition__module__study__advisers__user=self.request.user),
-                    Q(module_edition=mod_ed), Q(test__isnull=False)) \
-            .order_by('id').distinct()
+                           .filter(Q(module_edition__coordinators__user=self.request.user) | Q(teachers__user=self.request.user) |
+                                   Q(module_edition__module__study__advisers__user=self.request.user),
+                                   Q(module_edition=mod_ed), Q(test__isnull=False)) \
+                           .order_by('id')
 
         # Gather all tests the user is allowed to see, ordered by the ID of their respective module part.
         tests = Test.objects \
-            .filter(Q(type='E') | Q(type='P'), module_part__module_edition=mod_ed) \
+            .filter(Q(type='E') | Q(type='P'),
+                    Q(module_part__module_edition__coordinators__user=self.request.user) | Q(module_part__teachers__user=self.request.user) |
+                    Q(module_part__module_edition__module__study__advisers__user=self.request.user),
+                    module_part__module_edition=mod_ed) \
             .order_by('module_part__id').distinct()
 
         assignments = Test.objects \
             .filter(type='A', module_part__module_edition=mod_ed) \
             .order_by('module_part__id').distinct()
-
-        # Gather all important information about students and their grades.
-        # It returns a dictionary of values, denoted by the .values().
-        # It filters the queryset by filtering on students which are following the specified module edition.
-        # It orders the result by the person id and further order it on the test id of the grades.
-        query_result = Grade.objects.raw(
-            "SELECT "
-            "S.person_id, P.name, P.university_number, T.module_part_id, T.minimum_grade, T.maximum_grade, T.id AS test_id, T.type, G.grade, G.id "
-            "FROM \"Grades_test\" T "
-            "FULL OUTER JOIN ( "
-                "SELECT person_id "
-                "FROM \"Grades_studying\" "
-                "WHERE module_edition_id = %s "
-            ") AS S "
-            "ON TRUE "
-            "LEFT JOIN ( "
-                "SELECT DISTINCT ON (test_id, student_id) "
-                "id, test_id, student_id, grade "
-                "FROM \"Grades_grade\" "
-                "WHERE test_id IN ( "
-                    "SELECT id "
-                    "FROM \"Grades_test\" "
-                    "WHERE module_part_id IN ( "
-                        "SELECT id "
-                        "FROM \"Grades_modulepart\" "
-                        "WHERE module_edition_id = %s "
-                    ") "
-                ") "
-                "ORDER BY student_id, test_id, id DESC "
-            ") AS G "
-            "ON G.test_id = T.id AND G.student_id = S.person_id "
-            "FULL OUTER JOIN \"Grades_person\" P "
-            "ON P.id = S.person_id "
-            "WHERE  module_part_id IN ( "
-                "SELECT id "
-                "FROM \"Grades_modulepart\" "
-                "WHERE module_edition_id = %s "
-            ") ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC;",
-            [mod_ed.id, mod_ed.id, mod_ed.id]
-        )
-
-        student_grades_exam = OrderedDict()
-        student_grades_assi = OrderedDict()
-        for student in query_result:
-            if student.person_id is None:
-                continue
-            key = (student.person_id, student.name, student.university_number)
-
-            if not key in student_grades_exam.keys():
-                student_grades_exam[key] = []
-            if not key in student_grades_assi.keys():
-                student_grades_assi[key] = []
-
-            if not student.grade and (student.type == 'E' or student.type == 'P'):
-                student_grades_exam[key].append(("-", student.test_id, student.maximum_grade, student.minimum_grade))
-            elif not student.grade:
-                student_grades_assi[key].append(("-", student.test_id, student.maximum_grade, student.minimum_grade))
-            elif (student.type == 'E' or student.type == 'P'):
-                student_grades_exam[key].append((student.grade, student.test_id, student.maximum_grade, student.minimum_grade))
-            else:
-                student_grades_assi[key].append((student.grade, student.test_id, student.maximum_grade, student.minimum_grade))
-
-        testallreleased = dict()
 
         module_parts = ModulePart.objects \
             .filter(id__in=module_parts) \
@@ -189,15 +131,11 @@ class GradeView(generic.DetailView):
 
         # Add everything to the context.
         context['mod_ed'] = mod_ed
-        context['gradecheck'] = student_grades_exam or student_grades_assi
-        context['grades_exam'] = student_grades_exam
-        context['grades_assi'] = student_grades_assi
         context['assignments'] = assignments
         context['module_parts'] = module_parts
-        context['testallreleased'] = testallreleased
         context['mod_name'] = Module.objects.values('name').get(moduleedition=mod_ed)['name']
         context['tests'] = tests
-        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists()
+        context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists() or Teacher.objects.filter(person__user=self.request.user, module_part__module_edition=mod_ed).exists()
 
         return context
 
@@ -735,8 +673,9 @@ def edit(request, *args, **kwargs):
 
     user = request.user
 
-    test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user,
-                                                          id=kwargs['pk'])
+    test = Test.objects.prefetch_related('grade_set').filter(Q(module_part__module_edition__coordinators__user=user) |
+                                                          Q(module_part__teachers__user=user),
+                                                          id=kwargs['pk']).distinct()[0]
     if not test:
         raise PermissionDenied()
 
@@ -761,19 +700,89 @@ def edit(request, *args, **kwargs):
 def get(request, *args, **kwargs):
     user = request.user
 
-    mod_ed = ModuleEdition.objects.prefetch_related('modulepart_set').get(coordinators__user=user, id=kwargs['pk'])
+    mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+                                       Q(modulepart__teachers__user=user) |
+                                       Q(module__study__advisers__user=user),
+                                       pk=kwargs['pk'])\
+                                    .distinct()[0]
     if not mod_ed:
         raise PermissionDenied()
 
-    data = []
+    data = {}
+    data_array = []
 
-    for mod_part in ModulePart.objects.filter(module_edition=mod_ed):
-        data.append(mod_part.id)
+    if request.method == "GET":
 
-    print(data)
+        module_parts = str(ModulePart.objects \
+            .filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user) | Q(
+            module_edition__module__study__advisers__user=user),
+                    Q(module_edition=mod_ed), Q(test__isnull=False)) \
+            .values('id') \
+            .order_by('id').distinct().query)
+
+        query_result = Grade.objects.raw(
+            "SELECT S.person_id, P.name, P.university_number, T.module_part_id, T.minimum_grade, T.maximum_grade, T.id AS test_id, T.type, G.grade, G.id "
+            "FROM \"Grades_test\" T FULL OUTER JOIN ( "
+                "SELECT person_id FROM \"Grades_studying\" "
+                "WHERE module_edition_id = %s "
+            ") AS S "
+            "ON TRUE LEFT JOIN ( "
+                "SELECT DISTINCT ON (test_id, student_id) id, test_id, student_id, grade "
+                "FROM \"Grades_grade\" "
+                "WHERE test_id IN ( "
+                    "SELECT id FROM \"Grades_test\" "
+                    "WHERE module_part_id IN (" + module_parts + ")"
+                ") "
+                "ORDER BY student_id, test_id, id DESC "
+            ") AS G "
+            "ON G.test_id = T.id AND G.student_id = S.person_id "
+            "FULL OUTER JOIN \"Grades_person\" P "
+            "ON P.id = S.person_id "
+            "WHERE module_part_id IN (" + module_parts + ") "
+            "AND (type='E' OR type='P') "
+            "ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC ;",
+            [mod_ed.id]
+        )
+
+        print(query_result)
+
+        student_grades_exam = OrderedDict()
+        last_key = ""
+        for student in query_result:
+            if student is None:
+                key = last_key
+
+            if (student.type == 'E' or student.type == 'P'):
+                key = "<a href={}>{} ({})</a>".format(
+                    reverse('grades:modstudent', kwargs={'pk': mod_ed.id, 'sid': student.person_id}),
+                    student.name, student.university_number)
+                last_key = key
+
+                value = '<a id="grade_{}_{}"' \
+                        'data-grade="{}"'\
+                        'data-grade-min="{}" data-grade-max="{}"' \
+                        'data-edit-url="{}" ' \
+                        'data-remove-url="{}"' \
+                        '>{}</a>'.format(student.person_id, student.test_id,
+                                         (student.grade if student.grade else '-'),
+                                         student.minimum_grade, student.maximum_grade,
+                                         reverse('grades:edit', kwargs={'pk': student.test_id, 'sid': student.person_id}),
+                                         reverse('grades:remove', kwargs={'pk': student.test_id, 'sid': student.person_id}),
+                                         (student.grade if student.grade else '-'))
+
+                if not key in student_grades_exam.keys():
+                    student_grades_exam[key] = []
+                student_grades_exam[key].append(value)
+
+        for key, value in student_grades_exam.items():
+            data_array.append([key] + value)
+
+        data = {
+            "data": data_array
+        }
 
     # Return to the page the user came from.
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data)
 
 
 def QuerySetChanger(dicts, grade_dict, testallreleased=None):
