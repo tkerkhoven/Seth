@@ -140,7 +140,7 @@ def import_module(request, pk):
         form = GradeUploadForm(request.POST, request.FILES)
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
-            title_row = form.cleaned_data.get('title_row')
+            title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
 
                 test_rows = dict()
@@ -265,7 +265,7 @@ def import_module_part(request, pk):
         form = GradeUploadForm(request.POST, request.FILES)
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
-            title_row = form.cleaned_data.get('title_row')
+            title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
 
                 test_rows = dict()
@@ -388,7 +388,7 @@ def import_test(request, pk):
         if form.is_valid():
 
             sheet = request.FILES['file'].get_book_dict()
-            title_row = form.cleaned_data.get('title_row')
+            title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
                 # Identify columns
                 try:
