@@ -389,80 +389,73 @@ $(document).ready(function() {
     }
 
     // Study adviser students table search functions
-    // By student number
-    $("#search_student_number").on('keyup', function() {
-        var $input, filter, $table, $tr, $td, i;
-        $input = $("#search_student_number");
-        filter = $input.val().toLowerCase();
-        $table = $("#sa_person_table");
-        $tr = $table.children("tbody").children("tr");
-        if (filter === "") {
-            $tr.hide();
-        } else {
-            $tr.each(function () {
-                $td = $(this).children(".person_number");
-                // $tdNumber = $(this).children(".person_number");
-                // $tdName = $(this).children(".person_name");
-                if ($td) {
-                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                }
-            });
-        }
-    });
+    // // By student number
+    // $("#search_student_number").on('keyup', function() {
+    //     var $input, filter, $table, $tr, $td, i;
+    //     $input = $("#search_student_number");
+    //     filter = $input.val().toLowerCase();
+    //     $table = $("#sa_person_table");
+    //     $tr = $table.children("tbody").children("tr");
+    //     if (filter === "") {
+    //         $tr.hide();
+    //     } else {
+    //         $tr.each(function () {
+    //             $td = $(this).children(".person_number");
+    //             // $tdNumber = $(this).children(".person_number");
+    //             // $tdName = $(this).children(".person_name");
+    //             if ($td) {
+    //                 if ($td.text().toLowerCase().indexOf(filter) > -1) {
+    //                     $(this).show();
+    //                 } else {
+    //                     $(this).hide();
+    //                 }
+    //             }
+    //         });
+    //     }
+    // });
+    //
+    // // By student name
+    // $("#search_student_name").on('keyup', function() {
+    //     var $input, filter, $table, $tr, $td, i;
+    //     $input = $("#search_student_name");
+    //     filter = $input.val().toLowerCase();
+    //     $table = $("#sa_person_table");
+    //     $tr = $table.children("tbody").children("tr");
+    //     if (filter === "") {
+    //         $tr.hide();
+    //     } else {
+    //         $tr.each(function () {
+    //             $td = $(this).children(".person_name");
+    //             // $tdNumber = $(this).children(".person_number");
+    //             // $tdName = $(this).children(".person_name");
+    //             if ($td) {
+    //                 if ($td.text().toLowerCase().indexOf(filter) > -1) {
+    //                     $(this).show();
+    //                 } else {
+    //                     $(this).hide();
+    //                 }
+    //             }
+    //         });
+    //     }
+    // });
 
-    // By student name
     $("#search_student_name").on('keyup', function() {
-        var $input, filter, $table, $tr, $td, i;
-        $input = $("#search_student_name");
-        filter = $input.val().toLowerCase();
-        $table = $("#sa_person_table");
-        $tr = $table.children("tbody").children("tr");
-        if (filter === "") {
-            $tr.hide();
-        } else {
-            $tr.each(function () {
-                $td = $(this).children(".person_name");
-                // $tdNumber = $(this).children(".person_number");
-                // $tdName = $(this).children(".person_name");
-                if ($td) {
-                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                }
-            });
-        }
+        filter_sa_students();
     });
 
-    $("#search_student_name").on('keyup', search_sa_students());
-
-    function search_sa_students() {
-        var name, number, $table, $tr;
-        name = $("#search_student_name").val().toLowerCase();
-        number = $("#search_student_number").val().toLowerCase();
-        $table = $("#sa_person_table");
-        $tr = $table.children("tbody").children("tr");
-        if (name === "" && number === "") {
-            $tr.hide();
-        } else {
-            $tr.each(function() {
-
-            })
-        }
-    }
+    $("#search_student_number").on('keyup', function() {
+        filter_sa_students()
+    });
 
     // Clear input field buttons
     $("#clear-search-sname").on('click', function() {
        $("#search_student_name").val("");
+       filter_sa_students();
     });
 
     $("#clear-search-snumber").on('click', function() {
        $("#search_student_number").val("");
+       filter_sa_students();
     });
 
     // Human research table search function
@@ -534,6 +527,32 @@ $(document).ready(function() {
         }
     })
 });
+
+// var sname, snumber, $table, $tr, $tdName, $tdNumber;
+// Filtering the students table for the study adviser
+function filter_sa_students() {
+    var sname, snumber, $table, $tr, $tdName, $tdNumber;
+    sname = $("#search_student_name").val().toLowerCase();
+    snumber = $("#search_student_number").val().toLowerCase();
+    $table = $("#sa_person_table");
+    $tr = $table.children("tbody").children("tr");
+    if (sname === "" && snumber === "") {
+        $tr.show();
+    } else {
+        $tr.each(function() {
+            $tdName = $(this).children(".person_name");
+            $tdNumber = $(this).children(".person_number");
+            if ($tdName || $tdNumber) {
+                if ($tdName.text().toLowerCase().indexOf(sname) > -1 &&
+                    $tdNumber.text().toLowerCase().indexOf(snumber) > -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            }
+        })
+    }
+}
 
 // Functions for deleting persons from a module edition
 function deleteUser(userpk, studyingspk, url) {

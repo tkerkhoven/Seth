@@ -49,7 +49,7 @@
                     <table id="sa_person_table" class="table table-hover table-bordered table-responsive-lg mt-2">
                         <tbody>
                             {% for person in persons %}
-                            <tr style="display: none;" class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}">
+                            <tr class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}">
                                 <td class="person_number"> {{ person.university_number }} </td>
                                 <td class="person_name"> {{ person.name }} </td>
                             </tr>

@@ -39,7 +39,10 @@
                                 <div class="card-columns mc-dashboard-cards">
                                     {% for module_part in module_ed.module_parts %}
                                         <div class="card">
-                                            <div class="card-header">{{ module_part.name }}
+                                            <div class="card-header font-weight-bold">{{ module_part.name }}
+                                                <span class="font-weight-normal font-italic">
+                                                    - <a href="{% url 'grades:module_part' pk=module_part.pk %}">All grades</a>
+                                                </span>
                                             </div>
                                             <ul class="list-group list-group-flush">
                                                 {% for test in module_part.tests %}
