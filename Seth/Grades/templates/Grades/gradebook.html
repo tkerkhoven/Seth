@@ -109,18 +109,18 @@
                         <div class="card-header card-header-tabs">
                             <ul class="nav nav-tabs" id="card-tabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="tp-tab" data-toggle="tab" href="#tests_projects"
-                                       role="tab" aria-controls="tests_projects" aria-expanded="true">Tests/Projects</a>
+                                    <a class="nav-link active" id="tp-tab" data-toggle="tab" href="#tests_projects_tab"
+                                       role="tab" aria-controls="tests_projects_tab" aria-expanded="true">Tests/Projects</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link" id="a-tab" data-toggle="tab" href="#assignments"
-                                       role="tab" aria-controls="assignments">Assignments</a>
+                                    <a class="nav-link" id="a-tab" data-toggle="tab" href="#assignments_tab"
+                                       role="tab" aria-controls="assignments_tab">Assignments</a>
                                 </li>
                             </ul>
                         </div>
                         <div class="card-body">
                             <div class="tab-content" id="card-tab-content">
-                                <div class="tab-pane fade show active" id="tests_projects" role="tabpanel" aria-labelledby="tp-tab">
+                                <div class="tab-pane fade active show" id="tests_projects_tab" role="tabpanel" aria-labelledby="tp-tab" aria-expanded="true">
 
                                     <div class="table-overflow">
                                         <table id="gradebook" data-url="{% url 'grades:get' pk=mod_ed.id t='E' %}" data-view="mod_ed" class="gradebook table table-striped table-bordered table-responsive">
@@ -152,7 +152,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="a-tab">
+                                <div class="tab-pane fade" id="assignments_tab" role="tabpanel" aria-labelledby="a-tab" aria-expanded="false">
                                     <div class="table-overflow">
                                         <table id="assignment_table" data-url="{% url 'grades:get' pk=mod_ed.id t='A' %}" data-view="mod_ed" class="gradebook table table-striped table-bordered table-responsive">
                                         <thead>

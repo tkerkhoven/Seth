@@ -1,4 +1,5 @@
 import unittest
+from collections import OrderedDict
 
 import pyexcel
 import pyexcel_xlsx
@@ -7,7 +8,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 # Create your tests here.
-from pyexcel import Sheet
+from pyexcel import Sheet, Book
 
 from Grades.exceptions import GradeException
 from Grades.models import *
@@ -90,7 +91,7 @@ class ImporterTest(TestCase):
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[teacher]) for i in
             range(2)]
 
-        module_part_2 = ModulePart.objects.create(module_edition=module_ed2, name='Parel 1', teacher=[teacher])
+        module_part_2 = ModulePart.objects.create(module_edition=module_ed2, name='Parel 3', teacher=[teacher])
 
         Test.objects.create(name='Theory Test 1', module_part=module_part_2, type='E')
 
@@ -609,6 +610,118 @@ class ImporterTest(TestCase):
             self.fail('Person imported to module does not exist.')
         if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
+
+        # MODULE STRUCTURE IMPORT
+
+    def test_module_structure_import(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        new_module_part_name = 'New One'
+        new_test_name = 'New test'
+        new_signoff_name = 'New signoff'
+
+        table = OrderedDict()
+
+        table['sheet1'] = [
+            ['Module part:', new_module_part_name, ''],
+            ['Test name:', new_test_name, new_signoff_name],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+        table['sheet2'] = [
+            ['Module part:', new_module_part_name + ' 2', ''],
+            ['Test name:', new_test_name + ' 2', new_signoff_name + ' 2'],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+
+        book = Book(sheets=table)
+
+        book.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-structure/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertRedirects(response, reverse('module_management:module_edition_detail', args=[module_edition.pk]))
+
+        module_part_1 = ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name).first()
+        if not module_part_1:
+            self.fail('First page of sheet not imported correctly')
+        if not Test.objects.filter(module_part=module_part_1, name=new_test_name, type='E'):
+            self.fail('First test not imported correctly (at all or as exam)')
+        if not Test.objects.filter(module_part=module_part_1, name=new_signoff_name, type='A'):
+            self.fail('First signoff not imported correctly (at all or as exam)')
+
+        module_part_2 = ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name + ' 2').first()
+        if not ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name + ' 2'):
+            self.fail('Second page of sheet not imported correctly')
+        if not Test.objects.filter(module_part=module_part_2, name=new_test_name + ' 2', type='E'):
+            self.fail('Second test not imported correctly (at all or as exam)')
+        if not Test.objects.filter(module_part=module_part_2, name=new_signoff_name + ' 2', type='A'):
+            self.fail('Second signoff not imported correctly (at all or as exam)')
+
+        # Test whether object removal works fine
+        print(ModulePart.objects.all())
+        self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
+        self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 4)
+
+    # Requires test_import_module_structure to pass.
+    def test_module_structure_import_failure_grades_exist(self):
+
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        # This should be the amount of module parts and testa after setup. We need this later.
+        self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
+        self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 2)
+
+        Grade.objects.create(
+            grade=8,
+            test=Test.objects.filter(module_part__module_edition=module_edition).first(),
+            student=Person.objects.filter(university_number__startswith="s").first(),
+            teacher=Person.objects.filter(coordinator__module_edition=module_edition).first()
+        )
+
+        new_module_part_name = 'New One'
+        new_test_name = 'New test'
+        new_signoff_name = 'New signoff'
+
+        table = OrderedDict()
+
+        table['sheet1'] = [
+            ['Module part:', new_module_part_name, ''],
+            ['Test name:', new_test_name, new_signoff_name],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+        table['sheet2'] = [
+            ['Module part:', new_module_part_name + ' 2', ''],
+            ['Test name:', new_test_name + ' 2', new_signoff_name + ' 2'],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+
+        book = Book(sheets=table)
+
+        book.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-structure/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTemplateUsed(response, 'importer/module_structure_import_error.html')
+
+        if ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name).first():
+            self.fail('Made module part while atomicity should revert original state.')
+        # Test whether all moduleparts are restored correctly.
+        self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
+        self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 2)
+        if ModulePart.objects.filter(name=new_module_part_name):
+            self.fail("Imported module part from sheet when it shoudn't")
 
 
 class ImporterPermissionsTest(TestCase):

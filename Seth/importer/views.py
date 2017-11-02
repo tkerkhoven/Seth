@@ -141,6 +141,11 @@ def import_module(request, pk):
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
+                # Check if the sheet has enough rows
+                if len(sheet[table]) < title_row:
+                    return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
+                                                  ' Are you sure the file is an .xlsx file? Otherwise, download a new '
+                                                  'gradesheet and try using that instead.')
 
                 test_rows = dict()
 
@@ -265,6 +270,11 @@ def import_module_part(request, pk):
         if form.is_valid():
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
+                # Check if the sheet has enough rows
+                if len(sheet[table]) < title_row:
+                    return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
+                                                  ' Are you sure the file is an .xlsx file? Otherwise, download a new '
+                                                  'gradesheet and try using that instead.')
 
                 test_rows = dict()
 
@@ -351,7 +361,7 @@ def import_module_part(request, pk):
                                       'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
                                       'using that instead.')
     else:  # GET request
-        form = ImportModuleEditionStructureForm()
+        form = GradeUploadForm()
         return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk})
 
 
@@ -387,6 +397,11 @@ def import_test(request, pk):
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
+                # Check if the sheet has enough rows
+                if len(sheet[table]) < title_row:
+                    return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
+                                                  ' Are you sure the file is an .xlsx file? Otherwise, download a new '
+                                                  'gradesheet and try using that instead.')
                 # Identify columns
                 try:
                     student_id_field = sheet[table][COLUMN_TITLE_ROW].index('university_number')

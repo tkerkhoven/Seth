@@ -674,6 +674,7 @@ def get(request, *args, **kwargs):
         in_test = ""
         where_test = ""
         mod_ed = None
+        data = {}
 
         if kwargs['t'] == 'A':
             type = "type='A'"
@@ -743,14 +744,14 @@ def get(request, *args, **kwargs):
             [mod_ed.id]
         )
 
-        print(query_result)
-
         student_grades_exam = OrderedDict()
         for student in query_result:
+            if student.person_id is None:
+                continue
+
             key = "<a href={}>{} ({})</a>".format(
                 reverse('grades:modstudent', kwargs={'pk': mod_ed.id, 'sid': student.person_id}),
                 student.name, student.university_number)
-            value = ""
 
             if (student.type == 'E' or student.type == 'P'):
                 value = '<a id="grade_{}_{}"' \
@@ -765,7 +766,6 @@ def get(request, *args, **kwargs):
                                          reverse('grades:remove', kwargs={'pk': student.test_id, 'sid': student.person_id}),
                                          (student.grade if student.grade else '-'))
             else:
-                val = ''
                 if student.grade == 1:
                     val = 'done'
                 else:
