@@ -122,11 +122,7 @@ def study_adviser_view(request):
     person = Person.objects.filter(user=request.user).first()
     if pu.is_study_adviser(person):
         inner_qs = Module.objects.filter(study__advisers=person)
-        qs = Person.objects.filter(
-            Q(studying__module_edition__module__study__advisers=person)
-            # Q(study__advisers=person) |
-            # Q(teacher__module_part__module_edition__module__in=inner_qs)
-        ) \
+        qs = Person.objects.filter(studying__module_edition__module__study__advisers=person) \
             .order_by('university_number', 'user') \
             .distinct('university_number', 'user')
         context['persons'] = qs
@@ -142,25 +138,6 @@ def not_in_seth(request):
     return render(request, 'dashboard/not_in_seth.html')
 
 
-@login_required
-def modules(request):
-    """
-    Checks the type of logged in user and directs to view with relevant modules.
-
-    :param request: Django request for authentication
-    :return: Redirect to module (edition) overview
-    """
-    person = Person.objects.filter(user=request.user).first()
-    if pu.is_coordinator_or_assistant(person):
-        context = {
-            'modules': ModuleEdition.objects.filter(coordinator__person=person)
-        }
-        return render(request, 'dashboard/modules.html', context)
-    else:
-        # Todo: Add other usertypes
-        return PermissionDenied('Other types than coordinator (assistant) are not yet supported')
-
-
 def logged_out(request):
     """
     Logs the user out and directs to logged out portal
@@ -173,7 +150,6 @@ def logged_out(request):
 
 def get_persons(person):
     qs = Person.objects.none()
-
 
 
 @login_required

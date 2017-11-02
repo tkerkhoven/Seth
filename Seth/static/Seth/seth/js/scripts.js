@@ -477,56 +477,6 @@ $(document).ready(function() {
     }
 
     // Study adviser students table search functions
-    // // By student number
-    // $("#search_student_number").on('keyup', function() {
-    //     var $input, filter, $table, $tr, $td, i;
-    //     $input = $("#search_student_number");
-    //     filter = $input.val().toLowerCase();
-    //     $table = $("#sa_person_table");
-    //     $tr = $table.children("tbody").children("tr");
-    //     if (filter === "") {
-    //         $tr.hide();
-    //     } else {
-    //         $tr.each(function () {
-    //             $td = $(this).children(".person_number");
-    //             // $tdNumber = $(this).children(".person_number");
-    //             // $tdName = $(this).children(".person_name");
-    //             if ($td) {
-    //                 if ($td.text().toLowerCase().indexOf(filter) > -1) {
-    //                     $(this).show();
-    //                 } else {
-    //                     $(this).hide();
-    //                 }
-    //             }
-    //         });
-    //     }
-    // });
-    //
-    // // By student name
-    // $("#search_student_name").on('keyup', function() {
-    //     var $input, filter, $table, $tr, $td, i;
-    //     $input = $("#search_student_name");
-    //     filter = $input.val().toLowerCase();
-    //     $table = $("#sa_person_table");
-    //     $tr = $table.children("tbody").children("tr");
-    //     if (filter === "") {
-    //         $tr.hide();
-    //     } else {
-    //         $tr.each(function () {
-    //             $td = $(this).children(".person_name");
-    //             // $tdNumber = $(this).children(".person_number");
-    //             // $tdName = $(this).children(".person_name");
-    //             if ($td) {
-    //                 if ($td.text().toLowerCase().indexOf(filter) > -1) {
-    //                     $(this).show();
-    //                 } else {
-    //                     $(this).hide();
-    //                 }
-    //             }
-    //         });
-    //     }
-    // });
-
     $("#search_student_name").on('keyup', function() {
         filter_sa_students();
     });
