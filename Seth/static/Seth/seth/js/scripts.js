@@ -331,11 +331,10 @@ $(document).ready(function() {
                 if (tdNumber.innerHTML.toLowerCase().indexOf(filter) > -1 || tdName.innerHTML.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
-                    tr[i].style.display = "none";
+                    $(this).hide();
                 }
             }
         }
-
         if(target2 != null) {
             table = $(target2)[0];
             tr = table.getElementsByTagName("tr");
@@ -355,12 +354,134 @@ $(document).ready(function() {
                 }
             }
         }
-    }
+    };
 
     $("#searchInput").on('keyup', function() {
         if($(this).data("target2") != "") {
             searchTable(this, $(this).data("target2"));
         }
+    });
+
+    // Function for searching students in the study adviser students table
+    // Input is the search field object and child is the class name of the table data
+    function search_students_table(input, child) {
+        var $input, filter, $table, $tr, $td, i;
+        $input = input;
+        filter = $input.val().toLowerCase();
+        $table = $("#sa_person_table");
+        $tr = $table.children("tbody").children("tr");
+        if (filter === "") {
+            $tr.hide();
+        } else {
+            $tr.each(function () {
+                $td = $(this).children(child);
+                // $tdNumber = $(this).children(".person_number");
+                // $tdName = $(this).children(".person_name");
+                if ($td) {
+                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                }
+            });
+        }
+    }
+
+    // Study adviser students table search functions
+    // By student number
+    $("#search_student_number").on('keyup', function() {
+        var $input, filter, $table, $tr, $td, i;
+        $input = $("#search_student_number");
+        filter = $input.val().toLowerCase();
+        $table = $("#sa_person_table");
+        $tr = $table.children("tbody").children("tr");
+        if (filter === "") {
+            $tr.hide();
+        } else {
+            $tr.each(function () {
+                $td = $(this).children(".person_number");
+                // $tdNumber = $(this).children(".person_number");
+                // $tdName = $(this).children(".person_name");
+                if ($td) {
+                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                }
+            });
+        }
+    });
+
+    // By student name
+    $("#search_student_name").on('keyup', function() {
+        var $input, filter, $table, $tr, $td, i;
+        $input = $("#search_student_name");
+        filter = $input.val().toLowerCase();
+        $table = $("#sa_person_table");
+        $tr = $table.children("tbody").children("tr");
+        if (filter === "") {
+            $tr.hide();
+        } else {
+            $tr.each(function () {
+                $td = $(this).children(".person_name");
+                // $tdNumber = $(this).children(".person_number");
+                // $tdName = $(this).children(".person_name");
+                if ($td) {
+                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                }
+            });
+        }
+    });
+
+    $("#search_student_name").on('keyup', search_sa_students());
+
+    function search_sa_students() {
+        var name, number, $table, $tr;
+        name = $("#search_student_name").val().toLowerCase();
+        number = $("#search_student_number").val().toLowerCase();
+        $table = $("#sa_person_table");
+        $tr = $table.children("tbody").children("tr");
+        if (name === "" && number === "") {
+            $tr.hide();
+        } else {
+            $tr.each(function() {
+
+            })
+        }
+    }
+
+    // Clear input field buttons
+    $("#clear-search-sname").on('click', function() {
+       $("#search_student_name").val("");
+    });
+
+    $("#clear-search-snumber").on('click', function() {
+       $("#search_student_number").val("");
+    });
+
+    // Human research table search function
+    $("#persons_search").on('keyup', function() {
+        var $input, filter, $table, $tr, $tdNumber, $tdName, i;
+        $input = $("#searchInput")[0];
+        filter = $input.value.toLowerCase();
+        $table = $("#personTable");
+        $tr = $table.children("tbody").children("tr");
+
+        $tr.each(function () {
+            $tdNumber = $(this).children(".person_number");
+            $tdName = $(this).children(".person_name");
+            if ($tdName || $tdNumber) {
+                if ($tdNumber.text().toLowerCase().indexOf(filter) > -1 || $tdName.text().toLowerCase().indexOf(filter) > -1) {
+                    $(this).show();
+                }
+            }
+        });
     });
 
     var $role_div = $("#form_role_teacher"),
@@ -400,14 +521,16 @@ $(document).ready(function() {
 
     // Switch the logout menu depending on screen size.
     $(window).on('resize', function() {
-        console.log("Window resized");
         var $userDropdown = $("#user-dropdown");
+        var $columnBorder = $("#search_column");
         if ($(window).width() < 992) {
-           $userDropdown.removeClass("dropdown-menu-left");
-           $userDropdown.addClass("dropdown-menu-right");
+            $userDropdown.removeClass("dropdown-menu-left");
+            $userDropdown.addClass("dropdown-menu-right");
+            $columnBorder.removeClass("column-border");
         } else {
             $userDropdown.removeClass("dropdown-menu-right");
             $userDropdown.addClass("dropdown-menu-left");
+            $columnBorder.addClass("column-border")
         }
     })
 });
@@ -537,4 +660,4 @@ function updateColoring() {
       }
     });
   }
-};
+}

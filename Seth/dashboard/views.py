@@ -1,13 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from Grades.models import ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart, Test
+from Grades.models import Module, ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart, Test
 
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
@@ -35,7 +35,8 @@ class DashboardView(View):
             }
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
-            return render(request, 'dashboard/sa_index.html')
+            return redirect('sa_dashboard')
+            # return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
             print(self.make_module_parts_context()['module_parts'])
             context = {
@@ -87,7 +88,7 @@ class DashboardView(View):
         return context
 
     def make_module_parts_context(self):
-        module_parts =  ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
+        module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
             'test_set')
         tests = Test.objects.filter(module_part__teacher__person__user=self.request.user).annotate(num_grades=Count('grade'))
 
@@ -114,9 +115,32 @@ class DashboardView(View):
 
         return context
 
+
+@login_required
+def study_adviser_view(request):
+    context = dict()
+    person = Person.objects.filter(user=request.user).first()
+    if pu.is_study_adviser(person):
+        inner_qs = Module.objects.filter(study__advisers=person)
+        qs = Person.objects.filter(
+            Q(studying__module_edition__module__study__advisers=person)
+            # Q(study__advisers=person) |
+            # Q(teacher__module_part__module_edition__module__in=inner_qs)
+        ) \
+            .order_by('university_number', 'user') \
+            .distinct('university_number', 'user')
+        context['persons'] = qs
+        context['module_editions'] = ModuleEdition.objects.all()
+    # else:
+        #     Not a study adviser\
+
+    return render(request, 'dashboard/sa_index.html', context)
+
+
 @login_required
 def not_in_seth(request):
     return render(request, 'dashboard/not_in_seth.html')
+
 
 @login_required
 def modules(request):
@@ -145,6 +169,11 @@ def logged_out(request):
     :return: Redirect to logged out portal
     """
     return render(request, 'registration/success_logged_out.html')
+
+
+def get_persons(person):
+    qs = Person.objects.none()
+
 
 
 @login_required

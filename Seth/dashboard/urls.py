@@ -7,6 +7,7 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.DashboardView.as_view(), name='home'),
+    url(r'^sa_dashboard/$', views.study_adviser_view, name='sa_dashboard'),
     url(r'^dashboard/$', views.DashboardView.as_view(), name='home'),
     url(r'^dashboard/modules/$', views.modules, name='modules'),
     url(r'settings/$', views.settings, name='settings'),
