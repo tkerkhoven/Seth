@@ -77,7 +77,7 @@ gradeApp.controller('studentController', function($scope,$http) {
 
 $(document).ready(function() {
 
-    var table = $('.gradebook').on( 'processing.dt', function ( e, settings, processing ) {
+    var table = $('#gradebook').on( 'processing.dt', function ( e, settings, processing ) {
         $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
       } ).DataTable({
       "ordering": false,
@@ -88,8 +88,48 @@ $(document).ready(function() {
       "language": {'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'},
 
       "ajax": {
-        "url": $(".gradebook").attr("data-url"),
+        "url": $("#gradebook").attr("data-url"),
         "method": "GET",
+        "data": {
+          "view": $("#gradebook").attr("data-view"),
+        },
+      },
+
+      createdRow: function( row, data, dataIndex ) {
+        // Set the data-status attribute, and add a class
+        $(row).find('td:eq(0)').addClass('s_class nowrap');
+
+        $(row).children(":not(.s_class)").each(function() {
+          a = $(this).find("a");
+          $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
+        });
+      },
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    var assign_table = $('#assignment_table').on( 'processing.dt', function ( e, settings, processing ) {
+        $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
+      } ).DataTable({
+      "ordering": false,
+      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+      "scrollX": true,
+
+      "processing": true,
+      "language": {'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'},
+
+      "ajax": {
+        "url": $("#assignment_table").attr("data-url"),
+        "method": "GET",
+        "data": {
+          "view": $("#gradebook").attr("data-view"),
+        },
       },
 
       createdRow: function( row, data, dataIndex ) {
@@ -114,6 +154,15 @@ $(document).ready(function() {
     table.on('draw', function() {
       $('[data-toggle="popover"]').popover();
       updateColoring();
+    });
+
+    assign_table.on('draw', function() {
+      $('[data-toggle="popover"]').popover();
+      updateColoring();
+    });
+
+    $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+        $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
     });
 
     $('[id^="collapsePart"').on('show.bs.collapse', function () {
@@ -230,7 +279,7 @@ $(document).ready(function() {
           }
         },
 
-        url: $(this).attr('data-url'),
+        url: $(this).find("a").attr('data-url'),
         data: {
           'grade': $(this).find("a").attr("data-grade")
         },
@@ -262,7 +311,7 @@ $(document).ready(function() {
       });
     });
 
-    $(document).on('click', 'td[id^="gradeid_"]', function() {
+    $("#gradebook").on('click', 'td[id^="gradeid_"]', function() {
       if($("#can_edit").html().trim() == "False") {
         return;
       }

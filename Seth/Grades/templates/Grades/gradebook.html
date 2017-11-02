@@ -123,7 +123,7 @@
                                 <div class="tab-pane fade show active" id="tests_projects" role="tabpanel" aria-labelledby="tp-tab">
 
                                     <div class="table-overflow">
-                                        <table id="gradebook" data-url="{% url 'grades:get' pk=mod_ed.id %}" data-skip-to-row="1" class="gradebook table table-striped table-bordered table-responsive">
+                                        <table id="gradebook" data-url="{% url 'grades:get' pk=mod_ed.id t='E' %}" data-view="mod_ed" class="gradebook table table-striped table-bordered table-responsive">
                                         <thead>
                                         <tr>
                                             <th class="nowrap">Student</th>
@@ -154,7 +154,7 @@
                                 </div>
                                 <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="a-tab">
                                     <div class="table-overflow">
-                                        <table id="assignment_table" data-url="{% url 'grades:get' pk=mod_ed.id %}" data-skip-to-row="1" class="gradebook table table-striped table-bordered table-responsive">
+                                        <table id="assignment_table" data-url="{% url 'grades:get' pk=mod_ed.id t='A' %}" data-view="mod_ed" class="gradebook table table-striped table-bordered table-responsive">
                                         <thead>
                                         <tr>
                                             <th class="nowrap">Student</th>
@@ -179,7 +179,6 @@
                                         </tr>
                                         </thead>
                                         <tbody>
-
                                         </tbody>
                                         </table>
                                     </div>
