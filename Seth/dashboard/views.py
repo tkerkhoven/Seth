@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from Grades.models import Module, ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart, Test
+from Grades.models import Module, ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart, Test, Study
 
 from django.contrib.auth.decorators import login_required
 import permission_utils as pu
@@ -122,11 +122,23 @@ def study_adviser_view(request):
     person = Person.objects.filter(user=request.user).first()
     if pu.is_study_adviser(person):
         inner_qs = Module.objects.filter(study__advisers=person)
-        qs = Person.objects.filter(studying__module_edition__module__study__advisers=person) \
+        persons = Person.objects.filter(studying__module_edition__module__study__advisers=person) \
             .order_by('university_number', 'user') \
             .distinct('university_number', 'user')
-        context['persons'] = qs
-        context['module_editions'] = ModuleEdition.objects.all()
+        context['persons'] = []
+        for person in persons:
+            module_ed_set = ModuleEdition.objects.filter(studying__person=person)
+            module_eds = []
+            for module_ed in module_ed_set:
+                module_eds.append(module_ed.pk)
+            person_b = dict()
+            person_b['pk'] = person.pk
+            person_b['snumber'] = person.university_number
+            person_b['name'] = person.name
+            person_b['module_eds'] = module_eds
+            context['persons'].append(person_b)
+        context['module_editions'] = ModuleEdition.objects.filter(module__study__advisers__user=request.user)
+        context['studies'] = Study.objects.filter(advisers__user=request.user)
     # else:
         #     Not a study adviser\
 

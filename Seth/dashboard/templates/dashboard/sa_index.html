@@ -45,6 +45,19 @@
                     </div>
                     {% endfor %}
                 </div>
+                <hr>
+                <div class="display-5">Study</div>
+                <hr>
+                <div>
+                    {% for study in studies %}
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="checkbox" value="">
+                            {{ study }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
             <div class="col-lg-9 students-table-column">
                 {% if persons %}
@@ -52,7 +65,7 @@
                         <tbody>
                             {% for person in persons %}
                             <tr class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}">
-                                <td class="person_number"> {{ person.university_number }} </td>
+                                <td class="person_number"> {{ person.snumber }} </td>
                                 <td class="person_name"> {{ person.name }} </td>
                             </tr>
                             {% endfor %}
