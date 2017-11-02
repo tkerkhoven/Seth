@@ -77,6 +77,94 @@ gradeApp.controller('studentController', function($scope,$http) {
 
 $(document).ready(function() {
 
+    var table = $('#gradebook').on( 'processing.dt', function ( e, settings, processing ) {
+        $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
+      } ).DataTable({
+      "ordering": false,
+      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+      "scrollX": true,
+
+      "processing": true,
+      "language": {'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'},
+
+      "ajax": {
+        "url": $("#gradebook").attr("data-url"),
+        "method": "GET",
+        "data": {
+          "view": $("#gradebook").attr("data-view"),
+        },
+      },
+
+      createdRow: function( row, data, dataIndex ) {
+        // Set the data-status attribute, and add a class
+        $(row).find('td:eq(0)').addClass('s_class nowrap');
+
+        $(row).children(":not(.s_class)").each(function() {
+          a = $(this).find("a");
+          $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
+        });
+      },
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    var assign_table = $('#assignment_table').on( 'processing.dt', function ( e, settings, processing ) {
+        $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
+      } ).DataTable({
+      "ordering": false,
+      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+      "scrollX": true,
+
+      "processing": true,
+      "language": {'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'},
+
+      "ajax": {
+        "url": $("#assignment_table").attr("data-url"),
+        "method": "GET",
+        "data": {
+          "view": $("#gradebook").attr("data-view"),
+        },
+      },
+
+      createdRow: function( row, data, dataIndex ) {
+        // Set the data-status attribute, and add a class
+        $(row).find('td:eq(0)').addClass('s_class nowrap');
+
+        $(row).children(":not(.s_class)").each(function() {
+          a = $(this).find("a");
+          $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
+        });
+      },
+
+      drawCallback: function(settings){
+        var api = this.api();
+
+        $('td', api.table().container()).tooltip({
+           container: 'body'
+        });
+      }
+    });
+
+    table.on('draw', function() {
+      $('[data-toggle="popover"]').popover();
+      updateColoring();
+    });
+
+    assign_table.on('draw', function() {
+      $('[data-toggle="popover"]').popover();
+      updateColoring();
+    });
+
+    $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+        $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+    });
+
     $('[id^="collapsePart"').on('show.bs.collapse', function () {
       var id = $(this).attr("data-id");
       $("#mp_collapse" + id).find("i").html("arrow_drop_up");
@@ -108,7 +196,7 @@ $(document).ready(function() {
               if(data.deleted) {
                 change.attr("title", "N/A");
                 change.html("-");
-                change.parent().attr("data-grade", "-");
+                change.attr("data-grade", "-");
                 updateOrRemoveColoring(change.parent());
               }
               else {
@@ -150,7 +238,7 @@ $(document).ready(function() {
           dataType: 'json',
 
           success: function(data) {
-            viewableText.parent().attr("data-grade", data.grade);
+            viewableText.attr("data-grade", data.grade);
             viewableText.html(data.grade);
             updateOrRemoveColoring(viewableText.parent());
           },
@@ -170,11 +258,11 @@ $(document).ready(function() {
 
       var i = $(this).find("i");
       if(i.html().trim() == "done") {
-        $(this).attr("data-grade", 0.0);
+        $(this).find("a").attr("data-grade", 0.0);
         i.html("loop");
       }
       else {
-        $(this).attr("data-grade", 1.0);
+        $(this).find("a").attr("data-grade", 1.0);
         i.html("loop");
       }
 
@@ -191,9 +279,9 @@ $(document).ready(function() {
           }
         },
 
-        url: $(this).attr('data-url'),
+        url: $(this).find("a").attr('data-url'),
         data: {
-          'grade': $(this).attr("data-grade")
+          'grade': $(this).find("a").attr("data-grade")
         },
 
         method: "POST",
@@ -210,12 +298,12 @@ $(document).ready(function() {
         },
 
         error: function(data) {
-          if($(this).attr("data-grade") == 0) {
-            $(this).attr("data-grade", 1.0);
+          if($(this).find("a").attr("data-grade") == 0) {
+            $(this).find("a").attr("data-grade", 1.0);
             i.html("done");
           }
           else {
-            $(this).attr("data-grade", 0.0);
+            $(this).find("a").attr("data-grade", 0.0);
             i.html("clear");
           }
           updateOrRemoveColoring(t);
@@ -223,7 +311,7 @@ $(document).ready(function() {
       });
     });
 
-    $(document).on('click', 'td[id^="gradeid_"]', function() {
+    $("#gradebook").on('click', 'td[id^="gradeid_"]', function() {
       if($("#can_edit").html().trim() == "False") {
         return;
       }
@@ -231,19 +319,19 @@ $(document).ready(function() {
       if(highlighted != $(this).attr("id")) {
 
         highlighted = $(this).attr("id");
-        remove_url = $(this).attr("data-remove-url")
+        remove_url = $(this).find("a").attr("data-remove-url")
         var a = $(this).find("a").first();
 
-        var text = "<input type=number max=" + $(this).attr('data-grade-max') +
+        var text = "<input type=number max=" + $(this).find("a").attr('data-grade-max') +
           " class=\"grade-input\"" +
-          " min=" + $(this).attr('data-grade-min') +
+          " min=" + $(this).find("a").attr('data-grade-min') +
           " step=0.1" +
           " old=\"" + a.html() + "\"" +
           " id=\"" + a.attr("id") + "\"" +
           " title=\"" + a.attr("title") + "\"" +
-          " data-url=\"" + $(this).attr("data-edit-url") + "\"/>";
+          " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"/>";
 
-        if($(this).attr("data-grade") != "-") {
+        if($(this).find("a").attr("data-grade") != "-") {
           text += " <a id=\"remove_grade_a\">" +
               "<i class=\"material-icons float-right\">" +
               "delete_forever" +
@@ -460,8 +548,8 @@ jQuery(document).ready(function($) {
 
   if($('#colortoggle').hasClass("coloron")) {
     $('[id^="gradeid_"]').each(function(index) {
-      var grade = $(this).attr("data-grade");
-      var mult = $(this).attr("data-grade-max")/10;
+      var grade = $(this).find("a").attr("data-grade");
+      var mult = $(this).find("a").attr("data-grade-max")/10;
       var color = $(this).attr("data-always-color");
 
       if(+grade > ((+data.to)*mult)) {
@@ -517,8 +605,8 @@ function updateColoring() {
     $('[id^="gradeid_"]').each(function(index) {
       $(this).removeClass("success warning error loading");
       var color = $(this).attr('data-always-color');
-      var grade = $(this).attr("data-grade");
-      var mult = $(this).attr("data-grade-max")/10;
+      var grade = $(this).find("a").attr("data-grade");
+      var mult = $(this).find("a").attr("data-grade-max")/10;
 
       if($(this).attr("color")) {
         $(this).addClass($(this).attr("color"));
