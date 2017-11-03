@@ -34,6 +34,10 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
+        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-grade', $(this).attr('data-grade'));
+        viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
+        viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
         $("#remove_grade_a").remove();
         highlighted = "";
         $(this).replaceWith(viewableText);
@@ -41,9 +45,16 @@ function BlurEdit() {
     else {
         oldHtml = $(this).attr("old");
 
+        console.log(oldHtml)
+
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
+        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-grade', $(this).attr('data-grade'));
+        viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
+        viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
+
         $("#remove_grade_a").remove();
         highlighted = "";
         $(this).replaceWith(viewableText);
@@ -321,7 +332,7 @@ $(document).ready(function() {
 
       if(highlighted != $(this).attr("id")) {
 
-        highlighted = $(this).attr("id");
+        highlighted = $(this).attr("id")
         remove_url = $(this).find("a").attr("data-remove-url")
         var a = $(this).find("a").first();
 
@@ -332,6 +343,9 @@ $(document).ready(function() {
           " old=\"" + a.html() + "\"" +
           " id=\"" + a.attr("id") + "\"" +
           " title=\"" + a.attr("title") + "\"" +
+          " data-grade=\"" + a.attr("data-grade") + "\"" +
+          " data-grade-min=\"" + a.attr("data-grade-min") + "\"" +
+          " data-grade-max=\"" + a.attr("data-grade-max") + "\"" +
           " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"/>";
 
         if($(this).find("a").attr("data-grade") != "-") {
