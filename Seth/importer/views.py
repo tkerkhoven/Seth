@@ -400,10 +400,10 @@ def import_test(request, pk):
             sheet = request.FILES['file'].get_book_dict()
             title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
-                # Check if the sheet has enough rows
-                if len(sheet[table]) < title_row:
+                # Check dimensions
+                if not len(sheet[table]) > title_row and len(sheet[table][0]) == 3:
                     return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
-                                                  ' Are you sure the file is an .xlsx file? Otherwise, download a new '
+                                                  ' Are you sure all columns are present? Otherwise, download a new '
                                                   'gradesheet and try using that instead.')
                 # Identify columns
                 try:
@@ -669,8 +669,11 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
     try:
         float(grade)
     except ValueError:
-        raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
-                             .format(grade, student.name, test))  # Probably a typo, give an error.
+        if test.type == 'A':
+            grade = 1
+        else:
+            raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
+                                 .format(grade, student.name, test))  # Probably a typo, give an error.
     if test.minimum_grade > grade or grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
@@ -820,8 +823,14 @@ def import_student_to_module(request, pk):
         if student_form.is_valid():
             file = request.FILES['file']
             dict = file.get_book_dict()
+
+            # Select first page
             students_to_module = dict[list(dict.keys())[0]]
-            print(students_to_module)
+
+            # Check dimensions
+            if not len(students_to_module) > 1 and len(students_to_module[0]) == 4:
+                return HttpResponseBadRequest("Incorrect xls-format")
+
             string = ""
             emailpattern = re.compile('e[-]?mail*')
             if students_to_module[0][0].lower() == 'university_number' and students_to_module[0][
