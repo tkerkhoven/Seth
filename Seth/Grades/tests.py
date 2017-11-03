@@ -80,10 +80,10 @@ def set_up_base_data():
     module_part2.save()
 
     # Define Studying
-    studying00 = Studying(person=student_person0, study=study, module_edition=module_ed0, role='student')
-    studying01 = Studying(person=student_person0, study=study, module_edition=module_ed2, role='student')
-    studying1 = Studying(person=student_person1, study=study, module_edition=module_ed0, role='student')
-    studying2 = Studying(person=student_person2, study=study, module_edition=module_ed0, role='student')
+    studying00 = Studying(person=student_person0, module_edition=module_ed0, role='student')
+    studying01 = Studying(person=student_person0, module_edition=module_ed2, role='student')
+    studying1 = Studying(person=student_person1, module_edition=module_ed0, role='student')
+    studying2 = Studying(person=student_person2, module_edition=module_ed0, role='student')
     studying00.save()
     studying01.save()
     studying1.save()
@@ -132,27 +132,24 @@ class GradesModuleViewTest(TestCase):
         response = self.client.get(url, follow=True)
         self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
-    def test_insufficient_permissions(self):
-        url = reverse('grades:modules')
-
-        # Login as teaching assistant
-        self.client.logout()
-        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
-        # Login as study adviser
-        self.client.logout()
-        self.client.force_login(user=User.objects.get(username='study_adviser0'))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
     def test_sufficient_permissions(self):
         # Login as student
         self.client.logout()
         self.client.force_login(user=User.objects.get(username='student0'))
         response = self.client.get(reverse('grades:modules'))
         self.assertEqual(response.status_code, 302)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(reverse('grades:modules'))
+        self.assertEqual(response.status_code, 200)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(reverse('grades:modules'))
+        self.assertEqual(response.status_code, 200)
 
         # Login as teacher
         self.client.logout()
@@ -177,7 +174,7 @@ class GradesModuleViewTest(TestCase):
         self.assertEqual(response.resolver_match.func.__name__, ModuleView.as_view().__name__)
         self.assertTemplateUsed(response, 'Grades/modules.html')
 
-        self.assertQuerysetEqual(response.context['module_list'], get_list_from_queryset(ModuleEdition.objects.filter(coordinators__user=user).order_by('year')))
+        self.assertQuerysetEqual(response.context['module_list'], get_list_from_queryset(ModuleEdition.objects.filter(coordinators__user=user).order_by('-year')))
 
     def test_queries(self):
         user = User.objects.get(username='coordinator0')
@@ -187,7 +184,7 @@ class GradesModuleViewTest(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(7):
+        with self.assertNumQueries(12):
             self.client.get(url_1, follow=True)
 
 
@@ -208,12 +205,6 @@ class GradesGradeViewTest(TestCase):
         pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
         url = reverse('grades:gradebook', kwargs={'pk': pk})
 
-        # Login as teaching assistant
-        self.client.logout()
-        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
         # Login as student
         self.client.logout()
         self.client.force_login(user=User.objects.get(username='student0'))
@@ -223,6 +214,12 @@ class GradesGradeViewTest(TestCase):
     def test_sufficient_permissions(self):
         pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
         url = reverse('grades:gradebook', kwargs={'pk': pk})
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
         # Login as teacher
         self.client.logout()
@@ -264,7 +261,7 @@ class GradesGradeViewTest(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(15):
             self.client.get(url, follow=True)
 
 class GradesStudentViewTest(TestCase):
@@ -302,12 +299,6 @@ class GradesStudentViewTest(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
 
-        # Login as study adviser
-        self.client.logout()
-        self.client.force_login(user=User.objects.get(username='study_adviser0'))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
     def test_sufficient_permissions(self):
         pk = Person.objects.get(university_number='s0').pk
         url = reverse('grades:student', kwargs={'pk': pk})
@@ -315,6 +306,12 @@ class GradesStudentViewTest(TestCase):
         # Login as student
         self.client.logout()
         self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -340,7 +337,7 @@ class GradesStudentViewTest(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(13):
+        with self.assertNumQueries(16):
             self.client.get(url, follow=True)
 
 class GradesModuleStudentViewTest(TestCase):
@@ -362,12 +359,6 @@ class GradesModuleStudentViewTest(TestCase):
         uid = Person.objects.get(university_number='s0').pk
         url = reverse('grades:modstudent', kwargs={'pk': pk, 'sid': uid})
 
-        # Login as teaching assistant
-        self.client.logout()
-        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
-
         # Login as student
         self.client.logout()
         self.client.force_login(user=User.objects.get(username='student0'))
@@ -378,6 +369,12 @@ class GradesModuleStudentViewTest(TestCase):
         pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
         uid = Person.objects.get(university_number='s0').pk
         url = reverse('grades:modstudent', kwargs={'pk': pk, 'sid': uid})
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
         # Login as teacher
         self.client.logout()
@@ -421,5 +418,5 @@ class GradesModuleStudentViewTest(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
-        with self.assertNumQueries(10):
+        with self.assertNumQueries(17):
             self.client.get(url, follow=True)
