@@ -673,78 +673,9 @@ def get(request, *args, **kwargs):
 
         data_array = []
 
-        in_test = ""
-        where_test = ""
         mod_ed = None
-        data = {}
 
-        if kwargs['t'] == 'A':
-            type = "type='A'"
-        else:
-            type = "type='E' OR type='P'"
-
-        if request.GET.get('view') == 'mod_ed':
-            mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
-                                                  Q(modulepart__teachers__user=user) |
-                                                  Q(module__study__advisers__user=user),
-                                                  pk=kwargs['pk']) \
-                    .distinct()[0]
-            if not mod_ed:
-                raise PermissionDenied()
-
-            module_parts = str(ModulePart.objects \
-                .filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user) |
-                    Q(module_edition__module__study__advisers__user=user),
-                    Q(module_edition=mod_ed), Q(test__isnull=False)) \
-                .values('id') \
-                .order_by('id').distinct().query)
-
-            in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
-            where_test = "module_part_id IN (" + module_parts + ") AND (" + type + ") "
-
-        elif request.GET.get('view') == 'mod_part':
-            mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
-                                                  Q(modulepart__teachers__user=user) |
-                                                  Q(module__study__advisers__user=user),
-                                                  modulepart__pk=kwargs['pk']) \
-                    .distinct()[0]
-            if not mod_ed:
-                raise PermissionDenied()
-
-            in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + kwargs['pk'] + ") "
-            where_test = "module_part_id = " + kwargs['pk'] + " AND (" + type + ") "
-
-        elif request.GET.get('view') == 'mod_test':
-            mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
-                                                  Q(modulepart__teachers__user=user) |
-                                                  Q(module__study__advisers__user=user),
-                                                  modulepart__test__pk=kwargs['pk']) \
-                .distinct()[0]
-            if not mod_ed:
-                raise PermissionDenied()
-
-            in_test = "= " + kwargs['pk'] + " "
-            where_test = "T.id = " + kwargs['pk'] + " "
-
-        query_result = Grade.objects.raw(
-            "SELECT S.person_id, P.name, P.university_number, T.module_part_id, T.minimum_grade, T.maximum_grade, T.id AS test_id, T.type, G.grade, G.id "
-            "FROM \"Grades_test\" T FULL OUTER JOIN ( "
-                "SELECT person_id FROM \"Grades_studying\" "
-                "WHERE module_edition_id = %s "
-            ") AS S "
-            "ON TRUE LEFT JOIN ( "
-                "SELECT DISTINCT ON (test_id, student_id) id, test_id, student_id, grade "
-                "FROM \"Grades_grade\" "
-                "WHERE test_id " + in_test +
-                "ORDER BY student_id, test_id, id DESC "
-            ") AS G "
-            "ON G.test_id = T.id AND G.student_id = S.person_id "
-            "FULL OUTER JOIN \"Grades_person\" P "
-            "ON P.id = S.person_id "
-            "WHERE " + where_test +
-            "ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC ;",
-            [mod_ed.id]
-        )
+        (mod_ed, query_result) = make_query(request.GET.get('view'), kwargs['pk'], user, kwargs['t'])
 
         student_grades_exam = OrderedDict()
         for student in query_result:
@@ -797,6 +728,81 @@ def get(request, *args, **kwargs):
 
     # Return to the page the user came from.
     return JsonResponse(data)
+
+
+def make_query(view, id, user, type=None):
+    if type == 'A':
+        type = "type='A'"
+    elif type == 'E' or type =='P':
+        type = "type='E' OR type='P'"
+
+    if view == 'mod_ed':
+        mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+                                              Q(modulepart__teachers__user=user) |
+                                              Q(module__study__advisers__user=user),
+                                              pk=id) \
+            .distinct()[0]
+        if not mod_ed:
+            raise PermissionDenied()
+
+        module_parts = str(ModulePart.objects \
+                           .filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user) |
+                                   Q(module_edition__module__study__advisers__user=user),
+                                   Q(module_edition=mod_ed), Q(test__isnull=False)) \
+                           .values('id') \
+                           .order_by('id').distinct().query)
+
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
+        where_test = "module_part_id IN (" + module_parts + ") AND (" + type + ") "
+
+    elif view == 'mod_part':
+        mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+                                              Q(modulepart__teachers__user=user) |
+                                              Q(module__study__advisers__user=user),
+                                              modulepart__pk=id) \
+            .distinct()[0]
+        if not mod_ed:
+            raise PermissionDenied()
+
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + id + ") "
+        where_test = "module_part_id = " + id + " AND (" + type + ") "
+
+    elif view == 'mod_test':
+        mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+                                              Q(modulepart__teachers__user=user) |
+                                              Q(module__study__advisers__user=user),
+                                              modulepart__test__pk=id) \
+            .distinct()[0]
+        if not mod_ed:
+            raise PermissionDenied()
+
+        in_test = "= " + id + " "
+        where_test = "T.id = " + id + " "
+
+    else:
+        return None
+
+    query_result = Grade.objects.raw(
+        "SELECT S.person_id, P.name, P.university_number, T.module_part_id, T.minimum_grade, T.maximum_grade, T.id AS test_id, T.type, G.grade, G.id "
+        "FROM \"Grades_test\" T FULL OUTER JOIN ( "
+        "SELECT person_id FROM \"Grades_studying\" "
+        "WHERE module_edition_id = %s "
+        ") AS S "
+        "ON TRUE LEFT JOIN ( "
+        "SELECT DISTINCT ON (test_id, student_id) id, test_id, student_id, grade "
+        "FROM \"Grades_grade\" "
+        "WHERE test_id " + in_test +
+        "ORDER BY student_id, test_id, id DESC "
+        ") AS G "
+        "ON G.test_id = T.id AND G.student_id = S.person_id "
+        "FULL OUTER JOIN \"Grades_person\" P "
+        "ON P.id = S.person_id "
+        "WHERE " + where_test +
+        "ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC ;",
+        [mod_ed.id]
+    )
+
+    return (mod_ed, query_result)
 
 
 def QuerySetChanger(dicts, grade_dict, testallreleased=None):
