@@ -145,8 +145,9 @@ def import_module(request, pk):
                 # Check if the sheet has enough rows
                 if len(sheet[table]) < title_row:
                     return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
-                                                  ' Are you sure the file is an .xlsx file? Otherwise, download a new '
-                                                  'gradesheet and try using that instead.')
+                                                  ' Are you sure the file is an .xlsx file, and that all fields are '
+                                                  'present? Otherwise, download a new gradesheet and try using that '
+                                                  'instead.')
 
                 test_rows = dict()
 
@@ -169,8 +170,8 @@ def import_module(request, pk):
                                 pk=sheet[table][title_row][title_index])
                             if test:
                                 if not test.filter(module_part__module_edition=module_edition):
-                                    return HttpResponseBadRequest("Attempt to register grades for a test that is not part "
-                                                              "of this module.")
+                                    return HttpResponseBadRequest("Attempt to register grades for a test that is not "
+                                                                  "part of this module.")
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                         except ValueError:
                             pass  # Not an int.
@@ -230,8 +231,8 @@ def import_module(request, pk):
             return redirect('grades:gradebook', pk)
         else:
             return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file. Are you'
-                                      'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
-                                      'using that instead.')
+                                          'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+                                          'using that instead.')
     else:  # GET request
         form = GradeUploadForm()
         return render(request, 'importer/importmodule.html', {'form': form, 'pk': pk})
@@ -275,8 +276,9 @@ def import_module_part(request, pk):
                 # Check if the sheet has enough rows
                 if len(sheet[table]) < title_row:
                     return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
-                                                  ' Are you sure the file is an .xlsx file? Otherwise, download a new '
-                                                  'gradesheet and try using that instead.')
+                                                  ' Are you sure the file is an .xlsx file, and that all fields are '
+                                                  'present? Otherwise, download a new gradesheet and try using that '
+                                                  'instead.')
 
                 test_rows = dict()
 
@@ -299,8 +301,8 @@ def import_module_part(request, pk):
                                 pk=sheet[table][title_row][title_index])
                             if test:
                                 if not test.filter(module_part=module_part):
-                                    return HttpResponseBadRequest("Attempt to register grades for a test that is not part "
-                                                              "of this module.")
+                                    return HttpResponseBadRequest("Attempt to register grades for a test that is not "
+                                                                  "part of this module.")
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                         except ValueError:
                             pass  # Not an int.
@@ -360,8 +362,8 @@ def import_module_part(request, pk):
             return redirect('grades:module_part', pk)
         else:
             return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file. Are you'
-                                      'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
-                                      'using that instead.')
+                                          'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+                                          'using that instead.')
     else:  # GET request
         form = GradeUploadForm()
         return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk})
@@ -412,7 +414,7 @@ def import_test(request, pk):
                     description_field = sheet[table][title_row].index('description')
                 except ValueError:
                     return HttpResponseBadRequest('One of the required fields [student_id, grade, description] could'
-                                              ' not be found.')
+                                                  ' not be found.')
 
                 # The current user's Person is the corrector of the grades.
                 teacher = Person.objects.filter(user=request.user).first()
