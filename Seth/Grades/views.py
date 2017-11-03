@@ -730,17 +730,32 @@ def get(request, *args, **kwargs):
     return JsonResponse(data)
 
 
-def make_query(view, id, user, type=None):
+def create_grades_query(view, pk, user, type=None):
+    """
+    Creates a SQL query to get all grades from all students of a certain module edition, module part or test.
+    The result of the query can be looped over and the field present are:
+        Person:     person_id, name, university_number,
+        ModulePart: module_part_id,
+        Test:       minimum_grade, maximum_grade, test_id, type,
+        Grade:      grade, id
+    :param view: The component from which to get the grade - ('mod_ed', 'mod_part', 'mod_test').
+    :param pk: The ID of the component.
+    :param user: The user issuing the query.
+    :param type: The type of the test to be returned by the query. Can be omitted.
+    :return: (mod_ed, query_result) - The corresponding module edition and the result of the query. Returns None if a correct view isn't specified.
+    """
     if type == 'A':
         type = "type='A'"
     elif type == 'E' or type =='P':
         type = "type='E' OR type='P'"
+    else:
+        type = ""
 
     if view == 'mod_ed':
         mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
                                               Q(module__study__advisers__user=user),
-                                              pk=id) \
+                                              pk=pk) \
             .distinct()[0]
         if not mod_ed:
             raise PermissionDenied()
@@ -753,31 +768,35 @@ def make_query(view, id, user, type=None):
                            .order_by('id').distinct().query)
 
         in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
-        where_test = "module_part_id IN (" + module_parts + ") AND (" + type + ") "
+        where_test = "module_part_id IN (" + module_parts + ")"
+        if type != "":
+            where_test += " AND (" + type + ") "
 
     elif view == 'mod_part':
         mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
                                               Q(module__study__advisers__user=user),
-                                              modulepart__pk=id) \
+                                              modulepart__pk=pk) \
             .distinct()[0]
         if not mod_ed:
             raise PermissionDenied()
 
-        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + id + ") "
-        where_test = "module_part_id = " + id + " AND (" + type + ") "
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + ") "
+        where_test = "module_part_id = " + pk
+        if type != "":
+            where_test += " AND (" + type + ") "
 
     elif view == 'mod_test':
         mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
                                               Q(module__study__advisers__user=user),
-                                              modulepart__test__pk=id) \
+                                              modulepart__test__pk=pk) \
             .distinct()[0]
         if not mod_ed:
             raise PermissionDenied()
 
-        in_test = "= " + id + " "
-        where_test = "T.id = " + id + " "
+        in_test = "= " + pk + " "
+        where_test = "T.id = " + pk + " "
 
     else:
         return None
