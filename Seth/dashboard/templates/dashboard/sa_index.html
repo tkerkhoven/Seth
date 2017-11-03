@@ -9,7 +9,7 @@
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-lg-12">
-                <h1 class="display-4">Welcome {{ user.username }}</h1>
+                <span class="display-4">Welcome {{ user.username }}</span>
             </div>
         </div>
         <hr class="mb-0">
@@ -17,7 +17,7 @@
             <div id="search_column" class="col-lg-3 column-border">
                 <label class="mt-1" for="search_student_number"><span class="display-5">Student number</span></label>
                 <div class="input-group">
-                    <span class="input-group-addon" id="search-addon"><i class="material-icons">search</i></span>
+{#                    <span class="input-group-addon" id="search-addon"><i class="material-icons">search</i></span>#}
                     <input class="form-control" type="text" id="search_student_number" placeholder="Search..." />
                     <span class="input-group-btn">
                         <button id="clear-search-snumber" class="btn btn-danger pointer"><i class="material-icons">clear</i></button>
@@ -26,7 +26,7 @@
                 <hr>
                 <label for="search_student_name"><span class="display-5">Student name</span></label>
                 <div class="input-group">
-                    <span class="input-group-addon" id="search-student-name-addon"><i class="material-icons">search</i></span>
+{#                    <span class="input-group-addon" id="search-student-name-addon"><i class="material-icons">search</i></span>#}
                     <input class="form-control" type="text" id="search_student_name" placeholder="Name..." />
                     <span class="input-group-btn">
                         <button id="clear-search-sname" class="btn btn-danger pointer" type="button"><i class="material-icons">clear</i></button>
@@ -35,11 +35,11 @@
                 <hr>
                 <div class="display-5">Module edition</div>
                 <hr>
-                <div>
+                <div id="module_edition_filter">
                     {% for mod_ed in module_editions %}
                     <div class="form-check">
                         <label class="form-check-label">
-                            <input class="form-check-input" type="checkbox" value="">
+                            <input id="{{ mod_ed.pk }}" class="form-check-input" type="checkbox" value="">
                             {{ mod_ed }}
                         </label>
                     </div>
@@ -64,8 +64,8 @@
                     <table id="sa_person_table" class="table table-hover table-bordered table-responsive-lg mt-2">
                         <tbody>
                             {% for person in persons %}
-                            <tr class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}">
-                                <td class="person_number"> {{ person.snumber }} </td>
+                            <tr id="{{ person.pk }}" class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}">
+                                <td class="person_number"> {{ person.university_number }} </td>
                                 <td class="person_name"> {{ person.name }} </td>
                             </tr>
                             {% endfor %}
@@ -77,4 +77,8 @@
             </div>
         </div>
     </div>
+
+    <script>
+    var filterURL = "{% url 'filter_students' %}";
+    </script>
 {% endblock %}

@@ -518,6 +518,7 @@ $(document).ready(function() {
         });
     });
 
+    // Functions for creating a teacher when creating a person in HRM
     var $role_div = $("#form_role_teacher"),
     $module_part_div = $("#form_module_part_teacher"),
     $create_teacher_checkbox = $("#id_create_teacher"),
@@ -554,6 +555,7 @@ $(document).ready(function() {
     });
 
     // Switch the logout menu depending on screen size.
+    // Also switches the column border on the Study Adviser index page
     $(window).on('resize', function() {
         var $userDropdown = $("#user-dropdown");
         var $columnBorder = $("#search_column");
@@ -566,10 +568,44 @@ $(document).ready(function() {
             $userDropdown.addClass("dropdown-menu-left");
             $columnBorder.addClass("column-border")
         }
+    });
+
+    //Functions for filtering the Study adviser index students list
+    $("#module_edition_filter").children().children().children().on('click', function() {
+        var module_edition_pks = [];
+        $("#module_edition_filter").children().children().children().each(function() {
+            if ($(this).prop("checked")) {
+                module_edition_pks.push(parseInt($(this).attr('id')));
+            }
+        });
+        if (module_edition_pks.length === 0) {
+            empty = false;
+            person_pks_global = [];
+            filter_sa_students()
+        } else {
+            var data_to_send = {
+                'module_edition_pks': JSON.stringify(module_edition_pks)
+            };
+            $.ajax({
+                type: 'GET',
+                dataType: 'json',
+                url: filterURL,
+                data: data_to_send,
+                success: function(response) {
+                    person_pks_global = JSON.parse(response['person_pks']);
+                    empty = response['empty'];
+                    filter_sa_students();
+                }
+            })
+        }
     })
 });
 
-// var sname, snumber, $table, $tr, $tdName, $tdNumber;
+// Global array that keeps track of the last requested person pks for filtering
+// the students list.
+var person_pks_global = [];
+var empty = false;
+
 // Filtering the students table for the study adviser
 function filter_sa_students() {
     var sname, snumber, $table, $tr, $tdName, $tdNumber;
@@ -577,15 +613,22 @@ function filter_sa_students() {
     snumber = $("#search_student_number").val().toLowerCase();
     $table = $("#sa_person_table");
     $tr = $table.children("tbody").children("tr");
-    if (sname === "" && snumber === "") {
+    if (sname === "" && snumber === "" && person_pks_global.length === 0 && !empty) {
+        console.log("Showing all");
         $tr.show();
+    } else if (empty) {
+        console.log("Hiding all");
+        $tr.hide();
     } else {
+        console.log("Looping all");
         $tr.each(function() {
             $tdName = $(this).children(".person_name");
             $tdNumber = $(this).children(".person_number");
             if ($tdName || $tdNumber) {
                 if ($tdName.text().toLowerCase().indexOf(sname) > -1 &&
-                    $tdNumber.text().toLowerCase().indexOf(snumber) > -1) {
+                    $tdNumber.text().toLowerCase().indexOf(snumber) > -1 &&
+                    person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 &&
+                    !empty) {
                     $(this).show();
                 } else {
                     $(this).hide();

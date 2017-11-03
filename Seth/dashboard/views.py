@@ -2,10 +2,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect
-from django.http import Http404, HttpResponseForbidden, HttpResponse
+from django.http import Http404, HttpResponseForbidden, HttpResponse, JsonResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
+
+import json
 
 from Grades.models import Module, ModuleEdition, Person, Coordinator, Studying, Grade, ModulePart, Test, Study
 
@@ -125,24 +127,27 @@ def study_adviser_view(request):
         persons = Person.objects.filter(studying__module_edition__module__study__advisers=person) \
             .order_by('university_number', 'user') \
             .distinct('university_number', 'user')
-        context['persons'] = []
-        for person in persons:
-            module_ed_set = ModuleEdition.objects.filter(studying__person=person)
-            module_eds = []
-            for module_ed in module_ed_set:
-                module_eds.append(module_ed.pk)
-            person_b = dict()
-            person_b['pk'] = person.pk
-            person_b['snumber'] = person.university_number
-            person_b['name'] = person.name
-            person_b['module_eds'] = module_eds
-            context['persons'].append(person_b)
+        context['persons'] = persons
         context['module_editions'] = ModuleEdition.objects.filter(module__study__advisers__user=request.user)
         context['studies'] = Study.objects.filter(advisers__user=request.user)
     # else:
         #     Not a study adviser\
 
     return render(request, 'dashboard/sa_index.html', context)
+
+
+def filter_students_by_module_edition(request):
+    module_edition_pks = json.loads(request.GET.get('module_edition_pks', None))
+    person_pks = Person.objects.filter(studying__module_edition__pk__in=module_edition_pks).values_list('pk', flat=True)
+    if person_pks.count() == 0:
+        empty = True
+    else:
+        empty = False
+    data = {
+        'person_pks': json.dumps(list(person_pks)),
+        'empty': empty
+    }
+    return JsonResponse(data)
 
 
 @login_required
