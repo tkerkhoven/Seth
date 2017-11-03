@@ -442,5 +442,6 @@ class GetDataTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        json_data = response.data
+        json_data = response.json()
+        print(url)
         print(json_data)
