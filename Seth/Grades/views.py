@@ -675,7 +675,7 @@ def get(request, *args, **kwargs):
 
         mod_ed = None
 
-        (mod_ed, query_result) = make_query(request.GET.get('view'), kwargs['pk'], user, kwargs['t'])
+        (mod_ed, query_result) = create_grades_query(request.GET.get('view'), kwargs['pk'], user, kwargs['t'])
 
         student_grades_exam = OrderedDict()
         for student in query_result:
