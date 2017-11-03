@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from Grades.models import Person, Coordinator, Teacher, Grade, Test, Studying, ModulePart, ModuleEdition, Module, Study
-from Grades.views import ModuleView, GradeView, StudentView, ModuleStudentView
+from Grades.views import ModuleView, GradeView, StudentView, ModuleStudentView, create_grades_query
 from Seth.settings import LOGIN_URL
 from module_management.tests import get_list_from_queryset
 
