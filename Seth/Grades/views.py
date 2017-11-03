@@ -61,8 +61,10 @@ class ModuleView(generic.ListView):
     def get_queryset(self):
         user = self.request.user
         module_set = ModuleEdition.objects.filter(
-            Q(coordinators__user=user) | Q(modulepart__teachers__user=user) | Q(module__study__advisers__user=user))
-        return set(module_set)
+            Q(coordinators__user=user) | Q(modulepart__teachers__user=user) | Q(module__study__advisers__user=user)) \
+            .order_by('-year', 'module', 'block') \
+            .distinct('year', 'module', 'block')
+        return module_set
 
 
 class GradeView(generic.DetailView):

@@ -13,7 +13,7 @@
                 {% if module_list %}
                     <ul class="list-group">
                     {% for mod_ed in module_list %}
-                        <li class="list-group-item"><a href="{% url 'grades:gradebook' mod_ed.id %}">{{mod_ed.code}} - {{ mod_ed.module.name }}</a></li>
+                        <li class="list-group-item"><a href="{% url 'grades:gradebook' mod_ed.id %}">{{mod_ed.code}} - {{ mod_ed.module.name }} {{mod_ed.module.pk}}</a></li>
                     {% endfor %}
                     </ul>
                 {% else %}
