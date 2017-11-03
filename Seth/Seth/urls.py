@@ -27,7 +27,8 @@ urlpatterns = [
     url(r'^importer/', include('importer.urls')),
     url(r'^grades/', include('Grades.urls')),
     url(r'^module_management/', include('module_management.urls')),
-    url(r'^human_resource/', include('human_resource.urls'))
+    url(r'^human_resource/', include('human_resource.urls')),
+    url(r'^select2/', include('django_select2.urls'))
 ]
 
 if settings.DEBUG:

@@ -2,6 +2,7 @@
 <html>
 <head>
 
+    {{ form.media.css }}
     <script src="https://use.fontawesome.com/63604c1065.js"></script>
     <link href="{% static 'bootstrap_new/dist/css/bootstrap.min.css' %}" rel="stylesheet" media="screen">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
@@ -12,6 +13,7 @@
 {#    <link href="{% static 'font-awesome/css/font-awesome.min.css' %}" rel="stylesheet">#}
     <link rel="shortcut icon" type="image/png" href="{% static 'images/favicon.png' %}"/>
     <title>Seth - {% block title %}{% endblock %}</title>
+    {% block css %}{% endblock %}
 </head>
 <body>
 {#    <img src="{% static "images/sitelogo.png" %}" alt="Logo" />#}
@@ -34,5 +36,7 @@
         $("#wrapper").toggleClass("toggled");
     });
     </script>
+
+    {{ form.media.js }}
 </body>
 </html>

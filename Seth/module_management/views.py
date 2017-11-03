@@ -9,8 +9,11 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
+from django_select2.forms import Select2Widget, Select2MultipleWidget
 
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying, Study
+
+from django.forms.models import modelform_factory
 
 
 class ModuleListView(generic.ListView):
@@ -291,7 +294,7 @@ class ModulePartDetailView(generic.DetailView):
 class ModulePartUpdateView(generic.UpdateView):
     template_name = 'module_management/module_part_update.html'
     model = ModulePart
-    fields = ['name', 'teachers']
+    form_class = modelform_factory(ModulePart, fields=['name', 'teachers'], widgets={'teachers': Select2MultipleWidget})
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -528,7 +531,7 @@ class TestCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         test.save()
 
-        return redirect(reverse_lazy('module_management:module_part_detail', kwargs={'pk': pk}))
+        return redirect(reverse_lazy('module_management:test_detail', kwargs={'pk': test.pk}))
 
 
 class TestDeleteView(generic.DeleteView):

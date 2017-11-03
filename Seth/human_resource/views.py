@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import UpdatePersonForm, CreatePersonForm
+from .forms import UpdatePersonForm, CreatePersonForm, CreatePersonTeacherForm
 from django.core.exceptions import PermissionDenied
 from django.db.models import prefetch_related_objects
 from django.db.models.query import EmptyQuerySet
@@ -119,6 +119,18 @@ class UpdatePerson(generic.UpdateView):
         else:
             raise PermissionDenied('You are not allowed to access the details of this user')
 
+    def form_valid(self, form):
+        user, created = User.objects.get_or_create(username=form.cleaned_data.get('university_number'))
+        print(self.object)
+        self.object.university_number = form.cleaned_data.get('university_number')
+        self.object.user = user
+        self.object.name = form.cleaned_data.get('name')
+        self.object.email = form.cleaned_data.get('email')
+        print(self.object)
+        self.object.save()
+        return redirect(self.get_success_url())
+
+
     def get_success_url(self):
         return reverse_lazy('human_resource:person', args=(self.object.id,))
 
@@ -154,23 +166,39 @@ class DeletePerson(generic.DeleteView):
 class CreatePerson(generic.CreateView):
     model = Person
     template_name = 'human_resource/person_form.html'
-    fields = '__all__'
+    fields = ['name', 'university_number', 'email']
 
     def dispatch(self, request, *args, **kwargs):
         person = Person.objects.filter(user=request.user).first()
-        if pu.is_coordinator(person):
+        if pu.is_coordinator(person) or request.user.is_superuser:
             return super(CreatePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to create a user.')
 
+    def form_valid(self, form):
+        user, created = User.objects.get_or_create(username=form.cleaned_data.get('university_number'))
+
+        person, created = Person.objects.get_or_create(university_number=form.cleaned_data.get('university_number'))
+
+        person.user = user
+        person.name = form.cleaned_data.get('name')
+        person.email = form.cleaned_data.get('email')
+        person.save()
+        self.object = person
+        return redirect(self.get_success_url())
+
     def get_success_url(self):
-        return reverse_lazy('human_resource:user', args=(self.object.id,))
+        if not self.success_url:
+            return reverse_lazy('human_resource:user', args=(self.object.id,))
+        else:
+            return self.success_url
 
 
+# Unused View
 class CreatePersonNew(generic.FormView):
     template_name = 'human_resource/person_form.html'
     success_url = reverse_lazy('human_resource:users')
-    form_class = CreatePersonForm
+    form_class = CreatePersonTeacherForm
 
     def dispatch(self, request, *args, **kwargs):
         person = Person.objects.filter(user=request.user).first()
@@ -183,7 +211,7 @@ class CreatePersonNew(generic.FormView):
         person_name = form.cleaned_data['name']
         ut_number = form.cleaned_data['university_number']
         email = form.cleaned_data['email_address']
-        person_user = form.cleaned_data['user']
+        person_user, _ = User.objects.get_or_create(username=form.cleaned_data['university_number'])
         if form.cleaned_data['create_teacher']:
             role = form.cleaned_data['role_teacher']
             module_part = form.cleaned_data['module_part_teacher']
