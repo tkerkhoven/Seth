@@ -85,7 +85,8 @@ $(document).ready(function() {
       "scrollX": true,
 
       "processing": true,
-      "language": {'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'},
+      "language": { 'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
+                    'emptyTable': '<a class="float-left">No grades found!</a>'},
 
       "ajax": {
         "url": $("#gradebook").attr("data-url"),
@@ -122,7 +123,8 @@ $(document).ready(function() {
       "scrollX": true,
 
       "processing": true,
-      "language": {'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'},
+      "language": { 'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
+                    'emptyTable': '<a class="float-left">No grades found!</a>'},
 
       "ajax": {
         "url": $("#assignment_table").attr("data-url"),
@@ -163,6 +165,7 @@ $(document).ready(function() {
 
     $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
         $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+        $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade")
     });
 
     $('[id^="collapsePart"').on('show.bs.collapse', function () {
