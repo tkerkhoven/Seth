@@ -30,6 +30,12 @@ urlpatterns = [
     url(r'^human_resource/', include('human_resource.urls'))
 ]
 
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
+
 handler404 = 'dashboard.views.not_found'
 handler500 = 'dashboard.views.server_error'
 handler403 = 'dashboard.views.permission_denied'

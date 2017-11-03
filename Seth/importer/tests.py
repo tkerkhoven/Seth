@@ -1,4 +1,5 @@
 import unittest
+from collections import OrderedDict
 
 import pyexcel
 import pyexcel_xlsx
@@ -7,24 +8,24 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 # Create your tests here.
-from pyexcel import Sheet
+from pyexcel import Sheet, Book
 
 from Grades.exceptions import GradeException
 from Grades.models import *
-from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule
-from importer.views import make_grade, COLUMN_TITLE_ROW
+from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule, COLUMN_TITLE_ROW
+from importer.views import make_grade
 from django.contrib.auth.models import User
 
 import django_excel as excel
 from django.urls import reverse
+
 
 @unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
 class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica',
-                                           start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
@@ -90,7 +91,7 @@ class ImporterTest(TestCase):
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[teacher]) for i in
             range(2)]
 
-        module_part_2 = ModulePart.objects.create(module_edition=module_ed2, name='Parel 1', teacher=[teacher])
+        module_part_2 = ModulePart.objects.create(module_edition=module_ed2, name='Parel 3', teacher=[teacher])
 
         Test.objects.create(name='Theory Test 1', module_part=module_part_2, type='E')
 
@@ -123,11 +124,10 @@ class ImporterTest(TestCase):
 
         content = sheet.save_as(filename='test.xlsx')
         self.client.force_login(User.objects.get(username='mverkleij'))
-        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import(self):
@@ -150,7 +150,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         #print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
@@ -174,7 +174,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
 
@@ -200,7 +200,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
@@ -226,7 +226,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
@@ -252,7 +252,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
@@ -286,7 +286,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('GradeException' in response.content.decode())
 
@@ -314,7 +314,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('GradeException' in response.content.decode())
 
     def test_test_import_invalid_grade(self):
@@ -340,7 +340,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('GradeException' in response.content.decode())
 
 
@@ -370,7 +370,8 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        print(response.content)
         self.assertTrue('Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
     def test_module_part_import_invalid_test(self):
@@ -394,7 +395,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
     def test_test_import_invalid_test(self):
@@ -418,7 +419,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertEqual(response.status_code, 403)
 
 
@@ -448,7 +449,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_extra_columns(self):
@@ -473,7 +474,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
@@ -498,7 +499,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
 
@@ -526,7 +527,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_extra_row(self):
@@ -551,7 +552,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         #print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
@@ -577,7 +578,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('There are grades or description fields in this excel sheet that do not have a student number '
                         'filled in. Please check the contents of your excel file for stale values in rows.'
                         in response.content.decode())
@@ -609,6 +610,118 @@ class ImporterTest(TestCase):
             self.fail('Person imported to module does not exist.')
         if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
+
+        # MODULE STRUCTURE IMPORT
+
+    def test_module_structure_import(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        new_module_part_name = 'New One'
+        new_test_name = 'New test'
+        new_signoff_name = 'New signoff'
+
+        table = OrderedDict()
+
+        table['sheet1'] = [
+            ['Module part:', new_module_part_name, ''],
+            ['Test name:', new_test_name, new_signoff_name],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+        table['sheet2'] = [
+            ['Module part:', new_module_part_name + ' 2', ''],
+            ['Test name:', new_test_name + ' 2', new_signoff_name + ' 2'],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+
+        book = Book(sheets=table)
+
+        book.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-structure/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertRedirects(response, reverse('module_management:module_edition_detail', args=[module_edition.pk]))
+
+        module_part_1 = ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name).first()
+        if not module_part_1:
+            self.fail('First page of sheet not imported correctly')
+        if not Test.objects.filter(module_part=module_part_1, name=new_test_name, type='E'):
+            self.fail('First test not imported correctly (at all or as exam)')
+        if not Test.objects.filter(module_part=module_part_1, name=new_signoff_name, type='A'):
+            self.fail('First signoff not imported correctly (at all or as exam)')
+
+        module_part_2 = ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name + ' 2').first()
+        if not ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name + ' 2'):
+            self.fail('Second page of sheet not imported correctly')
+        if not Test.objects.filter(module_part=module_part_2, name=new_test_name + ' 2', type='E'):
+            self.fail('Second test not imported correctly (at all or as exam)')
+        if not Test.objects.filter(module_part=module_part_2, name=new_signoff_name + ' 2', type='A'):
+            self.fail('Second signoff not imported correctly (at all or as exam)')
+
+        # Test whether object removal works fine
+        print(ModulePart.objects.all())
+        self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
+        self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 4)
+
+    # Requires test_import_module_structure to pass.
+    def test_module_structure_import_failure_grades_exist(self):
+
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        # This should be the amount of module parts and testa after setup. We need this later.
+        self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
+        self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 2)
+
+        Grade.objects.create(
+            grade=8,
+            test=Test.objects.filter(module_part__module_edition=module_edition).first(),
+            student=Person.objects.filter(university_number__startswith="s").first(),
+            teacher=Person.objects.filter(coordinator__module_edition=module_edition).first()
+        )
+
+        new_module_part_name = 'New One'
+        new_test_name = 'New test'
+        new_signoff_name = 'New signoff'
+
+        table = OrderedDict()
+
+        table['sheet1'] = [
+            ['Module part:', new_module_part_name, ''],
+            ['Test name:', new_test_name, new_signoff_name],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+        table['sheet2'] = [
+            ['Module part:', new_module_part_name + ' 2', ''],
+            ['Test name:', new_test_name + ' 2', new_signoff_name + ' 2'],
+            ['min. grade', 1, 0],
+            ['max. grade', 10, 1]
+        ]
+
+        book = Book(sheets=table)
+
+        book.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-structure/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTemplateUsed(response, 'importer/module_structure_import_error.html')
+
+        if ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name).first():
+            self.fail('Made module part while atomicity should revert original state.')
+        # Test whether all moduleparts are restored correctly.
+        self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
+        self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 2)
+        if ModulePart.objects.filter(name=new_module_part_name):
+            self.fail("Imported module part from sheet when it shoudn't")
 
 
 class ImporterPermissionsTest(TestCase):
@@ -663,39 +776,27 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(dummyuser)
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
-        self.assertEqual(response.status_code, 403)
-
-        response = self.client.get(reverse('importer:import_new_student'))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
@@ -703,7 +804,12 @@ class ImporterPermissionsTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 403)
 
     def test_importer_views_as_module_coordinator(self):
@@ -714,49 +820,40 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(User.objects.get(username='mverkleij'))
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 200)
-
         self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
-        # response = self.client.get(reverse('importer:import_new_student'))
-        #
-        # self.assertEqual(response.status_code, 200)
-
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 200)
 
     def test_importer_views_as_teacher(self):
@@ -770,70 +867,55 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(user)
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 200)
-
         self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_module_part', args=[other_test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_test', args=[other_test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part', args=[other_test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[other_test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
-
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_test', args=[other_test.pk]))
-
-        self.assertEqual(response.status_code, 403)
-
-        response = self.client.get(reverse('importer:import_new_student'))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 403)
 
     def test_importer_views_as_student(self):
@@ -846,47 +928,39 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(user)
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
-        # response = self.client.get(reverse('importer:import_new_student'))
-        #
-        # self.assertEqual(response.status_code, 403)
-
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 403)
 
 
