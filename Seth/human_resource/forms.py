@@ -24,4 +24,5 @@ class CreatePersonTeacherForm(forms.Form):
     email_address = forms.EmailField(label='Email address')
     create_teacher = forms.BooleanField(required=False)
     role_teacher = forms.ChoiceField(choices=Teacher.ROLES, label='Role', required=False)
-    module_part_teacher = forms.ModelMultipleChoiceField(queryset=ModulePart.objects.all(), label='Module part', required=False, widget=Select2MultipleWidget)
+    module_part_teacher = forms.ModelMultipleChoiceField(queryset=ModulePart.objects.all(), label='Module part',
+                                                         required=False, widget=Select2MultipleWidget)

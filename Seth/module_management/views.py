@@ -532,7 +532,7 @@ class TestCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         test.save()
 
-        return redirect(reverse_lazy('module_management:module_part_detail', kwargs={'pk': pk}))
+        return redirect(reverse_lazy('module_management:test_detail', kwargs={'pk': test.pk}))
 
 
 class TestDeleteView(generic.DeleteView):

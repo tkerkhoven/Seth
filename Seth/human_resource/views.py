@@ -119,6 +119,18 @@ class UpdatePerson(generic.UpdateView):
         else:
             raise PermissionDenied('You are not allowed to access the details of this user')
 
+    def form_valid(self, form):
+        user, created = User.objects.get_or_create(username=form.cleaned_data.get('university_number'))
+        print(self.object)
+        self.object.university_number = form.cleaned_data.get('university_number')
+        self.object.user = user
+        self.object.name = form.cleaned_data.get('name')
+        self.object.email = form.cleaned_data.get('email')
+        print(self.object)
+        self.object.save()
+        return redirect(self.get_success_url())
+
+
     def get_success_url(self):
         return reverse_lazy('human_resource:person', args=(self.object.id,))
 
@@ -152,9 +164,9 @@ class DeletePerson(generic.DeleteView):
 
 
 class CreatePerson(generic.CreateView):
-    form_class = CreatePersonForm
+    model = Person
     template_name = 'human_resource/person_form.html'
-    fields = '__all__'
+    fields = ['name', 'university_number', 'email']
 
     def dispatch(self, request, *args, **kwargs):
         person = Person.objects.filter(user=request.user).first()
@@ -171,11 +183,18 @@ class CreatePerson(generic.CreateView):
         person.user = user
         person.name = form.cleaned_data.get('name')
         person.email = form.cleaned_data.get('email')
+        person.save()
+        self.object = person
+        return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse_lazy('human_resource:user', args=(self.object.id,))
+        if not self.success_url:
+            return reverse_lazy('human_resource:user', args=(self.object.id,))
+        else:
+            return self.success_url
 
 
+# Unused View
 class CreatePersonNew(generic.FormView):
     template_name = 'human_resource/person_form.html'
     success_url = reverse_lazy('human_resource:users')
