@@ -8,14 +8,50 @@
 
     <style>
     .table tbody tr > td.success {
-      background-color: rgba(102, 255, 163, .5) !important;
+      background-color: #66ffa3 !important;
     }
 
     .table tbody tr > td.error {
-      background-color: rgba(255, 153, 153, .5) !important;
+      background-color: #ff9999 !important;
     }
+
     .table tbody tr > td.warning {
-      background-color: rgba(255, 204, 102, .5) !important;
+      background-color: #ffcc66 !important;
+    }
+
+    .table tbody tr > td.loading {
+      background-color: #ccccb3 !important;
+    }
+
+    .table td {
+        padding: 0rem;
+    }
+
+    .min_width {
+        min-width: 100px;
+    }
+
+    .md-36 {
+        position: relative;
+        vertical-align: -12px;
+    }
+
+    .md-24 {
+        position: relative;
+        vertical-align: -8px;
+    }
+
+    .md-18 {
+        position: relative;
+        vertical-align: -4px;
+    }
+
+    .nowrap {
+        white-space: nowrap;
+    }
+
+    .grade-input {
+        height:10px;
     }
     </style>
 
@@ -63,8 +99,11 @@
                           <div class="card-body">
                             <button class="btn btn-secondary coloroff" id="colortoggle" name="colortoggle">Toggle Color</button>
                             <br>
-                            <input id="lowerNum" type="number" value="5" min="1" max="10" step="0.25">
-                            <input id="upperNum" type="number" value="5.5" min="1" max="10" step="0.25"
+                            <i style="color: #ff9999" class="material-icons md-36">view_module</i>
+                            <input id="lowerNum" type="number" value="5" min="1" max="10" step="0.25" data-target="tooltip" title="The bound between red and orange">
+                            <i style="color: #ffcc66" class="material-icons md-36">view_module</i>
+                            <input id="upperNum" type="number" value="5.5" min="1" max="10" step="0.25" data-target="tooltip" title="The bound between orange and green">
+                            <i style="color: #66ffa3" class="material-icons md-36">view_module</i>
                           </div>
                         </div>
                       </div>
