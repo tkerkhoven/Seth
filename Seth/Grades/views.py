@@ -673,8 +673,6 @@ def get(request, *args, **kwargs):
 
         data_array = []
 
-        mod_ed = None
-
         (mod_ed, query_result) = create_grades_query(request.GET.get('view'), kwargs['pk'], user, kwargs['t'])
 
         student_grades_exam = OrderedDict()
@@ -773,13 +771,15 @@ def create_grades_query(view, pk, user, type=None):
             where_test += " AND (" + type + ") "
 
     elif view == 'mod_part':
-        mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+        mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
                                               Q(module__study__advisers__user=user),
                                               modulepart__pk=pk) \
-            .distinct()[0]
-        if not mod_ed:
+            .distinct()
+        if not mod_eds:
             raise PermissionDenied()
+
+        mod_ed = mod_eds[0]
 
         in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + ") "
         where_test = "module_part_id = " + pk
@@ -787,13 +787,15 @@ def create_grades_query(view, pk, user, type=None):
             where_test += " AND (" + type + ") "
 
     elif view == 'mod_test':
-        mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+        mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
                                               Q(module__study__advisers__user=user),
                                               modulepart__test__pk=pk) \
-            .distinct()[0]
-        if not mod_ed:
+            .distinct()
+        if not mod_eds:
             raise PermissionDenied()
+
+        mod_ed = mod_eds[0]
 
         in_test = "= " + pk + " "
         where_test = "T.id = " + pk + " "
