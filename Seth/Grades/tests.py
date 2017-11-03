@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -420,3 +422,25 @@ class GradesModuleStudentViewTest(TestCase):
 
         with self.assertNumQueries(17):
             self.client.get(url, follow=True)
+
+# get/1/E?view=mod_ed&_=1509622129251
+class GetDataTest(TestCase):
+
+    def setUp(self):
+        set_up_base_data()
+
+    def test_assignments_mod_ed(self):
+        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        url = reverse("grades:get", kwargs={'pk':pk, 't':'A'}) + "?view=mod_ed"
+        user = User.objects.get(username='coordinator0')
+
+        #Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+
+        json_data = response.data
+        print(json_data)
