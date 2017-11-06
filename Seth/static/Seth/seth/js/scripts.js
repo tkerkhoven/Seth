@@ -599,6 +599,21 @@ $(document).ready(function() {
             })
         }
     });
+
+    // Function for flipping the expand icon
+    $(".flip-list-item").on('click', function() {
+        var $icon = $(this).find(".flip-icon");
+        console.log($icon);
+        if ($icon.text() === "expand_less") {
+            $icon.text("expand_more");
+        } else {
+            $icon.text("expand_less");
+        }
+    });
+
+    function flip_expand_icon() {
+
+    }
 });
 
 // Global array that keeps track of the last requested person pks for filtering
