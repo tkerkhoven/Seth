@@ -598,7 +598,7 @@ $(document).ready(function() {
                 }
             })
         }
-    })
+    });
 });
 
 // Global array that keeps track of the last requested person pks for filtering
