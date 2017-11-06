@@ -467,6 +467,10 @@ $(document).ready(function() {
         }
     });
 
+    var $spinner_box = $("#loading-spinner-box");
+    $spinner_box.removeClass("d-block");
+    $spinner_box.addClass("d-none");
+
     // Function for searching students in the study adviser students table
     // Input is the search field object and child is the class name of the table data
     function search_students_table(input, child) {
@@ -584,8 +588,14 @@ $(document).ready(function() {
         }
     });
 
+
+
     //Functions for filtering the Study adviser index students list
     $("#module_edition_filter").children().children().children().on('click', function() {
+        // $("#loading-spinner-box").show();
+        var $spinner_box = $("#loading-spinner-box");
+        $spinner_box.removeClass("d-none");
+        $spinner_box.addClass("d-block");
         var module_edition_pks = [];
         $("#module_edition_filter").children().children().children().each(function() {
             if ($(this).prop("checked")) {
@@ -650,6 +660,9 @@ function filter_sa_students() {
             }
         })
     }
+    var $spinner_box = $("#loading-spinner-box");
+    $spinner_box.removeClass("d-block");
+    $spinner_box.addClass("d-none");
 }
 
 // Functions for deleting persons from a module edition

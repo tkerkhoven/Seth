@@ -60,11 +60,17 @@
                 </div>
             </div>
             <div class="col-lg-9 students-table-column">
+                <div id="loading-spinner-box" class="loading-spinner text-center d-block">
+                    <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
                 {% if persons %}
                     <table id="sa_person_table" class="table table-hover table-bordered table-responsive-lg mt-2">
                         <tbody>
                             {% for person in persons %}
-                            <tr id="{{ person.pk }}" class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}">
+                            <tr id="{{ person.pk }}" class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}"
+                                onclick="$('#loading-spinner-box').removeClass('d-none');
+                                            $('#loading-spinner-box').addClass('d-block');">
                                 <td class="person_number"> {{ person.university_number }} </td>
                                 <td class="person_name"> {{ person.name }} </td>
                             </tr>
