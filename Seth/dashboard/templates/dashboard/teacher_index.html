@@ -19,6 +19,7 @@
                     {% for module_part in module_parts %}
                         <div class="card card-margin">
                             <div class="card-header font-weight-bold">{{ module_part.name }} - {{ module_part.module_edition }}
+                                <span class="font-italic font-weight-normal">- <a href="{% url 'grades:module_part' pk=module_part.pk %}">All grades</a></span>
                                 <a href="{% url 'importer:import_module_part' module_part.pk %}">
                                     <i class="material-icons float-right" data-toggle="tooltip" data-placement="bottom" title="Upload grades">file_upload</i>
                                 </a>
