@@ -24,8 +24,7 @@ class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica',
-                                           start=datetime.date(2017, 1, 1), end=datetime.date(9999, 1, 1))
+        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
