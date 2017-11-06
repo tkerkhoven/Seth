@@ -171,18 +171,14 @@ def import_module(request, pk):
                                                                   "part of this module.")
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                         except ValueError:
-                            pass  # Not an int.
-                        # search by name
-                        if Test.objects.filter(
-                                name=sheet[table][title_row][title_index]
-                        ).filter(module_part__module_edition=pk):
-                            test_rows[title_index] = Test.objects.filter(
-                                name=sheet[table][title_row][title_index]
-                            ).filter(module_part__module_edition=pk)[0].pk  # pk of Test
-
-                        # Attempt to ignore test altogether.
-                        else:
-                            pass
+                            # search by name
+                            if Test.objects.filter(
+                                    name=sheet[table][title_row][title_index]
+                            ).filter(module_part__module_edition=pk):
+                                test_rows[title_index] = Test.objects.filter(
+                                    name=sheet[table][title_row][title_index]
+                                ).filter(module_part__module_edition=pk)[0].pk  # pk of Test
+                            # Else not a test, continue...
 
                 if university_number_field is None:
                     return HttpResponseBadRequest('excel file misses required header: \"university_number\"')
