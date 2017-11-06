@@ -179,14 +179,14 @@ $(document).ready(function() {
         $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade")
     });
 
-    $('[id^="collapsePart"').on('show.bs.collapse', function () {
-      var id = $(this).attr("data-id");
-      $("#mp_collapse" + id).find("i").html("arrow_drop_up");
-    })
-    $('[id^="collapsePart"').on('hide.bs.collapse', function () {
-      var id = $(this).attr("data-id");
-      $("#mp_collapse" + id).find("i").html("arrow_drop_down");
-    })
+    // $('[id^="collapsePart"').on('show.bs.collapse', function () {
+    //   var id = $(this).attr("data-id");
+    //   $("#mp_collapse" + id).find("i").html("arrow_drop_up");
+    // })
+    // $('[id^="collapsePart"').on('hide.bs.collapse', function () {
+    //   var id = $(this).attr("data-id");
+    //   $("#mp_collapse" + id).find("i").html("arrow_drop_down");
+    // })
 
     $("#modal_yes").on("mousedown", function() {
 
@@ -520,7 +520,7 @@ $(document).ready(function() {
     // Human research table search function
     $("#persons_search").on('keyup', function() {
         var $input, filter, $table, $tr, $tdNumber, $tdName, i;
-        $input = $("#searchInput")[0];
+        $input = $("#persons_search")[0];
         filter = $input.value.toLowerCase();
         $table = $("#personTable");
         $tr = $table.children("tbody").children("tr");
@@ -531,6 +531,8 @@ $(document).ready(function() {
             if ($tdName || $tdNumber) {
                 if ($tdNumber.text().toLowerCase().indexOf(filter) > -1 || $tdName.text().toLowerCase().indexOf(filter) > -1) {
                     $(this).show();
+                } else {
+                    $(this).hide();
                 }
             }
         });
