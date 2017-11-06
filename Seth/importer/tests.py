@@ -19,7 +19,7 @@ from django.contrib.auth.models import User
 import django_excel as excel
 from django.urls import reverse
 
-@unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
+#@unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
 class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
@@ -68,7 +68,7 @@ class ImporterStressTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
 
@@ -304,7 +304,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
