@@ -1,10 +1,10 @@
 import json
+from unittest import skipIf
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
-from unittest import skipIf
 
 from Grades.models import Module, Person, Study, ModuleEdition, ModulePart, Studying, Test, Grade, Teacher, Coordinator
 from Seth.settings import LOGIN_URL
@@ -49,10 +49,10 @@ def set_up_base_data():
     coordinator_person.save()
 
     # Define Modules
-    module0 = Module(code='001', name='Module 1')
+    module0 = Module(name='Module 1')
     module0.save()
 
-    module1 = Module(code='002', name='Module 2')
+    module1 = Module(name='Module 2')
     module1.save()
 
     # Define Study
@@ -62,16 +62,16 @@ def set_up_base_data():
     study.modules.add(module0)
 
     # Define Module Editions
-    module_ed0 = ModuleEdition(module=module0, block='1A', year=timezone.now().year)
+    module_ed0 = ModuleEdition(module=module0, module_code='001', block='1A', year=timezone.now().year)
     module_ed0.save()
 
-    module_ed1 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 2)
+    module_ed1 = ModuleEdition(module=module0, module_code='001', block='1A', year=timezone.now().year - 2)
     module_ed1.save()
 
-    module_ed2 = ModuleEdition(module=module1, block='1B', year=timezone.now().year)
+    module_ed2 = ModuleEdition(module=module1, module_code='002', block='1B', year=timezone.now().year)
     module_ed2.save()
 
-    module_ed3 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 1)
+    module_ed3 = ModuleEdition(module=module0, module_code='001', block='1A', year=timezone.now().year - 1)
     module_ed3.save()
 
     # Define Module Parts
@@ -153,10 +153,10 @@ def set_up_large_independent_data():
         coordinator_person.save()
 
         # Define Modules
-        module0 = Module(code='x' + str(i), name='Module x' + str(i))
+        module0 = Module(name='Module x' + str(i))
         module0.save()
 
-        module1 = Module(code='y' + str(i), name='Module y' + str(i))
+        module1 = Module(name='Module y' + str(i))
         module1.save()
 
         # Define Study
@@ -166,16 +166,16 @@ def set_up_large_independent_data():
         study.modules.add(module0)
 
         # Define Module Editions
-        module_ed0 = ModuleEdition(module=module0, block='1A', year=timezone.now().year)
+        module_ed0 = ModuleEdition(module=module0, module_code='x' + str(i), block='1A', year=timezone.now().year)
         module_ed0.save()
 
-        module_ed1 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 2)
+        module_ed1 = ModuleEdition(module=module0, module_code='x' + str(i), block='1A', year=timezone.now().year - 2)
         module_ed1.save()
 
-        module_ed2 = ModuleEdition(module=module1, block='1B', year=timezone.now().year)
+        module_ed2 = ModuleEdition(module=module1, module_code='y' + str(i), block='1B', year=timezone.now().year)
         module_ed2.save()
 
-        module_ed3 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 1)
+        module_ed3 = ModuleEdition(module=module0, module_code='x' + str(i), block='1A', year=timezone.now().year - 1)
         module_ed3.save()
 
         # Define Module Parts
@@ -223,7 +223,7 @@ def set_up_large_independent_data():
 
 
 def set_up_large_dependent_data():
-    old_module = Module.objects.get(code='001')
+    old_module = Module.objects.get(name='Module 1')
     old_module_edition = ModuleEdition.objects.get(module=old_module.pk, block='1A', year=timezone.now().year)
     old_module_part = ModulePart.objects.get(module_edition=old_module_edition.pk, name='module_part0')
     old_test = Test.objects.get(module_part=old_module_part.pk, name='test0', type='E')
@@ -255,7 +255,7 @@ def set_up_large_dependent_data():
         coordinator_person.save()
 
         # Define Modules
-        module0 = Module(code='xq' + str(i), name='Module xq' + str(i))
+        module0 = Module(name='Module xq' + str(i))
         module0.save()
 
         # Fill old_study
@@ -263,7 +263,7 @@ def set_up_large_dependent_data():
         old_study.modules.add(module0)
 
         # Define Module Editions / Fill old_module
-        module_ed0 = ModuleEdition(module=old_module, block='1A', year=i)
+        module_ed0 = ModuleEdition(module=old_module, module_code='xq' + str(i), block='1A', year=i)
         module_ed0.save()
 
         # Define Module Parts / Fill old_module_edition
@@ -421,7 +421,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         set_up_base_data()
 
     def test_no_login(self):
-        pk = Module.objects.get(code='001').pk
+        pk = Module.objects.get(name='Module 1').pk
 
         self.client.logout()
         url = reverse('module_management:module_detail', kwargs={'pk': pk})
@@ -429,8 +429,8 @@ class ModuleManagementModuleDetailTests(TestCase):
         self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
     def test_insufficient_permissions(self):
-        pk_1 = Module.objects.get(code='001').pk
-        pk_2 = Module.objects.get(code='002').pk
+        pk_1 = Module.objects.get(name='Module 1').pk
+        pk_2 = Module.objects.get(name='Module 2').pk
 
         url_1 = reverse('module_management:module_detail', kwargs={'pk': pk_1})
         url_2 = reverse('module_management:module_detail', kwargs={'pk': pk_2})
@@ -466,7 +466,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_sufficient_permissions(self):
-        pk_1 = Module.objects.get(code='001').pk
+        pk_1 = Module.objects.get(name='Module 1').pk
 
         self.client.logout()
         self.client.force_login(user=User.objects.get(username='coordinator0'))
@@ -475,7 +475,7 @@ class ModuleManagementModuleDetailTests(TestCase):
 
     def test_contents(self):
         user = User.objects.get(username='coordinator0')
-        pk = Module.objects.get(code='001').pk
+        pk = Module.objects.get(name='Module 1').pk
 
         # Log in as coordinator
         self.client.logout()
@@ -550,7 +550,8 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         set_up_base_data()
 
     def test_no_login(self):
-        pk = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        pk = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
 
         self.client.logout()
         url = reverse('module_management:module_edition_detail', kwargs={'pk': pk})
@@ -558,9 +559,11 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
     def test_insufficient_permissions(self):
-        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
-        pk_2 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year - 2).pk
-        pk_3 = ModuleEdition.objects.get(module='002', block='1B', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        mod_2 = Module.objects.get(name='Module 2').pk
+        pk_1 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
+        pk_2 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year - 2).pk
+        pk_3 = ModuleEdition.objects.get(module=mod_2, block='1B', year=timezone.now().year).pk
         url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
         url_2 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_2})
         url_3 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_3})
@@ -600,7 +603,8 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
 
     def test_contents(self):
         user = User.objects.get(username='coordinator0')
-        module_edition = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        module_edition = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         url = reverse('module_management:module_edition_detail', kwargs={'pk': module_edition})
 
         # Log in as coordinator
@@ -620,7 +624,8 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
     @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         user = User.objects.get(username='coordinator0')
-        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        pk_1 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
 
         # Login as coordinator
@@ -634,7 +639,8 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
     def test_queries_independent(self):
         set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
-        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        pk_1 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
 
         # Login as coordinator
@@ -648,7 +654,8 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         user = User.objects.get(username='coordinator0')
-        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        pk_1 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
 
         # Login as coordinator
@@ -663,7 +670,8 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         set_up_large_dependent_data()
         set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
-        pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        pk_1 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         url_1 = reverse('module_management:module_edition_detail', kwargs={'pk': pk_1})
 
         # Login as coordinator
@@ -679,7 +687,8 @@ class ModuleManagementModuleEditionUpdateFormTests(TestCase):
         set_up_base_data()
         self.base_url = 'module_management:module_edition_update'
         self.model_cls = ModuleEdition
-        self.pk_1 = self.model_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        self.pk_1 = self.model_cls.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.user = User.objects.get(username='coordinator0')
 
@@ -696,8 +705,8 @@ class ModuleManagementModuleEditionUpdateFormTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         self.client.post(self.url_1,
-                         {'year': 2020, 'block': '1A', 'module': Module.objects.get(code='002').pk})
-        self.assertEqual('001', ModuleEdition.objects.get(year=2020).module.code)
+                         {'year': 2020, 'block': '1A', 'module': Module.objects.get(name='Module 2').pk})
+        self.assertEqual('001', ModuleEdition.objects.get(year=2020).module_code)
 
     def test_invalid_input_year(self):
         # Login as coordinator
@@ -730,8 +739,9 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         self.view_cls = ModuleEditionUpdateView
         self.model_cls = ModuleEdition
         self.model_name = 'moduleedition'
-        self.pk_1 = self.model_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
-        self.pk_2 = self.model_cls.objects.get(module='001', block='1A', year=timezone.now().year - 2).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        self.pk_1 = self.model_cls.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
+        self.pk_2 = self.model_cls.objects.get(module=mod_1, block='1A', year=timezone.now().year - 2).pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.user = User.objects.get(username='coordinator0')
@@ -871,8 +881,8 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.model_name = 'moduleedition'
         self.super_cls = Module
         self.form_cls = ModuleEditionCreateForm
-        self.pk_1 = self.super_cls.objects.get(code='001').pk
-        self.pk_2 = self.super_cls.objects.get(code='002').pk
+        self.pk_1 = self.super_cls.objects.get(name='Module 1').pk
+        self.pk_2 = self.super_cls.objects.get(name='Module 2').pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.user = User.objects.get(username='coordinator0')
@@ -1327,8 +1337,9 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.model_cls = ModulePart
         self.model_name = 'modulepart'
         self.super_cls = ModuleEdition
-        self.pk_1 = self.super_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
-        self.pk_2 = self.super_cls.objects.get(module='001', block='1A', year=timezone.now().year - 2).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        self.pk_1 = self.super_cls.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
+        self.pk_2 = self.super_cls.objects.get(module=mod_1, block='1A', year=timezone.now().year - 2).pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.user = User.objects.get(username='coordinator0')
@@ -2252,12 +2263,13 @@ class ModuleManagementRemoveUserTests(TestCase):
     def setUp(self):
         set_up_base_data()
         self.base_url = 'module_management:user_delete'
-        self.template = 'module_management/user_delete.html'
         self.pk_1 = Person.objects.get(university_number='s6').pk
-        self.pk_2 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
+        mod_1 = Module.objects.get(name='Module 1').pk
+        self.pk_2 = ModuleEdition.objects.get(module=mod_1, block='1A', year=timezone.now().year).pk
         self.pk_3 = Person.objects.get(university_number='s5').pk
         self.pk_4 = Person.objects.get(university_number='s0').pk
-        self.pk_5 = ModuleEdition.objects.get(module='002', block='1B', year=timezone.now().year).pk
+        mod_2 = Module.objects.get(name='Module 2').pk
+        self.pk_5 = ModuleEdition.objects.get(module=mod_2, block='1B', year=timezone.now().year).pk
         self.url_1 = reverse(self.base_url, kwargs={'spk': self.pk_1, 'mpk': self.pk_2})
         self.url_2 = reverse(self.base_url, kwargs={'spk': self.pk_3, 'mpk': self.pk_5})
         self.url_3 = reverse(self.base_url, kwargs={'spk': self.pk_4, 'mpk': self.pk_2})
@@ -2339,7 +2351,6 @@ class ModuleManagementRemoveUserTests(TestCase):
 
         response = self.client.get(self.url_1, follow=True)
         self.assertEqual(response.status_code, 200)
-        # self.assertTemplateUsed(response, self.template)
 
         response_content = json.loads(response.content)
 
