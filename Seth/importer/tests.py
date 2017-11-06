@@ -371,7 +371,6 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        print(response.content)
         self.assertTrue('Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
     def test_module_part_import_invalid_test(self):
@@ -666,10 +665,8 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 1})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 2})
         self.assertTrue('The file that was uploaded was not recognised as a grade excel file.'
-                        ' Are you sure the file is an .xlsx file? Otherwise, download a new '
-                        'gradesheet and try using that instead.'
                         in response.content.decode())
 
     def test_module_part_too_large_title_row(self):
@@ -694,10 +691,8 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 1})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 2})
         self.assertTrue('The file that was uploaded was not recognised as a grade excel file.'
-                        ' Are you sure the file is an .xlsx file? Otherwise, download a new '
-                        'gradesheet and try using that instead.'
                         in response.content.decode())
 
     ## STUDENT IMPORT
@@ -710,6 +705,10 @@ class ImporterTest(TestCase):
         university_number = 's54321'
 
         table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+
+        university_number = '54221'
+
+        table.append([university_number, 'Pietje PPuk', 'baz@example.com', 's'])
 
         sheet = Sheet(sheet=table)
 
@@ -727,7 +726,64 @@ class ImporterTest(TestCase):
         if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
 
-        # MODULE STRUCTURE IMPORT
+    def test_student_import_no_employees(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        table = [['university_number', 'name', 'email', 'role']]
+
+        university_number = 'm54321'
+
+        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = ImportStudentModule(
+            files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTrue('Trying to add an employee as a student to a module.' in response.content.decode())
+
+    def test_student_import_already_there(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        table = [['university_number', 'name', 'email', 'role']]
+
+        university_number = 's13371'
+
+        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = ImportStudentModule(
+            files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTemplateUsed(response, 'importer/students-module-imported.html')
+
+
+        self.assertEqual(
+            [['Pietje Puk 1', 's13371', 'Parels der Informatica', '2017-201300070-A1']],
+            response.context[0]['context']['failed']
+        )
+
+        if not Person.objects.filter(university_number=university_number):
+            self.fail('Person imported to module does not exist.')
+        if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
+            self.fail('Studying imported to module does not exist.')
+
+    # MODULE STRUCTURE IMPORT
 
     def test_module_structure_import(self):
         module_edition = \
