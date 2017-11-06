@@ -19,7 +19,7 @@ from django.contrib.auth.models import User
 import django_excel as excel
 from django.urls import reverse
 
-#@unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
+@unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
 class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
@@ -143,7 +143,7 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1  if i != 1 else '' for i in range(len(tests))])
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 if i != 1 else '' for i in range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -1235,44 +1235,41 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(dummyuser)
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
 
     def test_importer_views_as_module_coordinator(self):
         module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
@@ -1282,45 +1279,40 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(User.objects.get(username='mverkleij'))
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 200)
-
         self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 200)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 200)
 
     def test_importer_views_as_teacher(self):
@@ -1334,66 +1326,55 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(user)
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 200)
-
         self.assertTemplateUsed(response, 'importer/mcindex2.html')
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_module_part', args=[other_test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_test', args=[other_test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part', args=[other_test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_module_part_signoff', args=[other_test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
-
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:export_test', args=[other_test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 403)
 
     def test_importer_views_as_student(self):
@@ -1406,43 +1387,39 @@ class ImporterPermissionsTest(TestCase):
         self.client.force_login(user)
 
         response = self.client.get(reverse('importer:index'))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_module_part', args=[test.module_part.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
-
         self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:export_student_to_module', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
 
+        response = self.client.get(reverse('importer:import_module_structure', args=[module_edition.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 403)
 
 
