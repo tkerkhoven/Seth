@@ -118,7 +118,7 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 if i != 1 else '' for i in range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -140,7 +140,7 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1  if i != 1 else '' for i in range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -176,6 +176,55 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
+
+    # Test import by name
+
+    def test_module_import_by_name(self):
+        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.name for test in tests]]
+
+        for student in students:
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+    def test_module_part_import_by_name(self):
+        module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
+        students = Person.objects.filter(studying__module_edition__modulepart=module_part)
+
+        tests = Test.objects.filter(module_part=module_part)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.name for test in tests]]
+
+        for student in students:
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        #print(response.content)
+        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
+
 
 
     ## TEST INVALID STUDENT NUMBER
@@ -501,6 +550,157 @@ class ImporterTest(TestCase):
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
+    # Too little columns
+
+    def test_test_import_too_little_columns(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        test = Test.objects.filter(module_part__module_edition=module_edition)[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        table = [['' for _ in range(5)] for _ in range(COLUMN_TITLE_ROW)] + \
+                [['university_number', 'name', 'grade']]
+
+        for student in students:
+            table.append([student.university_number, student.name, 6])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = TestGradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file,
+                                                                          'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertTrue('One of the required fields [student_id, grade, description] could not be found.'
+                        in response.content.decode())
+
+        table = [['' for _ in range(5)] for _ in range(COLUMN_TITLE_ROW)] + \
+                [['university_number', 'name', 'grade', '']]
+
+        for student in students:
+            table.append([student.university_number, student.name, 6, ''])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = TestGradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file,
+                                                                          'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertTrue('One of the required fields [student_id, grade, description] could not be found.'
+                        in response.content.decode())
+
+
+    ### No tests
+
+    def test_module_import_no_tests(self):
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['', ''] for _ in range(COLUMN_TITLE_ROW)] + [['university_number', 'name']]
+
+        for student in students:
+            table.append(
+                [student.university_number, student.name])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertTrue('There are no tests to import' in response.content.decode())
+
+    def test_module_part_import_no_tests(self):
+        module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
+        students = Person.objects.filter(studying__module_edition__modulepart=module_part)
+
+        tests = Test.objects.filter(module_part=module_part)
+
+        table = [['', ''] for _ in range(COLUMN_TITLE_ROW)] + [['university_number', 'name']]
+
+        for student in students:
+            table.append(
+                [student.university_number, student.name])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertTrue('There are no tests to import' in response.content.decode())
+
+
+    ### No tests
+
+    def test_module_import_no_university_number(self):
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['wrong', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertTrue('excel file misses required header: \"university_number\"' in response.content.decode())
+
+    def test_module_part_import_no_university_number(self):
+        module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
+        students = Person.objects.filter(studying__module_edition__modulepart=module_part)
+
+        tests = Test.objects.filter(module_part=module_part)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['wrong', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        self.assertTrue('excel file misses required header: \"university_number\"' in response.content.decode())
+
 
     ### EXTRA ROWS
 
@@ -749,6 +949,30 @@ class ImporterTest(TestCase):
                                     {'title': 'test.xlsx', 'file': file})
         self.assertTrue('Trying to add an employee as a student to a module.' in response.content.decode())
 
+    def test_student_import_not_university_number(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        table = [['university_number', 'name', 'email', 'role']]
+
+        university_number = 'makls'
+
+        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = ImportStudentModule(
+            files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTrue('is not a student number' in response.content.decode())
+
+
     def test_student_import_already_there(self):
         module_edition = \
         ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
@@ -782,6 +1006,64 @@ class ImporterTest(TestCase):
             self.fail('Person imported to module does not exist.')
         if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
+
+    def test_student_import_missing_rows(self):
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        table = [['university_number', 'name', '', 'role']]
+
+        university_number = 'm54321'
+
+        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+
+        sheet = Sheet(sheet=table)
+
+        sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
+                        in response.content.decode())
+
+    def test_student_import_too_little_rows(self):
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+
+        table = [['university_number', 'name', 'e-mail']]
+
+        university_number = 'm54321'
+
+        table.append([university_number, 'Pietje PPPuk', 'leet@example.com'])
+
+        sheet = Sheet(sheet=table)
+
+        sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
+                        in response.content.decode())
+
+        table = [['university_number', 'name', 'e-mail', 'role']]
+
+        sheet = Sheet(sheet=table)
+
+        sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
+        self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
+                        in response.content.decode())
 
     # MODULE STRUCTURE IMPORT
 
