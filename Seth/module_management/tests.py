@@ -1,13 +1,18 @@
+import json
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from unittest import skipIf
 
 from Grades.models import Module, Person, Study, ModuleEdition, ModulePart, Studying, Test, Grade, Teacher, Coordinator
 from Seth.settings import LOGIN_URL
 from module_management.views import ModuleListView, ModuleDetailView, ModuleEditionDetailView, TestDetailView, ModuleEditionUpdateView, \
     ModulePartUpdateView, ModulePartDetailView, ModulePartDeleteView, TestDeleteView, TestUpdateView, ModuleEditionCreateView, \
-    ModuleEditionCreateForm, ModulePartCreateView, ModulePartCreateForm, TestCreateView, TestCreateForm
+    ModuleEditionCreateForm, ModulePartCreateView, TestCreateView, TestCreateForm
+
+_RUN_QUERY_TESTS = False
 
 
 def set_up_base_data():
@@ -358,6 +363,7 @@ class ModuleManagementModuleListTests(TestCase):
         self.assertNotContains(response, 'Module 2')
         self.assertNotContains(response, '{}-{}-{}'.format(timezone.now().year, '002', '1B'))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         user = User.objects.get(username='coordinator0')
         url_1 = reverse('module_management:module_overview')
@@ -369,6 +375,7 @@ class ModuleManagementModuleListTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
@@ -381,6 +388,7 @@ class ModuleManagementModuleListTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         user = User.objects.get(username='coordinator0')
@@ -393,6 +401,7 @@ class ModuleManagementModuleListTests(TestCase):
         with self.assertNumQueries(7):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -479,6 +488,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         self.assertEqual(response.context['module'], Module.objects.get(pk=pk))
         self.assertQuerysetEqual(response.context['module_editions'], get_list_from_queryset(ModuleEdition.objects.filter(coordinators__user=user)))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         user = User.objects.get(username='coordinator0')
         pk_1 = Module.objects.get(name='Module 1').pk
@@ -491,6 +501,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         with self.assertNumQueries(8):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
@@ -504,6 +515,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         with self.assertNumQueries(8):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         user = User.objects.get(username='coordinator0')
@@ -517,6 +529,7 @@ class ModuleManagementModuleDetailTests(TestCase):
         with self.assertNumQueries(8):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -604,6 +617,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         self.assertQuerysetEqual(response.context['module_parts'], get_list_from_queryset(ModulePart.objects.filter(module_edition=module_edition)))
         self.assertQuerysetEqual(response.context['coordinators'], get_list_from_queryset(Coordinator.objects.filter(module_edition=module_edition)))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         user = User.objects.get(username='coordinator0')
         pk_1 = ModuleEdition.objects.get(module='001', block='1A', year=timezone.now().year).pk
@@ -616,6 +630,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         with self.assertNumQueries(12):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         user = User.objects.get(username='coordinator0')
@@ -629,6 +644,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         with self.assertNumQueries(12):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         user = User.objects.get(username='coordinator0')
@@ -642,6 +658,7 @@ class ModuleManagementModuleEditionDetailTests(TestCase):
         with self.assertNumQueries(12):
             self.client.get(url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -791,6 +808,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         self.assertFalse(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
         self.assertTrue(ModuleEdition.objects.filter(year=2020))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -802,6 +820,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -814,6 +833,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -826,6 +846,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         with self.assertNumQueries(8):
             self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -936,6 +957,7 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         self.assertEqual(2, len(ModulePart.objects.filter(module_edition=new_object.pk)))
         self.assertEqual(2, len(Test.objects.filter(module_part__module_edition=new_object.pk)))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -945,8 +967,9 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(30):
-            self.client.post(self.url_1, {'year': 1337, 'block': '2B',})
+            self.client.post(self.url_1, {'year': 1337, 'block': '2B', })
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -959,6 +982,7 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         with self.assertNumQueries(30):
             self.client.post(self.url_1, {'year': 1337, 'block': '2B'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -971,6 +995,7 @@ class ModuleManagementModuleEditionCreateTests(TestCase):
         with self.assertNumQueries(30):
             self.client.post(self.url_1, {'year': 1337, 'block': '2B'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1064,6 +1089,7 @@ class ModuleManagementModulePartDetailTests(TestCase):
         self.assertQuerysetEqual(response.context['studying'], get_list_from_queryset(
             Studying.objects.filter(module_edition=ModulePart.objects.get(pk=self.pk_1).module_edition.pk)))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -1072,6 +1098,7 @@ class ModuleManagementModulePartDetailTests(TestCase):
         with self.assertNumQueries(14):
             self.client.get(self.url_1)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -1081,6 +1108,7 @@ class ModuleManagementModulePartDetailTests(TestCase):
         with self.assertNumQueries(14):
             self.client.get(self.url_1)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -1090,6 +1118,7 @@ class ModuleManagementModulePartDetailTests(TestCase):
         with self.assertNumQueries(14):
             self.client.get(self.url_1)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1236,6 +1265,7 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         self.assertTrue(Teacher.objects.filter(role='A', person=self.person1, module_part=self.pk_3))
         self.assertTrue(Teacher.objects.filter(role='T', person=self.person2, module_part=self.pk_3))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -1247,6 +1277,7 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         with self.assertNumQueries(10):
             self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -1259,6 +1290,7 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         with self.assertNumQueries(10):
             self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -1271,6 +1303,7 @@ class ModuleManagementModulePartUpdateTests(TestCase):
         with self.assertNumQueries(10):
             self.client.post(self.url_3, {'name': 'module_part2_new', 'teachers': (self.person1, self.person2)})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1294,7 +1327,6 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.model_cls = ModulePart
         self.model_name = 'modulepart'
         self.super_cls = ModuleEdition
-        self.form_cls = ModulePartCreateForm
         self.pk_1 = self.super_cls.objects.get(module='001', block='1A', year=timezone.now().year).pk
         self.pk_2 = self.super_cls.objects.get(module='001', block='1A', year=timezone.now().year - 2).pk
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
@@ -1364,8 +1396,6 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.assertEqual(response.resolver_match.func.__name__, self.view_cls.as_view().__name__)
         self.assertTemplateUsed(response, self.template)
 
-        self.assertEqual(response.context['form'].__class__, self.form_cls)
-
     def test_creation(self):
         # Login as coordinator
         self.client.logout()
@@ -1381,6 +1411,7 @@ class ModuleManagementModulePartCreateTests(TestCase):
         self.assertTrue(Teacher.objects.filter(role='A', person=self.person1, module_part=new_object.pk))
         self.assertTrue(Teacher.objects.filter(role='T', person=self.person2, module_part=new_object.pk))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -1392,6 +1423,7 @@ class ModuleManagementModulePartCreateTests(TestCase):
         with self.assertNumQueries(16):
             self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -1404,6 +1436,7 @@ class ModuleManagementModulePartCreateTests(TestCase):
         with self.assertNumQueries(16):
             self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -1416,6 +1449,7 @@ class ModuleManagementModulePartCreateTests(TestCase):
         with self.assertNumQueries(16):
             self.client.post(self.url_1, {'name': 'new_object', 'teachers': (self.person1, self.person2)})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1525,6 +1559,7 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         self.assertRedirects(response, self.redirect_url)
         self.assertFalse(Test.objects.filter(pk=self.pk_3))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -1536,6 +1571,7 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         with self.assertNumQueries(10):
             self.client.post(self.url_3)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -1548,6 +1584,7 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         with self.assertNumQueries(10):
             self.client.post(self.url_3)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -1560,6 +1597,7 @@ class ModuleManagementModulePartDeleteTests(TestCase):
         with self.assertNumQueries(10):
             self.client.post(self.url_3)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1651,6 +1689,7 @@ class ModuleManagementTestDetailTests(TestCase):
 
         self.assertEqual(response.context[self.model_name], self.model_cls.objects.get(pk=self.pk_1))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -1659,6 +1698,7 @@ class ModuleManagementTestDetailTests(TestCase):
         with self.assertNumQueries(8):
             self.client.get(self.url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -1668,6 +1708,7 @@ class ModuleManagementTestDetailTests(TestCase):
         with self.assertNumQueries(8):
             self.client.get(self.url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -1677,6 +1718,7 @@ class ModuleManagementTestDetailTests(TestCase):
         with self.assertNumQueries(8):
             self.client.get(self.url_1, follow=True)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1849,6 +1891,7 @@ class ModuleManagementTestUpdateTests(TestCase):
         self.assertTrue(Test.objects.filter(name='test0_new'))
         self.assertEquals('P', Test.objects.get(pk=self.pk_1).type)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -1861,6 +1904,7 @@ class ModuleManagementTestUpdateTests(TestCase):
             self.client.post(self.url_1,
                              {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -1874,6 +1918,7 @@ class ModuleManagementTestUpdateTests(TestCase):
             self.client.post(self.url_1,
                              {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -1887,6 +1932,7 @@ class ModuleManagementTestUpdateTests(TestCase):
             self.client.post(self.url_1,
                              {'name': 'test0_new', 'type': 'P', 'time': '2017-10-11 13:37:00', 'maximum_grade': '1', 'minimum_grade': '10'})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -1997,6 +2043,7 @@ class ModuleManagementTestCreateTests(TestCase):
         self.assertEquals(42, float(new_object.minimum_grade))
         self.assertEquals(133.7, float(new_object.maximum_grade))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -2009,6 +2056,7 @@ class ModuleManagementTestCreateTests(TestCase):
             self.client.post(self.url_1,
                              {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -2022,6 +2070,7 @@ class ModuleManagementTestCreateTests(TestCase):
             self.client.post(self.url_1,
                              {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -2035,6 +2084,7 @@ class ModuleManagementTestCreateTests(TestCase):
             self.client.post(self.url_1,
                              {'name': 'new_object', 'type': 'A', 'minimum_grade': 42, 'maximum_grade': 133.7})
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -2145,6 +2195,7 @@ class ModuleManagementTestDeleteTests(TestCase):
         self.assertRedirects(response, self.redirect_url)
         self.assertFalse(Test.objects.filter(pk=self.pk_3))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_base(self):
         # Login as coordinator
         self.client.logout()
@@ -2156,6 +2207,7 @@ class ModuleManagementTestDeleteTests(TestCase):
         with self.assertNumQueries(7):
             self.client.post(self.url_3)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
         set_up_large_independent_data()
         # Login as coordinator
@@ -2168,6 +2220,7 @@ class ModuleManagementTestDeleteTests(TestCase):
         with self.assertNumQueries(7):
             self.client.post(self.url_3)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
         set_up_large_dependent_data()
         # Login as coordinator
@@ -2180,6 +2233,7 @@ class ModuleManagementTestDeleteTests(TestCase):
         with self.assertNumQueries(7):
             self.client.post(self.url_3)
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
         set_up_large_dependent_data()
         set_up_large_independent_data()
@@ -2287,12 +2341,14 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # self.assertTemplateUsed(response, self.template)
 
-        self.assertEqual(response.context['person_name'], name)
-        self.assertEqual(response.context['person_number'], number)
-        self.assertEqual(response.context['person_pk'], pk)
-        self.assertEqual(response.context['module_code'], code)
-        self.assertEqual(response.context['module_name'], module_name)
-        self.assertTrue(response.context['success'])
+        response_content = json.loads(response.content)
+
+        self.assertEqual(response_content['person_name'], name)
+        self.assertEqual(response_content['person_number'], number)
+        self.assertEqual(response_content['person_pk'], pk)
+        self.assertEqual(response_content['module_code'], code)
+        self.assertEqual(response_content['module_name'], module_name)
+        self.assertTrue(response_content['success'])
 
         name = Person.objects.get(pk=self.pk_4).name
         number = Person.objects.get(pk=self.pk_4).university_number
@@ -2304,12 +2360,14 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # self.assertTemplateUsed(response, self.template)
 
-        self.assertEqual(response.context['person_name'], name)
-        self.assertEqual(response.context['person_number'], number)
-        self.assertEqual(response.context['person_pk'], pk)
-        self.assertEqual(response.context['module_code'], code)
-        self.assertEqual(response.context['module_name'], module_name)
-        self.assertTrue(response.context['failure'])
+        response_content = json.loads(response.content)
+
+        self.assertEqual(response_content['person_name'], name)
+        self.assertEqual(response_content['person_number'], number)
+        self.assertEqual(response_content['person_pk'], pk)
+        self.assertEqual(response_content['module_code'], code)
+        self.assertEqual(response_content['module_name'], module_name)
+        self.assertFalse(response_content['success'])
 
     def test_deletion(self):
         # Login as coordinator
@@ -2324,6 +2382,7 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.client.post(self.url_3, follow=True)
         self.assertTrue(Studying.objects.filter(person=self.pk_4, module_edition=self.pk_2))
 
+    @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries(self):
         # Login as coordinator
         self.client.logout()
