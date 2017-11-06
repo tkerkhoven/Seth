@@ -617,17 +617,15 @@ function filter_sa_students() {
         console.log("Showing all");
         $tr.show();
     } else if (empty) {
-        console.log("Hiding all");
         $tr.hide();
     } else {
-        console.log("Looping all");
         $tr.each(function() {
             $tdName = $(this).children(".person_name");
             $tdNumber = $(this).children(".person_number");
             if ($tdName || $tdNumber) {
                 if ($tdName.text().toLowerCase().indexOf(sname) > -1 &&
                     $tdNumber.text().toLowerCase().indexOf(snumber) > -1 &&
-                    person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 &&
+                    (person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 || person_pks_global.length === 0) &&
                     !empty) {
                     $(this).show();
                 } else {
