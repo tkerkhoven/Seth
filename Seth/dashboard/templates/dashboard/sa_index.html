@@ -6,11 +6,86 @@
 
     {% include 'navbar.html' with active_page='dashboard'%}
 
-    <div class="container">
+    <div class="container-fluid">
         <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <h1 class="display-4">There is nothing here yet</h1>
+            <div class="col-lg-12">
+                <span class="display-4">Welcome {{ user.username }}</span>
+            </div>
+        </div>
+        <hr class="mb-0">
+        <div class="row justify-content-center h-90">
+            <div id="search_column" class="col-lg-3 column-border">
+                <label class="mt-1" for="search_student_number"><span class="display-5">Student number</span></label>
+                <div class="input-group">
+{#                    <span class="input-group-addon" id="search-addon"><i class="material-icons">search</i></span>#}
+                    <input class="form-control" type="text" id="search_student_number" placeholder="Search..." />
+                    <span class="input-group-btn">
+                        <button id="clear-search-snumber" class="btn btn-danger pointer"><i class="material-icons">clear</i></button>
+                    </span>
+                </div>
+                <hr>
+                <label for="search_student_name"><span class="display-5">Student name</span></label>
+                <div class="input-group">
+{#                    <span class="input-group-addon" id="search-student-name-addon"><i class="material-icons">search</i></span>#}
+                    <input class="form-control" type="text" id="search_student_name" placeholder="Name..." />
+                    <span class="input-group-btn">
+                        <button id="clear-search-sname" class="btn btn-danger pointer" type="button"><i class="material-icons">clear</i></button>
+                    </span>
+                </div>
+                <hr>
+                <div class="display-5">Module edition</div>
+                <hr>
+                <div id="module_edition_filter">
+                    {% for mod_ed in module_editions %}
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input id="{{ mod_ed.pk }}" class="form-check-input" type="checkbox" value="">
+                            {{ mod_ed }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <hr>
+                <div class="display-5">Study</div>
+                <hr>
+                <div>
+                    {% for study in studies %}
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="checkbox" value="">
+                            {{ study }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-lg-9 students-table-column">
+                <div id="loading-spinner-box" class="loading-spinner text-center d-block">
+                    <i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+                    <span class="sr-only">Loading...</span>
+                </div>
+                {% if persons %}
+                    <table id="sa_person_table" class="table table-hover table-bordered table-responsive-lg mt-2">
+                        <tbody>
+                            {% for person in persons %}
+                            <tr id="{{ person.pk }}" class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}"
+                                onclick="var $loading_spinner = $('#loading-spinner-box');
+                                            $loading_spinner.removeClass('d-none');
+                                            $loading_spinner.addClass('d-block');">
+                                <td class="person_number"> {{ person.university_number }} </td>
+                                <td class="person_name"> {{ person.name }} </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <h4>No persons found</h4>
+                {% endif %}
             </div>
         </div>
     </div>
+
+    <script>
+    var filterURL = "{% url 'filter_students' %}";
+    </script>
 {% endblock %}

@@ -199,7 +199,7 @@ class Test(models.Model):
         return reverse('module_management:test_detail', kwargs={'pk': self.pk})
 
     class Meta:
-        ordering = ['module_part', '-type', 'id']
+        ordering = ['-type', 'id']
 
 
 class Studying(models.Model):
