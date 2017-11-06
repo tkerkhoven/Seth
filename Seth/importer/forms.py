@@ -7,7 +7,8 @@ COLUMN_TITLE_ROW = 5  # title-row, one-indexed, that contains the title for the 
 class GradeUploadForm(forms.Form):
     title_row = forms.IntegerField(
         label='Title row (starting from 1)',
-        initial=COLUMN_TITLE_ROW+1
+        initial=COLUMN_TITLE_ROW+1,
+        min_value=1
     )
     file = forms.FileField(
         label='Select the graded excel file',
@@ -17,7 +18,8 @@ class GradeUploadForm(forms.Form):
 class TestGradeUploadForm(forms.Form):
     title_row = forms.IntegerField(
         label='Title row (starting from 1)',
-        initial=COLUMN_TITLE_ROW+1
+        initial=COLUMN_TITLE_ROW+1,
+        min_value=1
     )
     file = forms.FileField(
         label='Select the graded excel file',

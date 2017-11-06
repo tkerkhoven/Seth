@@ -583,6 +583,122 @@ class ImporterTest(TestCase):
                         'filled in. Please check the contents of your excel file for stale values in rows.'
                         in response.content.decode())
 
+    ### INVALID TITLE_ROWS
+
+    def test_module_import_too_small_title_row(self):
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append(
+                [student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': -1})
+        self.assertTrue('The file that was uploaded was not recognised as a grade excel file. Are you'
+                        'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+                        'using that instead.'
+                        in response.content.decode())
+
+    def test_module_part_too_small_title_row(self):
+        module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
+        students = Person.objects.filter(studying__module_edition__modulepart=module_part)
+
+        tests = Test.objects.filter(module_part=module_part)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append(
+                [student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': -1})
+        self.assertTrue('The file that was uploaded was not recognised as a grade excel file. Are you'
+                        'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+                        'using that instead.'
+                        in response.content.decode())
+
+
+    def test_module_import_too_large_title_row(self):
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append(
+                [student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 1})
+        self.assertTrue('The file that was uploaded was not recognised as a grade excel file.'
+                        ' Are you sure the file is an .xlsx file? Otherwise, download a new '
+                        'gradesheet and try using that instead.'
+                        in response.content.decode())
+
+    def test_module_part_too_large_title_row(self):
+        module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
+        students = Person.objects.filter(studying__module_edition__modulepart=module_part)
+
+        tests = Test.objects.filter(module_part=module_part)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.pk for test in tests]]
+
+        for student in students:
+            table.append(
+                [student.university_number, student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = GradeUploadForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 1})
+        self.assertTrue('The file that was uploaded was not recognised as a grade excel file.'
+                        ' Are you sure the file is an .xlsx file? Otherwise, download a new '
+                        'gradesheet and try using that instead.'
+                        in response.content.decode())
 
     ## STUDENT IMPORT
 
@@ -722,6 +838,8 @@ class ImporterTest(TestCase):
         self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 2)
         if ModulePart.objects.filter(name=new_module_part_name):
             self.fail("Imported module part from sheet when it shoudn't")
+
+
 
 
 class ImporterPermissionsTest(TestCase):

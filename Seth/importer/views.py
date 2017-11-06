@@ -143,7 +143,7 @@ def import_module(request, pk):
             title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
                 # Check if the sheet has enough rows
-                if len(sheet[table]) < title_row:
+                if len(sheet[table]) <= title_row:
                     return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
                                                   ' Are you sure the file is an .xlsx file, and that all fields are '
                                                   'present? Otherwise, download a new gradesheet and try using that '
@@ -274,7 +274,7 @@ def import_module_part(request, pk):
             title_row = form.cleaned_data.get('title_row') - 1
             for table in sheet:
                 # Check if the sheet has enough rows
-                if len(sheet[table]) < title_row:
+                if len(sheet[table]) <= title_row:
                     return HttpResponseBadRequest('The file that was uploaded was not recognised as a grade excel file.'
                                                   ' Are you sure the file is an .xlsx file, and that all fields are '
                                                   'present? Otherwise, download a new gradesheet and try using that '
