@@ -3,6 +3,9 @@ from django import forms
 from Grades.models import Test, ModulePart
 
 
+COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
+
+
 class GradeUploadForm(forms.Form):
     title_row = forms.IntegerField(
         label='Title row (starting from 1)',

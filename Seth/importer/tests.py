@@ -12,8 +12,8 @@ from pyexcel import Sheet, Book
 
 from Grades.exceptions import GradeException
 from Grades.models import *
-from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule
-from importer.views import make_grade, COLUMN_TITLE_ROW
+from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule, COLUMN_TITLE_ROW
+from importer.views import make_grade
 from django.contrib.auth.models import User
 
 import django_excel as excel
@@ -128,7 +128,10 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx',
+                                                                                      'file': file,
+                                                                                      'title_row': COLUMN_TITLE_ROW + 1
+                                                                                      })
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import(self):
@@ -151,7 +154,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         #print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
@@ -175,7 +178,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
     # Test import by name
@@ -250,7 +253,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
@@ -276,7 +279,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
@@ -336,7 +339,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('GradeException' in response.content.decode())
 
@@ -364,7 +367,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('GradeException' in response.content.decode())
 
     def test_test_import_invalid_grade(self):
@@ -390,7 +393,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('GradeException' in response.content.decode())
 
 
@@ -444,7 +447,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
     def test_test_import_invalid_test(self):
@@ -498,7 +501,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_extra_columns(self):
@@ -523,7 +526,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
@@ -548,7 +551,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
     # Too little columns
@@ -727,7 +730,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_extra_row(self):
@@ -752,7 +755,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         #print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
@@ -778,7 +781,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('There are grades or description fields in this excel sheet that do not have a student number '
                         'filled in. Please check the contents of your excel file for stale values in rows.'
                         in response.content.decode())
@@ -1099,7 +1102,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/import-module-structure/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, reverse('module_management:module_edition_detail', args=[module_edition.pk]))
 
         module_part_1 = ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name).first()
@@ -1167,7 +1170,7 @@ class ImporterTest(TestCase):
         file.name = 'test.xlsx'
 
         response = self.client.post('/importer/import-module-structure/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTemplateUsed(response, 'importer/module_structure_import_error.html')
 
         if ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name).first():
@@ -1264,10 +1267,6 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_new_student'))
-
-        self.assertEqual(response.status_code, 403)
-
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
@@ -1316,10 +1315,6 @@ class ImporterPermissionsTest(TestCase):
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
 
         self.assertEqual(response.status_code, 200)
-
-        # response = self.client.get(reverse('importer:import_new_student'))
-        #
-        # self.assertEqual(response.status_code, 200)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
@@ -1394,10 +1389,6 @@ class ImporterPermissionsTest(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-        response = self.client.get(reverse('importer:import_new_student'))
-
-        self.assertEqual(response.status_code, 403)
-
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 
         self.assertEqual(response.status_code, 403)
@@ -1446,10 +1437,6 @@ class ImporterPermissionsTest(TestCase):
         response = self.client.get(reverse('importer:export_test', args=[test.pk]))
 
         self.assertEqual(response.status_code, 403)
-
-        # response = self.client.get(reverse('importer:import_new_student'))
-        #
-        # self.assertEqual(response.status_code, 403)
 
         response = self.client.get(reverse('importer:import_student_to_module', args=[module_edition.pk]))
 

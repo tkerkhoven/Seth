@@ -3,6 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.db import transaction
+from django.db.utils import IntegrityError
 from django.http.response import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponse, \
     Http404
 from django.shortcuts import render, redirect, get_object_or_404
@@ -19,7 +20,7 @@ import re
 from Grades.exceptions import GradeException
 from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module, Study
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule, \
-    ImportModuleEditionStructureForm
+    ImportModuleEditionStructureForm, COLUMN_TITLE_ROW
 
 
 # Create your views here.
@@ -110,8 +111,6 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
         return context
 
-COLUMN_TITLE_ROW = 5  # title-row, zero-indexed, that contains the title for the grade sheet rows.
-
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -138,7 +137,10 @@ def import_module(request, pk):
 
     if request.method == "POST":
         form = GradeUploadForm(request.POST, request.FILES)
+
         if form.is_valid():
+            title_row = form.cleaned_data['title_row']
+
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
                 # Check if the sheet has enough rows
@@ -263,8 +265,10 @@ def import_module_part(request, pk):
         raise PermissionDenied('You are not allowed to do this.')
 
     if request.method == "POST":
-        form = ImportModuleEditionStructureForm(request.POST, request.FILES)
+        form = GradeUploadForm(request.POST, request.FILES)
         if form.is_valid():
+            title_row = form.cleaned_data['title_row']
+
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
                 # Check if the sheet has enough rows
@@ -391,6 +395,7 @@ def import_test(request, pk):
         form = TestGradeUploadForm(request.POST, request.FILES)
 
         if form.is_valid():
+            title_row = form.cleaned_data['title_row']
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -823,13 +828,14 @@ def import_student_to_module(request, pk):
                       {'form': student_form, 'pk': pk})
 
 
+
 class ModuleStructureImporter(LoginRequiredMixin, View):
     """Import to bulk-create Module parts and Tests for a module.
     """
 
     def dispatch(self, request, *args, **kwargs):
         module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
-        if is_coordinator_or_assistant_of_module(Person.objects.get(user=self.request.user), module_edition):
+        if is_coordinator_or_assistant_of_module(Person.objects.filter(user=self.request.user).first(), module_edition):
             return super(ModuleStructureImporter, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not the module coordinator of this module.")
@@ -843,35 +849,89 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
     def post(self, request, pk):
         module_edition = get_object_or_404(ModuleEdition, pk=pk)
 
+        tests_in_sheet = []
+        module_parts_in_sheet = []
+
+        # Collect module parts and tests that cannot be deleted, because they contain Grades.
+        old_tests = []
+        old_module_parts = []
+
         student_form = ImportModuleEditionStructureForm(request.POST, request.FILES)
         if student_form.is_valid():
-            file = request.FILES['file']
-            workbook = file.get_book_dict()
+            try:
+                with transaction.atomic():
+                    file = request.FILES['file']
+                    workbook = file.get_book_dict()
 
-            structure = dict()
+                    structure = dict()
 
-            for page in workbook.keys():
-                module_part = ModulePart.objects.get_or_create(name=workbook[page][0][1], module_edition=module_edition)
+                    for page in workbook.keys():
+                        module_part, mp_created = ModulePart.objects.get_or_create(name=workbook[page][0][1], module_edition=module_edition)
+                        module_parts_in_sheet.append(module_part.pk)
 
-                for i in range(1, len(workbook[page][0])):
 
-                    min_grade = float(workbook[page][2][i])
-                    max_grade = float(workbook[page][3][i])
+                        for i in range(1, len(workbook[page][0])):
 
-                    if min_grade == 0 and max_grade == 1:
-                        test_type = 'A'
-                    else:
-                        test_type = 'E'
+                            min_grade = float(workbook[page][2][i])
+                            max_grade = float(workbook[page][3][i])
 
-                    test = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
-                                               defaults={'type': test_type,
-                                                         'minimum_grade': min_grade,
-                                                         'maximum_grade': max_grade})
-                    test.type = test_type
-                    test.minimum_grade = min_grade
-                    test.maximum_grade = max_grade
-                    test.save()
+                            if min_grade == 0 and max_grade == 1:
+                                test_type = 'A'
+                            else:
+                                test_type = 'E'
+
+                            test, test_created = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
+                                                       defaults={'type': test_type,
+                                                                 'minimum_grade': min_grade,
+                                                                 'maximum_grade': max_grade})
+                            test.type = test_type
+                            test.minimum_grade = min_grade
+                            test.maximum_grade = max_grade
+                            test.save()
+                            tests_in_sheet.append(test.pk)
+
+                    for test in Test.objects.filter(module_part__module_edition=module_edition).exclude(
+                            pk__in=tests_in_sheet):
+                        if not Grade.objects.filter(test=test):
+                            test.delete()
+                        else:
+                            old_tests.append(test)
+                    for module_part in ModulePart.objects.filter(module_edition=module_edition).exclude(
+                            pk__in=module_parts_in_sheet):
+                        if not Grade.objects.filter(test__module_part=module_part):
+                            module_part.delete()
+                        else:
+                            old_module_parts.append(module_part)
+                    if len(old_tests) > 0 or len(old_module_parts) > 0:
+                        raise IntegrityError("Some modules that should be removed have grades.")
+            except IntegrityError:
+                return render(request, 'importer/module_structure_import_error.html',
+                              context={'old_tests': old_tests, 'old_module_parts': old_module_parts})
+
         else:
             return HttpResponseBadRequest('Bad POST')
 
         return redirect('module_management:module_edition_detail', pk)
+
+
+def export_module_structure(request, pk):
+    """ Returns an excel sheet which can be used to upload the module structure.
+    :param request: Django request
+    :param pk: Module edition primary key
+    :return: Excel worksheet as response.
+    """
+    # Check if user is a module coordinator.
+    module_edition = get_object_or_404(ModuleEdition, pk=pk)
+    person = Person.objects.filter(user=request.user).first()
+    if not is_coordinator_or_assistant_of_module(person, module_edition):
+        raise PermissionDenied('You are not the module coordinator for this course.')
+
+    # Insert column titles
+    table = [
+        ['Module part:', '<<example>>', '', '(Duplicate this page for each module part)'],
+        ['Test:', '<<example test>>', '<<example signoff>>', ''],
+        ['Min. grade', '1', '0', ''],
+        ['Max. grade', '10', '1', '']
+    ]
+
+    return excel.make_response_from_array(table, file_name='Module Structure {}.xlsx'.format(module_edition), file_type='xlsx')
