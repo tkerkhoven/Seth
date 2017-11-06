@@ -35,9 +35,21 @@
                     {% for mod_ed in modules %}
                     <div class="card">
                         <div class="card-header">
-                            <div class="display-5">{{ mod_ed }}</div>
+                            <div class="display-5">
+                                {{ mod_ed }}
+                                <span class="float-right">
+                                    <i class="material-icons pointer expand_all"
+                                       data-toggle="tooltip" data-placement="bottom" title="Expand all">
+                                        expand_more
+                                    </i>
+                                    <i class="material-icons pointer expand_less"
+                                       data-toggle="tooltip" data-placement="bottom" title="Collapse all">
+                                        expand_less
+                                    </i>
+                                </span>
+                            </div>
                         </div>
-                        <ul class="list-group-flush pl-0 mb-0">
+                        <ul class="list-group-flush pl-0 mb-0 module_part_list">
                             {% for module_part in module_parts|key:mod_ed %}
                                 <li class="list-group-item flip-list-item" id="mp_collapse{{ module_part.id }}" data-toggle="collapse" data-target="#collapsePart{{ module_part.id }}"
                                     aria-expanded="false" aria-controls="collapsePart{{ module_part.id }}">

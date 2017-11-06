@@ -603,17 +603,26 @@ $(document).ready(function() {
     // Function for flipping the expand icon
     $(".flip-list-item").on('click', function() {
         var $icon = $(this).find(".flip-icon");
-        console.log($icon);
-        if ($icon.text() === "expand_less") {
-            $icon.text("expand_more");
-        } else {
-            $icon.text("expand_less");
-        }
+        flip_icon($icon);
     });
 
-    function flip_expand_icon() {
+    $(".expand_all").on('click', function() {
+        var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
+        expand_all($ul);
+        $ul.children().each(function() {
+            var $icon = $(this).find(".flip-icon");
+            flip_icon($icon)
+        })
+    });
 
-    }
+    $(".expand_less").on('click', function() {
+        var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
+        collapse_all($ul);
+        $ul.children().each(function() {
+            var $icon = $(this).find(".flip-icon");
+            flip_icon($icon);
+        })
+    })
 });
 
 // Global array that keeps track of the last requested person pks for filtering
@@ -652,6 +661,32 @@ function filter_sa_students() {
     var $spinner_box = $("#loading-spinner-box");
     $spinner_box.removeClass("d-block");
     $spinner_box.addClass("d-none");
+}
+
+// Function for expanding all module parts of a module edition in student dashboard
+function expand_all(ul) {
+    ul.children().each(function() {
+        $(this).children("div").each(function() {
+            $(this).collapse('show');
+        })
+    });
+}
+
+// Function for retracting all expandable module parts of a module edition in student dashboard
+function collapse_all(ul) {
+    ul.children().each(function () {
+        $(this).children("div").each(function() {
+            $(this).collapse('hide');
+        })
+    })
+}
+
+function flip_icon(icon) {
+    if (icon.text() === "expand_less") {
+        icon.text("expand_more");
+    } else {
+        icon.text("expand_less");
+    }
 }
 
 // Functions for deleting persons from a module edition
