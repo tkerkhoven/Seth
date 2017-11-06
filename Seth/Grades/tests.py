@@ -6,7 +6,8 @@ from django.urls import reverse
 from django.utils import timezone
 
 from Grades.models import Person, Coordinator, Teacher, Grade, Test, Studying, ModulePart, ModuleEdition, Module, Study
-from Grades.views import ModuleView, GradeView, StudentView, ModuleStudentView, create_grades_query
+from Grades.views import ModuleView, GradeView, StudentView, ModuleStudentView, create_grades_query, TestView, \
+    ModulePartView
 from Seth.settings import LOGIN_URL
 from module_management.tests import get_list_from_queryset
 
@@ -425,9 +426,168 @@ class GradesModuleStudentViewTest(TestCase):
             self.client.get(url, follow=True)
 
 
+class GradesModulePartViewTest(TestCase):
+    def setUp(self):
+        set_up_base_data()
+
+    def test_no_login(self):
+        pk = ModulePart.objects.get(name='module_part0').pk
+
+        self.client.logout()
+        url = reverse('grades:module_part', kwargs={'pk': pk})
+        response = self.client.get(url, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url)
+
+    def test_insufficient_permissions(self):
+        pk = ModulePart.objects.get(name='module_part0').pk
+        url = reverse('grades:module_part', kwargs={'pk': pk})
+
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        pk = ModulePart.objects.get(name='module_part0').pk
+        url = reverse('grades:module_part', kwargs={'pk': pk})
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Log in as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        pk = ModulePart.objects.get(name='module_part0').pk
+        url = reverse('grades:module_part', kwargs={'pk': pk})
+        user = User.objects.get(username='coordinator0')
+
+        # Log in as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+        response = self.client.get(url)
+
+        self.assertEqual(response.resolver_match.func.__name__, ModulePartView.as_view().__name__)
+        self.assertTemplateUsed(response, 'Grades/module_part.html')
+
+    def test_queries(self):
+        pk = ModulePart.objects.get(name='module_part0').pk
+        url = reverse('grades:module_part', kwargs={'pk': pk})
+        user = User.objects.get(username='coordinator0')
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(15):
+            self.client.get(url, follow=True)
+
+
+class GradesTestViewTest(TestCase):
+    def setUp(self):
+        set_up_base_data()
+
+    def test_no_login(self):
+        pk = Test.objects.get(name='test0').pk
+
+        self.client.logout()
+        url = reverse('grades:test', kwargs={'pk': pk})
+        response = self.client.get(url, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url)
+
+    def test_insufficient_permissions(self):
+        pk = Test.objects.get(name='test0').pk
+        url = reverse('grades:test', kwargs={'pk': pk})
+
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        pk = Test.objects.get(name='test0').pk
+        url = reverse('grades:test', kwargs={'pk': pk})
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Log in as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_contents(self):
+        pk = Test.objects.get(name='test0').pk
+        url = reverse('grades:test', kwargs={'pk': pk})
+        user = User.objects.get(username='coordinator0')
+
+        # Log in as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+        response = self.client.get(url)
+
+        self.assertEqual(response.resolver_match.func.__name__, TestView.as_view().__name__)
+        self.assertTemplateUsed(response, 'Grades/test.html')
+
+    def test_queries(self):
+        pk = ModulePart.objects.get(name='module_part0').pk
+        url = reverse('grades:module_part', kwargs={'pk': pk})
+        user = User.objects.get(username='coordinator0')
+
+        # Login as coordinator
+        self.client.logout()
+        self.client.force_login(user=user)
+
+        with self.assertNumQueries(15):
+            self.client.get(url, follow=True)
+
+
 class GetDataTest(TestCase):
     def setUp(self):
         set_up_base_data()
+
+    def test_no_login(self):
+        self.client.logout()
+        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        url = reverse("grades:get", kwargs={'pk': pk, 't': 'E'})
+        response = self.client.get(url + "?view=mod_ed", follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url + "%3Fview%3Dmod_ed")
 
     def test_insufficient_permissions(self):
         pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
@@ -515,6 +675,24 @@ class GetDataTest(TestCase):
 class EditDataTest(TestCase):
     def setUp(self):
         set_up_base_data()
+
+    def test_no_login(self):
+        self.client.logout()
+        g = Grade.objects.get(grade=9)
+        pk = g.test.pk
+        s_pk = g.student.pk
+        url_release = reverse("grades:release", kwargs={'pk': pk})
+        url_edit = reverse("grades:edit", kwargs={'pk': pk, 'sid': s_pk})
+        url_remove = reverse("grades:edit", kwargs={'pk': pk, 'sid': s_pk})
+
+        response = self.client.get(url_release, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url_release)
+
+        response = self.client.get(url_edit, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url_edit)
+
+        response = self.client.get(url_remove, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url_remove)
 
     def test_permissions(self):
         g = Grade.objects.get(grade=9)
@@ -695,6 +873,13 @@ class EditDataTest(TestCase):
 class ExportDataTest(TestCase):
     def setUp(self):
         set_up_base_data()
+
+    def test_no_login(self):
+        self.client.logout()
+        pk = Test.objects.get(name='test0').pk
+        url = reverse("grades:export", kwargs={'pk': pk})
+        response = self.client.get(url, follow=True)
+        self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
     def test_insufficient_permissions(self):
         pk = Test.objects.get(name='test0').pk
