@@ -613,10 +613,13 @@ class EditDataTest(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
+        # Check whether the test has already been released
         self.assertEqual(Test.objects.get(name='test0').released, False)
 
+        # Release the test
         response = self.client.post(url, {'rel': 'False'})
 
+        # Check if a redirect happened and the test got released
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Test.objects.get(name='test0').released, True)
 
@@ -629,15 +632,20 @@ class EditDataTest(TestCase):
         self.client.logout()
         self.client.force_login(user=user)
 
+        # Check whether the test has already been released
         self.assertEqual(Test.objects.get(name='test0').released, False)
 
+        # Release the test
         response = self.client.post(url, {'rel': 'False'})
 
+        # Check if a redirect happened and the test got released
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Test.objects.get(name='test0').released, True)
 
-        self.client.post(url, {'rel': True})
+        # Retract the test
+        response = self.client.post(url, {'rel': True})
 
+        # Check if a redirect happened and if the test got retracted
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Test.objects.get(name='test0').released, False)
 
@@ -682,3 +690,46 @@ class EditDataTest(TestCase):
         # Check the response and see if the grade has been removed
         self.assertEqual(response.status_code, 200)
         self.assertNotIn(g, Grade.objects.filter(test=pk, student=s_pk))
+
+
+class ExportDataTest(TestCase):
+    def setUp(self):
+        set_up_base_data()
+
+    def test_insufficient_permissions(self):
+        pk = Test.objects.get(name='test0').pk
+        url = reverse("grades:export", kwargs={'pk': pk})
+
+        # Login as student
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='student0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teaching assistant
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as teacher
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='teacher0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+        # Login as study adviser
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='study_adviser0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_sufficient_permissions(self):
+        pk = Test.objects.get(name='test0').pk
+        url = reverse("grades:export", kwargs={'pk': pk})
+
+        # Log in as coordinator
+        self.client.logout()
+        self.client.force_login(user=User.objects.get(username='coordinator0'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
