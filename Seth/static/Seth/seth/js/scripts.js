@@ -687,11 +687,11 @@ function deleteUser(userpk, studyingspk, url) {
                 var $tablerow = $("#row" + personpk);
                 $modal.modal('hide');
                 $tablerow.hide(1000, function() { $tablerow.remove() });
-                $snackbarMessage.html(personName + " (" + personNumber +") was successfully removed from module "
+                $snackbarMessage.html(personName + " (" + personNumber +") was successfully unenrolled from module "
                     + moduleName + " (" + moduleCode + ").");
                 $snackbar.fadeIn(1000);
             } else {
-                $messageModal.html(personName + " (<span class='font-italic'>" + personNumber + "</span>) was <strong>not</strong> deleted from " +
+                $messageModal.html(personName + " (<span class='font-italic'>" + personNumber + "</span>) was <strong>not</strong> unenrolled from " +
                     moduleName + " (<span class='font-italic'>" + moduleCode + "</span>), because there are still grades in the system for this person.");
             }
             $modal.on('hidden.bs.modal', function() {
