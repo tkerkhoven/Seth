@@ -4,11 +4,13 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.forms.models import ModelForm
+from django.forms.models import modelform_factory
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
+from django_select2.forms import Select2MultipleWidget
 
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying, Study
 
@@ -140,7 +142,6 @@ class ModuleEditionCreateForm(ModelForm):
         super(ModuleEditionCreateForm, self).__init__(*args, **kwargs)
         self.fields['module'].widget.attrs['disabled'] = True
         self.fields['coordinators'].widget.attrs['disabled'] = True
-        self.fields['coordinators'].queryset = kwargs['initial']['coordinators']
 
 
 class ModuleEditionCreateView(generic.CreateView):
@@ -292,7 +293,7 @@ class ModulePartDetailView(generic.DetailView):
 class ModulePartUpdateView(generic.UpdateView):
     template_name = 'module_management/module_part_update.html'
     model = ModulePart
-    fields = ['name', 'teachers']
+    form_class = modelform_factory(ModulePart, fields=['name', 'teachers'], widgets={'teachers': Select2MultipleWidget})
 
     def dispatch(self, request, *args, **kwargs):
         pk = self.kwargs['pk']
@@ -326,15 +327,9 @@ class ModulePartUpdateView(generic.UpdateView):
         return super(ModelFormMixin, self).form_valid(form)
 
 
-class ModulePartCreateForm(ModelForm):
-    class Meta:
-        model = ModulePart
-        fields = ['name', 'teachers']
-
-
 class ModulePartCreateView(generic.CreateView):
     template_name = 'module_management/module_part_create.html'
-    form_class = ModulePartCreateForm
+    form_class = modelform_factory(ModulePart, fields=['name', 'teachers'], widgets={'teachers': Select2MultipleWidget})
 
     def get_context_data(self, **kwargs):
         context = super(ModulePartCreateView, self).get_context_data(**kwargs)
@@ -529,7 +524,7 @@ class TestCreateView(generic.CreateView):
             return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         test.save()
 
-        return redirect(reverse_lazy('module_management:module_part_detail', kwargs={'pk': pk}))
+        return redirect(reverse_lazy('module_management:test_detail', kwargs={'pk': test.pk}))
 
 
 class TestDeleteView(generic.DeleteView):

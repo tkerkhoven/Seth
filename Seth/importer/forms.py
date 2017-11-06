@@ -1,7 +1,6 @@
 from django import forms
 
 from Grades.models import Test, ModulePart
-COLUMN_TITLE_ROW = 5  # title-row, one-indexed, that contains the title for the grade sheet rows.
 
 
 class GradeUploadForm(forms.Form):
@@ -36,8 +35,6 @@ class ImportStudentModule(forms.Form):
     file = forms.FileField(
         label='Select Student excel file'
     )
-
-
 class ImportModuleEditionStructureForm(forms.Form):
     file = forms.FileField(
         label='Select module structure excel file'

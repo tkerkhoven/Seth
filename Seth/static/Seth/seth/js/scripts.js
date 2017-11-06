@@ -34,6 +34,10 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
+        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-grade', $(this).attr('data-grade'));
+        viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
+        viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
         $("#remove_grade_a").remove();
         highlighted = "";
         $(this).replaceWith(viewableText);
@@ -41,9 +45,16 @@ function BlurEdit() {
     else {
         oldHtml = $(this).attr("old");
 
+        console.log(oldHtml)
+
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
+        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-grade', $(this).attr('data-grade'));
+        viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
+        viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
+
         $("#remove_grade_a").remove();
         highlighted = "";
         $(this).replaceWith(viewableText);
@@ -321,7 +332,7 @@ $(document).ready(function() {
 
       if(highlighted != $(this).attr("id")) {
 
-        highlighted = $(this).attr("id");
+        highlighted = $(this).attr("id")
         remove_url = $(this).find("a").attr("data-remove-url")
         var a = $(this).find("a").first();
 
@@ -332,6 +343,9 @@ $(document).ready(function() {
           " old=\"" + a.html() + "\"" +
           " id=\"" + a.attr("id") + "\"" +
           " title=\"" + a.attr("title") + "\"" +
+          " data-grade=\"" + a.attr("data-grade") + "\"" +
+          " data-grade-min=\"" + a.attr("data-grade-min") + "\"" +
+          " data-grade-max=\"" + a.attr("data-grade-max") + "\"" +
           " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"/>";
 
         if($(this).find("a").attr("data-grade") != "-") {
@@ -422,11 +436,10 @@ $(document).ready(function() {
                 if (tdNumber.innerHTML.toLowerCase().indexOf(filter) > -1 || tdName.innerHTML.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
-                    tr[i].style.display = "none";
+                    $(this).hide();
                 }
             }
         }
-
         if(target2 != null) {
             table = $(target2)[0];
             tr = table.getElementsByTagName("tr");
@@ -446,7 +459,7 @@ $(document).ready(function() {
                 }
             }
         }
-    }
+    };
 
     $("#searchInput").on('keyup', function() {
         if($(this).data("target2") != "") {
@@ -454,6 +467,76 @@ $(document).ready(function() {
         }
     });
 
+    var $spinner_box = $("#loading-spinner-box");
+    $spinner_box.removeClass("d-block");
+    $spinner_box.addClass("d-none");
+
+    // Function for searching students in the study adviser students table
+    // Input is the search field object and child is the class name of the table data
+    function search_students_table(input, child) {
+        var $input, filter, $table, $tr, $td, i;
+        $input = input;
+        filter = $input.val().toLowerCase();
+        $table = $("#sa_person_table");
+        $tr = $table.children("tbody").children("tr");
+        if (filter === "") {
+            $tr.hide();
+        } else {
+            $tr.each(function () {
+                $td = $(this).children(child);
+                // $tdNumber = $(this).children(".person_number");
+                // $tdName = $(this).children(".person_name");
+                if ($td) {
+                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                }
+            });
+        }
+    }
+
+    // Study adviser students table search functions
+    $("#search_student_name").on('keyup', function() {
+        filter_sa_students();
+    });
+
+    $("#search_student_number").on('keyup', function() {
+        filter_sa_students()
+    });
+
+    // Clear input field buttons
+    $("#clear-search-sname").on('click', function() {
+       $("#search_student_name").val("");
+       filter_sa_students();
+    });
+
+    $("#clear-search-snumber").on('click', function() {
+       $("#search_student_number").val("");
+       filter_sa_students();
+    });
+
+    // Human research table search function
+    $("#persons_search").on('keyup', function() {
+        var $input, filter, $table, $tr, $tdNumber, $tdName, i;
+        $input = $("#searchInput")[0];
+        filter = $input.value.toLowerCase();
+        $table = $("#personTable");
+        $tr = $table.children("tbody").children("tr");
+
+        $tr.each(function () {
+            $tdNumber = $(this).children(".person_number");
+            $tdName = $(this).children(".person_name");
+            if ($tdName || $tdNumber) {
+                if ($tdNumber.text().toLowerCase().indexOf(filter) > -1 || $tdName.text().toLowerCase().indexOf(filter) > -1) {
+                    $(this).show();
+                }
+            }
+        });
+    });
+
+    // Functions for creating a teacher when creating a person in HRM
     var $role_div = $("#form_role_teacher"),
     $module_part_div = $("#form_module_part_teacher"),
     $create_teacher_checkbox = $("#id_create_teacher"),
@@ -490,18 +573,97 @@ $(document).ready(function() {
     });
 
     // Switch the logout menu depending on screen size.
+    // Also switches the column border on the Study Adviser index page
     $(window).on('resize', function() {
-        console.log("Window resized");
         var $userDropdown = $("#user-dropdown");
+        var $columnBorder = $("#search_column");
         if ($(window).width() < 992) {
-           $userDropdown.removeClass("dropdown-menu-left");
-           $userDropdown.addClass("dropdown-menu-right");
+            $userDropdown.removeClass("dropdown-menu-left");
+            $userDropdown.addClass("dropdown-menu-right");
+            $columnBorder.removeClass("column-border");
         } else {
             $userDropdown.removeClass("dropdown-menu-right");
             $userDropdown.addClass("dropdown-menu-left");
+            $columnBorder.addClass("column-border")
+        }
+    });
+
+
+
+    //Functions for filtering the Study adviser index students list
+    $("#module_edition_filter").children().children().children().on('click', function() {
+        // $("#loading-spinner-box").show();
+        var $spinner_box = $("#loading-spinner-box");
+        $spinner_box.removeClass("d-none");
+        $spinner_box.addClass("d-block");
+        var module_edition_pks = [];
+        $("#module_edition_filter").children().children().children().each(function() {
+            if ($(this).prop("checked")) {
+                module_edition_pks.push(parseInt($(this).attr('id')));
+            }
+        });
+        if (module_edition_pks.length === 0) {
+            empty = false;
+            person_pks_global = [];
+            filter_sa_students()
+        } else {
+            var data_to_send = {
+                'module_edition_pks': JSON.stringify(module_edition_pks)
+            };
+            $.ajax({
+                type: 'GET',
+                dataType: 'json',
+                url: filterURL,
+                data: data_to_send,
+                success: function(response) {
+                    person_pks_global = JSON.parse(response['person_pks']);
+                    empty = response['empty'];
+                    filter_sa_students();
+                }
+            })
         }
     })
 });
+
+// Global array that keeps track of the last requested person pks for filtering
+// the students list.
+var person_pks_global = [];
+var empty = false;
+
+// Filtering the students table for the study adviser
+function filter_sa_students() {
+    var sname, snumber, $table, $tr, $tdName, $tdNumber;
+    sname = $("#search_student_name").val().toLowerCase();
+    snumber = $("#search_student_number").val().toLowerCase();
+    $table = $("#sa_person_table");
+    $tr = $table.children("tbody").children("tr");
+    if (sname === "" && snumber === "" && person_pks_global.length === 0 && !empty) {
+        console.log("Showing all");
+        $tr.show();
+    } else if (empty) {
+        console.log("Hiding all");
+        $tr.hide();
+    } else {
+        console.log("Looping all");
+        $tr.each(function() {
+            $tdName = $(this).children(".person_name");
+            $tdNumber = $(this).children(".person_number");
+            if ($tdName || $tdNumber) {
+                if ($tdName.text().toLowerCase().indexOf(sname) > -1 &&
+                    $tdNumber.text().toLowerCase().indexOf(snumber) > -1 &&
+                    person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 &&
+                    !empty) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            }
+        })
+    }
+    var $spinner_box = $("#loading-spinner-box");
+    $spinner_box.removeClass("d-block");
+    $spinner_box.addClass("d-none");
+}
 
 // Functions for deleting persons from a module edition
 function deleteUser(userpk, studyingspk, url) {
@@ -525,11 +687,11 @@ function deleteUser(userpk, studyingspk, url) {
                 var $tablerow = $("#row" + personpk);
                 $modal.modal('hide');
                 $tablerow.hide(1000, function() { $tablerow.remove() });
-                $snackbarMessage.html(personName + " (" + personNumber +") was successfully removed from module "
+                $snackbarMessage.html(personName + " (" + personNumber +") was successfully unenrolled from module "
                     + moduleName + " (" + moduleCode + ").");
                 $snackbar.fadeIn(1000);
             } else {
-                $messageModal.html(personName + " (<span class='font-italic'>" + personNumber + "</span>) was <strong>not</strong> deleted from " +
+                $messageModal.html(personName + " (<span class='font-italic'>" + personNumber + "</span>) was <strong>not</strong> unenrolled from " +
                     moduleName + " (<span class='font-italic'>" + moduleCode + "</span>), because there are still grades in the system for this person.");
             }
             $modal.on('hidden.bs.modal', function() {
@@ -628,4 +790,4 @@ function updateColoring() {
       }
     });
   }
-};
+}

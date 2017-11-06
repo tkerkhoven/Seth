@@ -25,14 +25,14 @@
                     <thead>
                         <tr>
                             <th>Student/Employer number</th>
-                            <th>Full name<input style="float: right;" type="text" id="searchInput" data-target="#personTable" placeholder="Search..."></th>
+                            <th>Full name<input style="float: right;" type="text" id="persons_search" data-target="#personTable" placeholder="Search..."></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for person in persons %}
                         <tr class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=person.pk%}">
-                            <td> {{ person.university_number }} </td>
-                            <td> {{ person.name }} </td>
+                            <td class="person_number"> {{ person.university_number }} </td>
+                            <td class="person_name"> {{ person.name }} </td>
                         </tr>
                         {% endfor %}
                     </tbody>
