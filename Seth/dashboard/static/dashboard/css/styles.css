@@ -9,6 +9,11 @@ body {
   font-weight: 300;
   line-height: 1.1; }
 
+.display-6 {
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1; }
+
 .table-overflow {
   display: block;
   width: 100%;
