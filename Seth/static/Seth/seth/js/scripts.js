@@ -471,32 +471,6 @@ $(document).ready(function() {
     $spinner_box.removeClass("d-block");
     $spinner_box.addClass("d-none");
 
-    // Function for searching students in the study adviser students table
-    // Input is the search field object and child is the class name of the table data
-    function search_students_table(input, child) {
-        var $input, filter, $table, $tr, $td, i;
-        $input = input;
-        filter = $input.val().toLowerCase();
-        $table = $("#sa_person_table");
-        $tr = $table.children("tbody").children("tr");
-        if (filter === "") {
-            $tr.hide();
-        } else {
-            $tr.each(function () {
-                $td = $(this).children(child);
-                // $tdNumber = $(this).children(".person_number");
-                // $tdName = $(this).children(".person_name");
-                if ($td) {
-                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                }
-            });
-        }
-    }
-
     // Study adviser students table search functions
     $("#search_student_name").on('keyup', function() {
         filter_sa_students();
