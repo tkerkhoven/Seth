@@ -69,8 +69,9 @@
                         <tbody>
                             {% for person in persons %}
                             <tr id="{{ person.pk }}" class="clickable-row pointer" data-href="{% url 'grades:student' pk=person.pk%}"
-                                onclick="$('#loading-spinner-box').removeClass('d-none');
-                                            $('#loading-spinner-box').addClass('d-block');">
+                                onclick="var $loading_spinner = $('#loading-spinner-box');
+                                            $loading_spinner.removeClass('d-none');
+                                            $loading_spinner.addClass('d-block');">
                                 <td class="person_number"> {{ person.university_number }} </td>
                                 <td class="person_name"> {{ person.name }} </td>
                             </tr>
