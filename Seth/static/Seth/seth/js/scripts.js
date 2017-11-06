@@ -638,7 +638,6 @@ function filter_sa_students() {
     $table = $("#sa_person_table");
     $tr = $table.children("tbody").children("tr");
     if (sname === "" && snumber === "" && person_pks_global.length === 0 && !empty) {
-        console.log("Showing all");
         $tr.show();
     } else if (empty) {
         $tr.hide();
