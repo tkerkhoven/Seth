@@ -143,7 +143,6 @@ class ModuleEditionCreateForm(ModelForm):
         super(ModuleEditionCreateForm, self).__init__(*args, **kwargs)
         self.fields['module'].widget.attrs['disabled'] = True
         self.fields['coordinators'].widget.attrs['disabled'] = True
-        self.fields['coordinators'].queryset = kwargs['initial']['coordinators']
 
 
 class ModuleEditionCreateView(generic.CreateView):
