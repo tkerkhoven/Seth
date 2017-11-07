@@ -19,6 +19,7 @@ from django.contrib.auth.models import User
 import django_excel as excel
 from django.urls import reverse
 
+
 @unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
 class ImporterStressTest(TestCase):
     def setUp(self):
@@ -68,7 +69,8 @@ class ImporterStressTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
 
@@ -104,11 +106,11 @@ class ImporterTest(TestCase):
 
         [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
 
-
-    ### CORRECT TESTS
+    # CORRECT TESTS
 
     def test_module_import(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -117,7 +119,8 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 if i != 1 else '' for i in range(len(tests))])
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 if i != 1 else '' for i in
+                                                                      range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -143,7 +146,8 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 if i != 1 else '' for i in range(len(tests))])
+            table.append([student.university_number, student.name] + [divmod(i, 9)[1] + 1 if i != 1 else '' for i in
+                                                                      range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -153,12 +157,14 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        #print(response.content)
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     def test_test_import(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -177,13 +183,15 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/test/{}'.format(test.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
     # Test import by name
 
     def test_module_import_by_name(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -201,7 +209,8 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_by_name(self):
@@ -224,16 +233,16 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        #print(response.content)
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
-
-
-    ## TEST INVALID STUDENT NUMBER
+    # TEST INVALID STUDENT NUMBER
 
     def test_module_import_invalid_university_number(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -242,7 +251,8 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number + '1', student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+            table.append(
+                [student.university_number + '1', student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -252,7 +262,8 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
@@ -268,7 +279,8 @@ class ImporterTest(TestCase):
             ['university_number', 'name'] + [test.pk for test in tests]]
 
         for student in students:
-            table.append([student.university_number + '1', student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
+            table.append(
+                [student.university_number + '1', student.name] + [divmod(i, 9)[1] + 1 for i in range(len(tests))])
 
         sheet = Sheet(sheet=table)
 
@@ -278,14 +290,16 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
             self.assertTrue(student.university_number + '1' in response.content.decode())
 
     def test_test_import_invalid_university_number(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -304,18 +318,18 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/test/{}'.format(test.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
         for student in students:
             self.assertTrue(student.university_number + '1' in response.content.decode())
 
-
-    ### INVALID GRADE
+    # INVALID GRADE
 
     def test_module_import_invalid_grade(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -371,7 +385,7 @@ class ImporterTest(TestCase):
 
     def test_test_import_invalid_grade(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -392,16 +406,15 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/test/{}'.format(test.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('GradeException' in response.content.decode())
 
-
-
-    ### INVALID TEST
+    # INVALID TEST
 
     def test_module_import_invalid_test(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.all()
@@ -423,7 +436,8 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('Attempt to register grades for a test that is not part of this module.' in response.content.decode())
+        self.assertTrue(
+            'Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
     def test_module_part_import_invalid_test(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -447,11 +461,12 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('Attempt to register grades for a test that is not part of this module.' in response.content.decode())
+        self.assertTrue(
+            'Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
     def test_test_import_invalid_test(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.exclude(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -473,13 +488,11 @@ class ImporterTest(TestCase):
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file})
         self.assertEqual(response.status_code, 403)
 
-
-
-    ### Extra columns
+    # Extra columns
 
     def test_module_import_extra_columns(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -531,7 +544,7 @@ class ImporterTest(TestCase):
 
     def test_test_import_extra_columns(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -550,14 +563,15 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/test/{}'.format(test.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/tests/{}/'.format(test.pk))
 
     # Too little columns
 
     def test_test_import_too_little_columns(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -600,8 +614,7 @@ class ImporterTest(TestCase):
         self.assertTrue('One of the required fields [student_id, grade, description] could not be found.'
                         in response.content.decode())
 
-
-    ### No tests
+    # No tests
 
     def test_module_import_no_tests(self):
         module_edition = \
@@ -652,8 +665,7 @@ class ImporterTest(TestCase):
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('There are no tests to import' in response.content.decode())
 
-
-    ### No tests
+    # No tests
 
     def test_module_import_no_university_number(self):
         module_edition = \
@@ -704,11 +716,11 @@ class ImporterTest(TestCase):
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('excel file misses required header: \"university_number\"' in response.content.decode())
 
-
-    ### EXTRA ROWS
+    # EXTRA ROWS
 
     def test_module_import_extra_row(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -729,7 +741,8 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_extra_row(self):
@@ -754,12 +767,14 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module_part/{}'.format(module_part.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        #print(response.content)
+        response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     def test_test_import_extra_row(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -780,16 +795,17 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        response = self.client.post('/importer/test/{}'.format(test.pk),
+                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('There are grades or description fields in this excel sheet that do not have a student number '
                         'filled in. Please check the contents of your excel file for stale values in rows.'
                         in response.content.decode())
 
-    ### INVALID TITLE_ROWS
+    # INVALID TITLE_ROWS
 
     def test_module_import_too_small_title_row(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -844,7 +860,6 @@ class ImporterTest(TestCase):
                         'using that instead.'
                         in response.content.decode())
 
-
     def test_module_import_too_large_title_row(self):
         module_edition = \
             ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
@@ -898,10 +913,11 @@ class ImporterTest(TestCase):
         self.assertTrue('The file that was uploaded was not recognised as a grade excel file.'
                         in response.content.decode())
 
-    ## STUDENT IMPORT
+    # STUDENT IMPORT
 
     def test_student_import(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         table = [['university_number', 'name', 'email', 'role']]
 
@@ -921,17 +937,19 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file})
+        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                    {'title': 'test.xlsx', 'file': file})
         self.assertTemplateUsed(response, 'importer/students-module-imported.html')
 
         if not Person.objects.filter(university_number=university_number):
             self.fail('Person imported to module does not exist.')
-        if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
+        if not Studying.objects.filter(person__university_number=university_number).filter(
+                module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
 
     def test_student_import_no_employees(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         table = [['university_number', 'name', 'email', 'role']]
 
@@ -954,7 +972,7 @@ class ImporterTest(TestCase):
 
     def test_student_import_not_university_number(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         table = [['university_number', 'name', 'email', 'role']]
 
@@ -975,10 +993,9 @@ class ImporterTest(TestCase):
                                     {'title': 'test.xlsx', 'file': file})
         self.assertTrue('is not a student number' in response.content.decode())
 
-
     def test_student_import_already_there(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         table = [['university_number', 'name', 'email', 'role']]
 
@@ -999,7 +1016,6 @@ class ImporterTest(TestCase):
                                     {'title': 'test.xlsx', 'file': file})
         self.assertTemplateUsed(response, 'importer/students-module-imported.html')
 
-
         self.assertEqual(
             [['Pietje Puk 1', 's13371', 'Parels der Informatica', '2017-201300070-A1']],
             response.context[0]['context']['failed']
@@ -1007,7 +1023,8 @@ class ImporterTest(TestCase):
 
         if not Person.objects.filter(university_number=university_number):
             self.fail('Person imported to module does not exist.')
-        if not Studying.objects.filter(person__university_number=university_number).filter(module_edition=module_edition):
+        if not Studying.objects.filter(person__university_number=university_number).filter(
+                module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
 
     def test_student_import_missing_rows(self):
@@ -1072,7 +1089,7 @@ class ImporterTest(TestCase):
 
     def test_module_structure_import(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         new_module_part_name = 'New One'
         new_test_name = 'New test'
@@ -1112,7 +1129,8 @@ class ImporterTest(TestCase):
         if not Test.objects.filter(module_part=module_part_1, name=new_signoff_name, type='A'):
             self.fail('First signoff not imported correctly (at all or as exam)')
 
-        module_part_2 = ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name + ' 2').first()
+        module_part_2 = ModulePart.objects.filter(module_edition=module_edition,
+                                                  name=new_module_part_name + ' 2').first()
         if not ModulePart.objects.filter(module_edition=module_edition, name=new_module_part_name + ' 2'):
             self.fail('Second page of sheet not imported correctly')
         if not Test.objects.filter(module_part=module_part_2, name=new_test_name + ' 2', type='E'):
@@ -1179,8 +1197,6 @@ class ImporterTest(TestCase):
         self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 2)
         if ModulePart.objects.filter(name=new_module_part_name):
             self.fail("Imported module part from sheet when it shoudn't")
-
-
 
 
 class ImporterPermissionsTest(TestCase):
@@ -1270,9 +1286,9 @@ class ImporterPermissionsTest(TestCase):
         response = self.client.get(reverse('importer:export_module_structure', args=[module_edition.pk]))
         self.assertEqual(response.status_code, 403)
 
-
     def test_importer_views_as_module_coordinator(self):
-        module_edition = ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        module_edition = \
+        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
 
