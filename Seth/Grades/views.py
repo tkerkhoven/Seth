@@ -595,10 +595,15 @@ def release(request, *args, **kwargs):
     user = request.user
 
     # Check whether the user is able to release/retract grades.
-    test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user,
+    tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
                                                           id=kwargs['pk'])
-    if not test:
+    if not tests:
         raise PermissionDenied()
+
+    test = tests[0]
+
+    if not 'rel' in request.POST:
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     if request.POST['rel'] == "False":
         test.released = True
@@ -642,11 +647,13 @@ def edit(request, *args, **kwargs):
 
     user = request.user
 
-    test = Test.objects.prefetch_related('grade_set').filter(Q(module_part__module_edition__coordinators__user=user) |
+    tests = Test.objects.prefetch_related('grade_set').filter(Q(module_part__module_edition__coordinators__user=user) |
                                                           Q(module_part__teachers__user=user),
-                                                          id=kwargs['pk']).distinct()[0]
-    if not test:
+                                                          id=kwargs['pk']).distinct()
+    if not tests:
         raise PermissionDenied()
+
+    test = tests[0]
 
     data = {}
 
@@ -673,7 +680,7 @@ def get(request, *args, **kwargs):
 
         data_array = []
 
-        (mod_ed, query_result) = create_grades_query(request.GET.get('view'), kwargs['pk'], user, kwargs['t'])
+        (mod_ed, query_result) = create_grades_query(request.GET.get('view'), kwargs['pk'], user, (kwargs['t']) if kwargs['t'] else None)
 
         student_grades_exam = OrderedDict()
         for student in query_result:
@@ -750,13 +757,14 @@ def create_grades_query(view, pk, user, type=None):
         type = ""
 
     if view == 'mod_ed':
-        mod_ed = ModuleEdition.objects.filter(Q(coordinators__user=user) |
+        mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
                                               Q(module__study__advisers__user=user),
-                                              pk=pk) \
-            .distinct()[0]
-        if not mod_ed:
+                                              pk=pk).distinct()
+        if not mod_eds:
             raise PermissionDenied()
+
+        mod_ed = mod_eds[0]
 
         module_parts = str(ModulePart.objects \
                            .filter(Q(module_edition__coordinators__user=user) | Q(teachers__user=user) |
@@ -819,7 +827,7 @@ def create_grades_query(view, pk, user, type=None):
         "FULL OUTER JOIN \"Grades_person\" P "
         "ON P.id = S.person_id "
         "WHERE " + where_test +
-        "ORDER BY P.name, T.module_part_id, T.type, T.id, G.id DESC ;",
+        "ORDER BY P.name, S.person_id, T.module_part_id, T.type, T.id, G.id DESC ;",
         [mod_ed.id]
     )
 
