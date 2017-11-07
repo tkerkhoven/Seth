@@ -454,9 +454,9 @@ class TestView(generic.DetailView):
         if 'change' not in self.request.session.keys():
             context['change'] = False
         elif self.request.session['change'] == 1:
-            context['change'] = 'The chosen grade(s) have successfully been released.'
+            context['change'] = 1
         elif self.request.session['change'] == 2:
-            context['change'] = 'The chosen grade(s) have successfully been retracted.'
+            context['change'] = 2
         self.request.session['change'] = 0
 
         # Get the specified test.

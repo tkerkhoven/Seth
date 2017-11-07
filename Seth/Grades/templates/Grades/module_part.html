@@ -74,9 +74,11 @@
 
                         <ul class="navbar-nav mr-auto"></ul>
 
+                        {% if is_module_coordinator or is_mc_assistant %}
                         <a href="{% url 'module_management:module_part_detail' module_part.pk %}" data-toggle="tooltip"
                            data-placement="bottom"
                            title="Module part detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                        {% endif %}
                     </nav>
                     <hr>
                     <nav aria-label="breadcrumb" role="navigation">

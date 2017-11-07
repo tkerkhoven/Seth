@@ -64,17 +64,22 @@ class DashboardView(View):
             'modulepart_set__test_set')
         context = dict()
         context['module_editions'] = []
+        num_grades = dict()
+
+        for test in Test.objects.filter(module_part__module_edition__coordinator__person__user=self.request.user).annotate(num_grades=Count('grade__student', distinct=True)):
+            num_grades[test] = test.num_grades
+
         for module_edition in module_editions:
             edition = {'name': module_edition, 'pk': module_edition.pk, 'module_parts': []}
             for module_part in module_edition.modulepart_set.all():
                 part = {'name': module_part.name, 'pk': module_part.pk, 'tests': []}
                 sign_off_assignments = []
-                for test in module_part.test_set.annotate(num_grades=Count('grade__student', distinct=True)).all():
+                for test in module_part.test_set.all():
                     if test.type is 'A':
                         sign_off_assignments.append(test)
                         continue
 
-                    test_item = {'name': test.name, 'pk': test.pk, 'signoff': False, 'num_grades': test.num_grades, 'released': test.released}
+                    test_item = {'name': test.name, 'pk': test.pk, 'signoff': False, 'num_grades': num_grades[test], 'released': test.released}
                     part['tests'].append(test_item)
                 if sign_off_assignments:
                     soa_line = {'module_part_pk': module_part.pk, 'signoff': True, 'released': True}
@@ -92,7 +97,10 @@ class DashboardView(View):
     def make_module_parts_context(self):
         module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
             'test_set')
-        tests = Test.objects.filter(module_part__teacher__person__user=self.request.user).annotate(num_grades=Count('grade'))
+        num_grades = dict()
+
+        for test in Test.objects.filter(module_part__teacher__person__user=self.request.user).annotate(num_grades=Count('grade__student', distinct=True)):
+            num_grades[test] = test.num_grades
 
         context = dict()
         context['module_parts'] = []
@@ -101,9 +109,9 @@ class DashboardView(View):
             sign_off_assignments = []
             for test in module_part.test_set.all():
                 if test.type is 'A':
-                    sign_off_assignments.append(tests.get(pk=test.pk))
+                    sign_off_assignments.append(test)
                     continue
-                test_item = {'name': test.name, 'pk': test.pk, 'signoff': False, 'num_grades': tests.get(pk=test.pk).num_grades, 'released': test.released}
+                test_item = {'name': test.name, 'pk': test.pk, 'signoff': False, 'num_grades': num_grades[test], 'released': test.released}
                 part['tests'].append(test_item)
             if sign_off_assignments:
                 soa_line = {'module_part_pk': module_part.pk, 'signoff': True, 'released': True}
