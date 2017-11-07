@@ -480,8 +480,61 @@ class TestView(generic.DetailView):
         return context
 
 
+class EmailBulkTestReleasedPreviewView(FormView):
+    """Email view used to email students about a bulk-release of grades (multiple grades released at once.)
 
-class EmailPreviewView(FormView):
+    Use the argument tests to pass Test instances that have been released.
+    """
+    template_name = 'Grades/email_preview.html'
+    form_class = EmailPreviewForm
+    tests = []
+
+    def __init__(self, *args, **kwargs):
+        instance = super(EmailGradeReleasedPreviewView, self).__init__(self, *args, **kwargs)
+        instance.tests = kwargs['tests']
+
+    # Check permissions
+    def dispatch(self, request, *args, **kwargs):
+        test = get_object_or_404(Test, pk=kwargs['pk'])
+        person = Person.objects.filter(user=self.request.user)
+        if is_coordinator_of_module(person, test.module_part.module_edition):
+            return super(EmailGradeReleasedPreviewView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You are not allowed to send emails to students.")
+
+    def get_initial(self):
+        test = Test.objects.filter(pk=self.kwargs['pk']).prefetch_related('module_part__module_edition__module').first()
+        return {'test': test.pk,
+                'subject': '[SETH] {} ({}-{}) Grades released.'.format(test.module_part.module_edition.module.name, test.module_part.module_edition.year,
+                                                              test.module_part.module_edition.block),
+                'message': 'Dear student, \n\nThe grades for some tests have been released. Go to {} to see your '
+                           'grades.\n\n Tests affected:\n' + ''.join(['{}\n'.format(test.name) for test in self.tests])
+                           + '\n\nKind regards,\n\n{}\n\n=======================================\n'
+                           'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
+                           ' grades or any other kinds of information in this system.'
+                           .format(mailing.DOMAIN, Person.objects.get(user=self.request.user).name)}
+
+    def form_valid(self, form):
+        test = get_object_or_404(Test, pk=self.kwargs['pk'])
+        failed = mail_module_edition_participants(
+            module_edition=test.module_part.module_edition,
+            subject=form.cleaned_data['subject'],
+            body=form.cleaned_data['message'])
+        if failed:
+            return HttpResponse('Sending of the email failed for: \n{}'.format(
+                ['{}\t{}\n'.format(student.university_number, student.name) for student in failed]
+            ))
+        else:
+            return redirect('grades:test', test.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super(EmailGradeReleasedPreviewView, self).get_context_data(**kwargs)
+        context['pk'] = context['view'].kwargs['pk']
+        return context
+
+
+
+class EmailGradeReleasedPreviewView(FormView):
     template_name = 'Grades/email_preview.html'
     form_class = EmailPreviewForm
 
@@ -490,7 +543,7 @@ class EmailPreviewView(FormView):
         test = get_object_or_404(Test, pk=kwargs['pk'])
         person = Person.objects.filter(user=self.request.user)
         if is_coordinator_of_module(person, test.module_part.module_edition):
-            return super(EmailPreviewView, self).dispatch(request, *args, **kwargs)
+            return super(EmailGradeReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not allowed to send emails to students.")
 
@@ -518,7 +571,7 @@ class EmailPreviewView(FormView):
             return redirect('grades:test', test.pk)
 
     def get_context_data(self, **kwargs):
-        context = super(EmailPreviewView, self).get_context_data(**kwargs)
+        context = super(EmailGradeReleasedPreviewView, self).get_context_data(**kwargs)
         context['pk'] = context['view'].kwargs['pk']
         return context
 
