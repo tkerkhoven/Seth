@@ -74,9 +74,11 @@
 
                         <ul class="navbar-nav mr-auto"></ul>
 
+                        {% if is_module_coordinator or is_mc_assistant %}
                         <a href="{% url 'module_management:test_detail' test.pk %}" data-toggle="tooltip"
                            data-placement="bottom"
                            title="Test detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                        {% endif %}
                     </nav>
                     <hr>
 
@@ -108,11 +110,16 @@
                     {% endif %}
 
                     {% if change %}
-                      <div class="alert alert-success alert-dismissible fade show" role="alert">
+                      <div class="alert alert-{% if change == 1 %}success{% else %}warning{% endif %} alert-dismissible fade show" role="alert">
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                           <span aria-hidden="true">&times;</span>
                         </button>
-                        <strong>Changes made!</strong> {{ change }}
+                        <strong>Changes made!</strong>
+                          {% if change == 1%}
+                          The chosen grade(s) have successfully been released.
+                          {% else %}
+                          The chosen grade(s) have successfully been retracted.
+                          {% endif %}
                       </div>
                     {% endif %}
 
