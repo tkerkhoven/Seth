@@ -26,32 +26,32 @@ def known_persons(person):
     """
     qs = Person.objects.none()
     if pu.is_coordinator_or_assistant(person):
-        inner_qs = Module.objects.filter(moduleedition__coordinators=person)
-        qs = Person.objects.filter(
-            Q(studying__module_edition__coordinators=person) |
-            Q(study__modules__in=inner_qs) |
-            Q(teacher__module_part__module_edition__coordinators=person)
-        ) \
-            .order_by('university_number', 'user') \
-            .distinct('university_number', 'user')
-    elif pu.is_teacher(person):
-        inner_qs = Module.objects.filter(moduleedition__modulepart__teachers=person)
-        qs = Person.objects.filter(
-            Q(studying__module_edition__modulepart__teachers=person) |
-            Q(study__modules__in=inner_qs) |
-            Q(teacher__module_part__module_edition__modulepart__teachers=person)
-        ) \
-            .order_by('university_number', 'user') \
-            .distinct('university_number', 'user')
-    elif pu.is_study_adviser(person):
-        inner_qs = Module.objects.filter(study__advisers=person)
-        qs = Person.objects.filter(
-            Q(studying__module_edition__module__study__advisers=person) |
-            Q(study__advisers=person) |
-            Q(teacher__module_part__module_edition__module__in=inner_qs)
-        ) \
-            .order_by('university_number', 'user') \
-            .distinct('university_number', 'user')
+        qs = qs.union(
+            Person.objects.filter(
+                Q(studying__module_edition__coordinators=person) |
+                Q(coordinator__module_edition__coordinators=person) |
+                Q(teacher__module_part__module_edition__coordinators=person)
+            ).order_by('university_number')
+            .distinct('university_number')
+        )
+    if pu.is_teacher(person) or pu.is_teaching_assistant(person):
+        qs = qs.union(
+            Person.objects.filter(
+                Q(studying__module_edition__modulepart__teachers=person) |
+                Q(coordinator__module_edition__modulepart__teachers=person) |
+                Q(teacher__module_part__module_edition__modulepart__teachers=person)
+            ).order_by('university_number')
+            .distinct('university_number')
+        )
+    if pu.is_study_adviser(person):
+        qs = qs.union(
+            Person.objects.filter(
+                Q(studying__module_edition__module__study__advisers=person) |
+                Q(moduleedition__module__study__advisers=person) |
+                Q(teacher__module_part__module_edition__module__study__advisers=person)
+            ).order_by('university_number')
+            .distinct('university_number')
+        )
     return qs
 
 
@@ -112,9 +112,8 @@ class UpdatePerson(generic.UpdateView):
     form_class = UpdatePersonForm
 
     def dispatch(self, request, *args, **kwargs):
-        user = Person.objects.filter(user=request.user).first()
-        person = Person.objects.filter(id=self.kwargs['pk']).first()
-        if person in known_persons(user):
+        person = Person.objects.filter(user=request.user).first()
+        if pu.is_coordinator_or_assistant(person):
             return super(UpdatePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to access the details of this user')
@@ -155,9 +154,8 @@ class DeletePerson(generic.DeleteView):
     success_url = reverse_lazy('human_resource:persons')
 
     def dispatch(self, request, *args, **kwargs):
-        user = Person.objects.filter(user=request.user).first()
-        person = Person.objects.filter(id=self.kwargs['pk']).first()
-        if person in known_persons(user):
+        person = Person.objects.filter(user=request.user).first()
+        if pu.is_coordinator_or_assistant(person):
             return super(DeletePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to delete this user.')
@@ -170,7 +168,7 @@ class CreatePerson(generic.CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         person = Person.objects.filter(user=request.user).first()
-        if pu.is_coordinator(person) or request.user.is_superuser:
+        if pu.is_coordinator_or_assistant(person) or request.user.is_superuser:
             return super(CreatePerson, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not allowed to create a user.')
@@ -195,30 +193,30 @@ class CreatePerson(generic.CreateView):
 
 
 # Unused View
-class CreatePersonNew(generic.FormView):
-    template_name = 'human_resource/person_form.html'
-    success_url = reverse_lazy('human_resource:users')
-    form_class = CreatePersonTeacherForm
-
-    def dispatch(self, request, *args, **kwargs):
-        person = Person.objects.filter(user=request.user).first()
-        if pu.is_coordinator(person):
-            return super(CreatePersonNew, self).dispatch(request, *args, **kwargs)
-        else:
-            raise PermissionDenied('You are not allowed to create a user.')
-
-    def form_valid(self, form):
-        person_name = form.cleaned_data['name']
-        ut_number = form.cleaned_data['university_number']
-        email = form.cleaned_data['email_address']
-        person_user, _ = User.objects.get_or_create(username=form.cleaned_data['university_number'])
-        if form.cleaned_data['create_teacher']:
-            role = form.cleaned_data['role_teacher']
-            module_part = form.cleaned_data['module_part_teacher']
-            # todo Nieuwe user aanmaken met als username het medewerkersnummer
-            person = Person.objects.get_or_create(name=person_name, university_number=ut_number, email=email, user=person_user)[0]
-            Teacher.objects.get_or_create(person=person, module_part=module_part, role=role)
-        else:
-            person = Person.objects.get_or_create(name=person_name, university_number=ut_number, email=email, user=person_user)
-            print("Don't create teacher")
-        return super(CreatePersonNew, self).form_valid(form)
+# class CreatePersonNew(generic.FormView):
+#     template_name = 'human_resource/person_form.html'
+#     success_url = reverse_lazy('human_resource:users')
+#     form_class = CreatePersonTeacherForm
+#
+#     def dispatch(self, request, *args, **kwargs):
+#         person = Person.objects.filter(user=request.user).first()
+#         if pu.is_coordinator(person):
+#             return super(CreatePersonNew, self).dispatch(request, *args, **kwargs)
+#         else:
+#             raise PermissionDenied('You are not allowed to create a user.')
+#
+#     def form_valid(self, form):
+#         person_name = form.cleaned_data['name']
+#         ut_number = form.cleaned_data['university_number']
+#         email = form.cleaned_data['email_address']
+#         person_user, _ = User.objects.get_or_create(username=form.cleaned_data['university_number'])
+#         if form.cleaned_data['create_teacher']:
+#             role = form.cleaned_data['role_teacher']
+#             module_part = form.cleaned_data['module_part_teacher']
+#             # todo Nieuwe user aanmaken met als username het medewerkersnummer
+#             person = Person.objects.get_or_create(name=person_name, university_number=ut_number, email=email, user=person_user)[0]
+#             Teacher.objects.get_or_create(person=person, module_part=module_part, role=role)
+#         else:
+#             person = Person.objects.get_or_create(name=person_name, university_number=ut_number, email=email, user=person_user)
+#             print("Don't create teacher")
+#         return super(CreatePersonNew, self).form_valid(form)

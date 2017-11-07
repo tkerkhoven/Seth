@@ -17,6 +17,8 @@ _RUN_QUERY_TESTS = False
 
 def set_up_base_data():
     # Define Users
+    dummy_user = User.objects.create(username='dummy_user', password='')
+
     student_user0 = User(username='student0', password='secure_password')
     student_user1 = User(username='student1', password='secure_password')
     student_user2 = User(username='student2', password='secure_password')
@@ -24,6 +26,7 @@ def set_up_base_data():
     teacher_user = User(username='teacher0', password='secure_password')
     study_adviser_user = User(username='study_adviser0', password='secure_password')
     coordinator_user = User(username='coordinator0', password='secure_password')
+    coordinator_assistant_user = User(username='coordinator1', password='secure_password')
     student_user0.save()
     student_user1.save()
     student_user2.save()
@@ -31,6 +34,7 @@ def set_up_base_data():
     teacher_user.save()
     study_adviser_user.save()
     coordinator_user.save()
+    coordinator_assistant_user.save()
 
     # Define Persons
     student_person0 = Person(university_number='s0', name='Student 0', user=student_user0)
@@ -40,6 +44,7 @@ def set_up_base_data():
     teacher_person = Person(university_number='m2', name='Teacher 0', user=teacher_user)
     study_adviser_person = Person(university_number='m3', name='Study Adviser 0', user=study_adviser_user)
     coordinator_person = Person(university_number='m4', name='Coordinator 0', user=coordinator_user)
+    coordinator_assistant_person = Person(university_number='m5', name='Coordinator 1', user=coordinator_assistant_user)
     student_person0.save()
     student_person1.save()
     student_person2.save()
@@ -47,6 +52,7 @@ def set_up_base_data():
     teacher_person.save()
     study_adviser_person.save()
     coordinator_person.save()
+    coordinator_assistant_person.save()
 
     # Define Modules
     module0 = Module(code='001', name='Module 1')
@@ -120,6 +126,9 @@ def set_up_base_data():
 
     coordinator1 = Coordinator(person=coordinator_person, module_edition=module_ed3, is_assistant=False)
     coordinator1.save()
+
+    coordinator2 = Coordinator(person=coordinator_assistant_person, module_edition=module_ed0, is_assistant=True)
+    coordinator2.save()
 
 
 def set_up_large_independent_data():
@@ -2341,7 +2350,7 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # self.assertTemplateUsed(response, self.template)
 
-        response_content = json.loads(response.content)
+        response_content = json.loads(response.content.decode())
 
         self.assertEqual(response_content['person_name'], name)
         self.assertEqual(response_content['person_number'], number)
@@ -2360,7 +2369,7 @@ class ModuleManagementRemoveUserTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # self.assertTemplateUsed(response, self.template)
 
-        response_content = json.loads(response.content)
+        response_content = json.loads(response.content.decode())
 
         self.assertEqual(response_content['person_name'], name)
         self.assertEqual(response_content['person_number'], number)
