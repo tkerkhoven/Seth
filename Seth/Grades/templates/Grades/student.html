@@ -38,20 +38,24 @@
                             <div class="display-5">
                                 {{ mod_ed }}
                                 <span class="float-right">
-                                    <i class="material-icons pointer expand_all"
-                                       data-toggle="tooltip" data-placement="bottom" title="Expand all">
+{#                                    <i class="material-icons pointer expand_all"#}
+{#                                       data-toggle="tooltip" data-placement="bottom" title="Expand all">#}
+{#                                        expand_more#}
+{#                                    </i>#}
+{#                                    <i class="material-icons pointer expand_less"#}
+{#                                       data-toggle="tooltip" data-placement="bottom" title="Collapse all">#}
+{#                                        expand_less#}
+{#                                    </i>#}
+                                    <i class="material-icons pointer expand_collapse"
+                                       data-toggle="tooltip" data-placement="bottom" title="Expand/Collapse">
                                         expand_more
-                                    </i>
-                                    <i class="material-icons pointer expand_less"
-                                       data-toggle="tooltip" data-placement="bottom" title="Collapse all">
-                                        expand_less
                                     </i>
                                 </span>
                             </div>
                         </div>
                         <ul class="list-group-flush pl-0 mb-0 module_part_list">
                             {% for module_part in module_parts|key:mod_ed %}
-                                <li class="list-group-item flip-list-item" id="mp_collapse{{ module_part.id }}" data-toggle="collapse" data-target="#collapsePart{{ module_part.id }}"
+                                <li class="list-group-item flip-list-item collapsed" id="mp_collapse{{ module_part.id }}" data-toggle="collapse" data-target="#collapsePart{{ module_part.id }}"
                                     aria-expanded="false" aria-controls="collapsePart{{ module_part.id }}">
                                 <a class="text-dark">
                                     <span class="display-6 mb-0">

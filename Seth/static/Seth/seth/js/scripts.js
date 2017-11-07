@@ -564,8 +564,6 @@ $(document).ready(function() {
         }
     });
 
-
-
     //Functions for filtering the Study adviser index students list
     $("#module_edition_filter").children().children().children().on('click', function() {
         // $("#loading-spinner-box").show();
@@ -604,24 +602,30 @@ $(document).ready(function() {
     $(".flip-list-item").on('click', function() {
         var $icon = $(this).find(".flip-icon");
         flip_icon($icon);
+        var all_collapsed = false;
+        $(this).on('shown.bs.collapse hidden.bs.collapse', function() {
+            $(this).parent().children().each(function() {
+                if ($(this).hasClass("collapsed")) {
+                    all_collapsed = true;
+                    // all_collapsed === true als 1 van de list items de collapsed klasse heeft
+                    // Dus dat
+                }
+            });
+            if (!all_collapsed) {
+                $(this).parent().parent().find(".expand_collapse").text("expand_less");
+                collapsed = false;
+            }
+        });
     });
 
-    $(".expand_all").on('click', function() {
+    $(".expand_collapse").on('click', function() {
         var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
-        expand_all($ul);
-        $ul.children().each(function() {
-            var $icon = $(this).find(".flip-icon");
-            flip_icon($icon)
-        })
-    });
-
-    $(".expand_less").on('click', function() {
-        var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
-        collapse_all($ul);
-        $ul.children().each(function() {
-            var $icon = $(this).find(".flip-icon");
-            flip_icon($icon);
-        })
+        if (collapsed) {
+            $(this).text("expand_less");
+        } else {
+            $(this).text("expand_more");
+        }
+        expand_collapse_all($ul);
     })
 });
 
@@ -662,28 +666,37 @@ function filter_sa_students() {
     $spinner_box.addClass("d-none");
 }
 
-// Function for expanding all module parts of a module edition in student dashboard
-function expand_all(ul) {
-    ul.children().each(function() {
-        $(this).children("div").each(function() {
-            $(this).collapse('show');
-        })
-    });
-}
+var collapsed = true;
 
-// Function for retracting all expandable module parts of a module edition in student dashboard
-function collapse_all(ul) {
-    ul.children().each(function () {
-        $(this).children("div").each(function() {
-            $(this).collapse('hide');
+function expand_collapse_all(ul) {
+    if (collapsed) {
+        collapsed = false;
+        ul.children().each(function () {
+            if ($(this).find(".flip-icon").text() === "expand_more") {
+                flip_icon($(this).find(".flip-icon"));
+            }
+            $(this).children("div").each(function() {
+                $(this).collapse("show");
+            })
         })
-    })
+    } else {
+        collapsed = true;
+        ul.children().each(function () {
+            if ($(this).find(".flip-icon").text() === "expand_less") {
+                flip_icon($(this).find(".flip-icon"));
+            }
+            $(this).children("div").each(function() {
+                $(this).collapse("hide");
+            })
+        })
+    }
 }
 
 function flip_icon(icon) {
-    if (icon.text() === "expand_less") {
+    var $list_item = icon.parent().parent().parent();
+    if (icon.text() === "expand_less" && $list_item.attr("aria-expanded") === "true") {
         icon.text("expand_more");
-    } else {
+    } else if (icon.text() === "expand_more" && $list_item.attr("aria-expanded") === "false"){
         icon.text("expand_less");
     }
 }
