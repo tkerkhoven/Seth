@@ -1,3 +1,4 @@
+import json
 import re
 from collections import OrderedDict
 
@@ -582,9 +583,39 @@ def export(request, *args, **kwargs):
                 ['{}'.format(u_num), '{}'.format(name), 'N/A', 'NVD', 'N/A', 'N/A']
             )
 
-    return excel.make_response_from_array(table, file_name='{} MODXX {} {}.xlsx'
+    return excel.make_response_from_array(table, file_name='{} MODxx {} {}.xlsx'
                                           .format(study.abbreviation, mod_ed.module.code, test.name),
                                           file_type='xlsx')
+
+
+def bulk_release(request, *args, **kwargs):
+    user = request.user
+    data = {}
+
+    if request.method == "POST":
+        print(request.POST)
+
+        test_list = json.loads(request.POST.get('tests', None))
+        print(test_list)
+        for pk in test_list:
+            tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
+                                                                      id=pk)
+            if not tests:
+                raise PermissionDenied()
+
+            test = tests[0]
+            rel = test.released
+            test.released = not rel
+            test.save()
+
+            request.session['change'] = (not rel) if 1 else 2
+
+        data = {
+            'tests': test_list
+        }
+
+    # Return to the page the user came from.
+    return JsonResponse(data)
 
 
 def release(request, *args, **kwargs):
@@ -750,11 +781,11 @@ def create_grades_query(view, pk, user, type=None):
     :return: (mod_ed, query_result) - The corresponding module edition and the result of the query. Returns None if a correct view isn't specified.
     """
     if type == 'A':
-        type = "type='A'"
+        type_str = "type='A'"
     elif type == 'E' or type =='P':
-        type = "type='E' OR type='P'"
+        type_str = "type='E' OR type='P'"
     else:
-        type = ""
+        type_str = ""
 
     if view == 'mod_ed':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
@@ -775,8 +806,8 @@ def create_grades_query(view, pk, user, type=None):
 
         in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
         where_test = "module_part_id IN (" + module_parts + ")"
-        if type != "":
-            where_test += " AND (" + type + ") "
+        if type_str != "":
+            where_test += " AND (" + type_str + ") "
 
     elif view == 'mod_part':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
@@ -791,8 +822,8 @@ def create_grades_query(view, pk, user, type=None):
 
         in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + ") "
         where_test = "module_part_id = " + pk
-        if type != "":
-            where_test += " AND (" + type + ") "
+        if type_str != "":
+            where_test += " AND (" + type_str + ") "
 
     elif view == 'mod_test':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |

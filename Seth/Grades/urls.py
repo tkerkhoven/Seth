@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^tests/(?P<pk>[0-9]+)/send_email$', login_required(views.EmailPreviewView.as_view()), name='test_send_email'),
     url(r'^exports/(?P<pk>([0-9]+))/$', login_required(views.export), name='export'),
     url(r'^release/(?P<pk>([0-9]+))/$', login_required(views.release), name='release'),
+    url(r'^release/$', login_required(views.bulk_release), name='bulk-release'),
     url(r'^remove/(?P<pk>([0-9]+))/(?P<sid>([0-9]+))/$', login_required(views.remove), name='remove'),
     url(r'^edit/(?P<pk>([0-9]+))/(?P<sid>([0-9]+))/$', login_required(views.edit), name='edit'),
     url(r'^get/(?P<pk>([0-9]+))/(?P<t>([AE]))$', login_required(views.get), name='get'),

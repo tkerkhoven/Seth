@@ -2,6 +2,7 @@ var oldto = 5.5;
 var oldfrom = 5;
 var searchString = "";
 var highlighted = "";
+var currentlySelected = 0;
 
 $(".btn").mouseup(function(){
     $(this).blur();
@@ -87,6 +88,65 @@ gradeApp.controller('studentController', function($scope,$http) {
 });
 
 $(document).ready(function() {
+
+    $('[id^="rel_button_"]').on("mousedown", function() {
+        i = $(this).find("i");
+        current = $(this).attr("data-current") == "true";
+
+        if($(this).attr("data-selected") == "true") {
+            i.removeClass("text-muted");
+            if(current)
+                i.addClass("text-success");
+            else
+                i.addClass("text-danger");
+            $(this).removeAttr("data-selected")
+            currentlySelected--;
+            if(currentlySelected == 0) {
+                $("#bulk-release").css("display","none");
+            }
+            return
+        }
+
+        if(current)
+            i.removeClass("text-success");
+        else
+            i.removeClass("text-danger");
+        i.addClass("text-muted");
+
+        $(this).attr("data-selected", "true")
+        currentlySelected++;
+
+        if(currentlySelected == 1) {
+            $("#bulk-release").css("display","inline");
+        }
+    });
+
+    $("#bulk-release").click(function() {
+        test_list = [];
+        $('[id^="rel_button_"]').each(function() {
+            if($(this)[0].hasAttribute("data-selected")) {
+                test_list.push(($(this).attr("data-test")));
+            }
+        });
+
+        $.ajax({
+            beforeSend: function(xhr, settings) {
+              if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+              }
+            },
+
+            type: 'POST',
+            url: $(this).attr("data-url"),
+            data: {
+                tests: JSON.stringify(test_list)
+            },
+
+            success: function(data) {
+                
+            }
+        });
+    });
 
     var table = $('#gradebook').on( 'processing.dt', function ( e, settings, processing ) {
         $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
@@ -520,7 +580,7 @@ $(document).ready(function() {
     // Human research table search function
     $("#persons_search").on('keyup', function() {
         var $input, filter, $table, $tr, $tdNumber, $tdName, i;
-        $input = $("#searchInput")[0];
+        $input = $("#persons_search")[0];
         filter = $input.value.toLowerCase();
         $table = $("#personTable");
         $tr = $table.children("tbody").children("tr");
@@ -531,6 +591,9 @@ $(document).ready(function() {
             if ($tdName || $tdNumber) {
                 if ($tdNumber.text().toLowerCase().indexOf(filter) > -1 || $tdName.text().toLowerCase().indexOf(filter) > -1) {
                     $(this).show();
+                }
+                else {
+                    $(this).hide();
                 }
             }
         });
