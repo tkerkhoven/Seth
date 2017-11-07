@@ -25,13 +25,13 @@ class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         teacher = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
 
         module_ed.save()
 
@@ -78,15 +78,15 @@ class ImporterTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         teacher = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
 
-        module_ed2 = ModuleEdition.objects.create(module=module_tcs, year=2018, block='A1')
+        module_ed2 = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2018, block='A1')
 
         module_parts = [
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[teacher]) for i in
@@ -1203,14 +1203,14 @@ class ImporterPermissionsTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         module_coordinator = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
-        module_ed_2 = ModuleEdition.objects.create(module=module_tcs, year=2018, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
+        module_ed_2 = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2018, block='A1')
 
         module_parts = [
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[module_coordinator])
@@ -1443,13 +1443,13 @@ class MakeGradeTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         module_coordinator = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
 
         module_ed.save()
 
