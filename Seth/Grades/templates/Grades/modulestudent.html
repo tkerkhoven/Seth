@@ -73,9 +73,11 @@
 
                         <ul class="navbar-nav mr-auto"></ul>
 
+                        {% if is_module_coordinator or is_mc_assistant %}
                         <a href="{% url 'human_resource:person' student.pk %}" data-toggle="tooltip"
                            data-placement="bottom"
                            title="Student detail"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                        {% endif %}
                     </nav>
                     <h2 class="display-5">{{ student.university_number }}</h2>
                     <hr>

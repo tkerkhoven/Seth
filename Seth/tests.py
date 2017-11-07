@@ -8,7 +8,7 @@ from Seth.settings import LOGIN_URL
 import permission_utils as pu
 
 
-class ModuleManagementIndexTests(TestCase):
+class PermissionUtilsTests(TestCase):
     study_assigned = None
     study_unassigned = None
 

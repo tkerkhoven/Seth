@@ -68,9 +68,11 @@
 
                     <ul class="navbar-nav mr-auto"></ul>
 
+                    {% if is_module_coordinator or is_mc_assistant %}
                     <a href="{% url 'module_management:module_edition_detail' moduleedition.pk %}" data-toggle="tooltip"
                        data-placement="bottom"
                        title="Edit module edition"><i class="material-icons md-36 title-bar">find_in_page</i></a>
+                    {% endif %}
                 </nav>
                 <hr>
 
