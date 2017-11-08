@@ -170,13 +170,21 @@
                                                     <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
                                                     <br>
                                                     {% if test.released %}
+                                                    {% if can_release %}
                                                     <a id="rel_button_{{ test.id }}_1" data-current="true" data-test="{{ test.id }}">
+                                                    {% endif %}
                                                         <i class="material-icons rounded-circle white-border text-center text-success" title="The grades in this test have been released">check_circle</i>
+                                                    {% if can_release %}
                                                     </a>
+                                                    {% endif %}
                                                     {% else %}
+                                                    {% if can_release %}
                                                     <a id="rel_button_{{ test.id }}_2" data-current="false" data-test="{{ test.id }}">
+                                                    {% endif %}
                                                         <i class="material-icons rounded-circle white-border text-center text-danger" title="The grades in this test have not been released">cancel</i>
+                                                    {% if can_release %}
                                                     </a>
+                                                    {% endif %}
                                                     {% endif %}
                                                 </th>
                                             {% endfor %}
@@ -198,13 +206,21 @@
                                                 <a href="{% url 'grades:test' pk=assignment.id %}">{{ assignment.name }}</a>
                                                 <br>
                                                 {% if assignment.released %}
+                                                {% if can_release %}
                                                 <a id="rel_button_{{ assignment.id }}_1" data-current="true" data-test="{{ assignment.id }}">
+                                                {% endif %}
                                                     <i class="material-icons rounded-circle white-border text-center text-success" title="The grades in this test have been released">check_circle</i>
+                                                {% if can_release %}
                                                 </a>
+                                                {% endif %}
                                                 {% else %}
+                                                {% if can_release %}
                                                 <a id="rel_button_{{ assignment.id }}_2" data-current="false" data-test="{{ assignment.id }}">
+                                                {% endif %}
                                                     <i class="material-icons rounded-circle white-border text-center text-danger" title="The grades in this test have not been released">cancel</i>
+                                                {% if can_release %}
                                                 </a>
+                                                {% endif %}
                                                 {% endif %}
                                             </th>
                                             {% endfor %}

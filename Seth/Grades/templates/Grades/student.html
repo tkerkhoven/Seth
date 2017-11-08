@@ -47,7 +47,7 @@
 {#                                        expand_less#}
 {#                                    </i>#}
                                     <i class="material-icons pointer expand_collapse"
-                                       data-toggle="tooltip" data-placement="bottom" title="Expand/Collapse">
+                                       data-toggle="tooltip" data-placement="bottom" title="Expand/Collapse All">
                                         expand_more
                                     </i>
                                 </span>
@@ -107,6 +107,19 @@
                                                     </td>
                                                     <td>
                                                         <i class="material-icons text-success">check_circle</i>
+                                                    </td>
+                                                </tr>
+                                                {% else %}
+                                                <tr>
+                                                    <th>Assignments</th>
+                                                    <th>Done</th>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        No assignments have been signed off yet.
+                                                    </td>
+                                                    <td>
+                                                        <i class="material-icons text-danger">cancel</i>
                                                     </td>
                                                 </tr>
                                                 {% endif %}
