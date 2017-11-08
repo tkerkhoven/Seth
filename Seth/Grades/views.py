@@ -140,9 +140,9 @@ class GradeView(generic.DetailView):
         context['mod_ed'] = mod_ed
         context['assignments'] = assignments
         context['module_parts'] = module_parts
-        context['mod_name'] = Module.objects.values('name').get(moduleedition=mod_ed)['name']
         context['tests'] = tests
         context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists() or Teacher.objects.filter(person__user=self.request.user, module_part__module_edition=mod_ed).exists()
+        context['can_release'] = Coordinator.objects.filter(person__user=self.request.user, module_edition=mod_ed).exists()
 
         return context
 
@@ -411,6 +411,7 @@ class ModulePartView(generic.DetailView):
         context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user,
                                                          module_edition__modulepart=module_part).exists() or Teacher.objects.filter(
             person__user=self.request.user, module_part__module_edition__modulepart=module_part).exists()
+        context['can_release'] = Coordinator.objects.filter(person__user=self.request.user, module_edition__modulepart=module_part).exists()
 
         return context
 
@@ -472,8 +473,7 @@ class TestView(generic.DetailView):
         context['can_export'] = Test.objects.filter(
             module_part__module_edition__coordinators__user=self.request.user).exists()
         # Set whether the user can release/retract grades.
-        context['can_release'] = Test.objects.filter(
-            module_part__module_edition__coordinators__user=self.request.user).exists()
+        context['can_release'] = Coordinator.objects.filter(person__user=self.request.user, module_edition__modulepart__test=test).exists()
         context['can_edit'] = Coordinator.objects.filter(person__user=self.request.user,
                                                          module_edition__modulepart__test=test).exists() or Teacher.objects.filter(
             person__user=self.request.user, module_part__module_edition__modulepart__test=test).exists()
@@ -650,21 +650,35 @@ def bulk_release(request, *args, **kwargs):
         if(len(json_test_list) == 0):
             return JsonResponse()
         test_list = []
+        released = 0
+        last_test = 0
+
         for pk in json_test_list:
             tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
                                                                       id=pk)
             if not tests:
                 raise PermissionDenied()
 
-            test_list.append(tests[0])
-        for test in test_list:
-            rel = test.released
-            test.released = not rel
-            test.save()
+            rel = tests[0].released
+            tests[0].released = not rel
+            tests[0].save()
+            if not rel:
+                last_test = tests[0].pk
+                released += 1
+                test_list.append(tests[0])
 
-        data = {
-            'redirect': reverse('grades:test_bulk_send_email', kwargs={'pk': test_list[0].module_part.module_edition.pk})
-        }
+        if released == 0:
+            data = {
+                'redirect': request.META.get('HTTP_REFERER')
+            }
+        elif released == 1:
+            data = {
+                'redirect': reverse('grades:test_send_email', kwargs={'pk': last_test})
+            }
+        else:
+            data = {
+                'redirect': reverse('grades:test_bulk_send_email', kwargs={'pk': test_list[0].module_part.module_edition.pk})
+            }
 
     # Return to the page the user came from.
     return JsonResponse(data)
@@ -677,28 +691,28 @@ def release(request, *args, **kwargs):
     """
     user = request.user
 
-    # Check whether the user is able to release/retract grades.
-    tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
-                                                          id=kwargs['pk'])
-    if not tests:
-        raise PermissionDenied()
+    if request.method == "POST":
+        # Check whether the user is able to release/retract grades.
+        tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
+                                                              id=kwargs['pk'])
+        if not tests:
+            raise PermissionDenied()
 
-    test = tests[0]
+        test = tests[0]
 
-    if not 'rel' in request.POST:
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        if not 'rel' in request.POST:
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    if request.POST['rel'] == "False":
-        test.released = True
-        test.save()
-        request.session['change'] = 1
-        if 'sendcheck' in request.POST:
+        if request.POST['rel'] == "False":
+            test.released = True
+            test.save()
+            request.session['change'] = 1
             return redirect('grades:test_send_email', test.id)
 
-    else:
-        test.released = False
-        test.save()
-        request.session['change'] = 2
+        else:
+            test.released = False
+            test.save()
+            request.session['change'] = 2
 
     # Return to the page the user came from.
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
