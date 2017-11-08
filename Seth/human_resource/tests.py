@@ -81,8 +81,6 @@ class KnownPersonsTest(TestCase):
             Q(coordinator__module_edition__coordinator__person=module_coordinator)
         ).distinct()
 
-        print(module_coordinator)
-
         self.assertQuerysetEqual(queryset.order_by('university_number'), map(repr, known_persons(module_coordinator)))
 
     def test_as_study_adviser(self):
@@ -95,11 +93,6 @@ class KnownPersonsTest(TestCase):
             Q(teacher__module_part__module_edition__module__study__advisers=study_adviser) |
             Q(coordinator__module_edition__module__study__advisers=study_adviser)
         ).distinct()
-
-
-        print(queryset.order_by('university_number'))
-
-        print(known_persons(study_adviser))
 
         self.assertQuerysetEqual(queryset.order_by('university_number'), map(repr, known_persons(study_adviser)))
 
