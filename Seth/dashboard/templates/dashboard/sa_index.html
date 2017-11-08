@@ -27,7 +27,7 @@
                 <label for="search_student_name"><span class="display-5">Student name</span></label>
                 <div class="input-group">
 {#                    <span class="input-group-addon" id="search-student-name-addon"><i class="material-icons">search</i></span>#}
-                    <input class="form-control" type="text" id="search_student_name" placeholder="Name..." />
+                    <input class="form-control" type="text" id="search_student_name" placeholder="Search..." />
                     <span class="input-group-btn">
                         <button id="clear-search-sname" class="btn btn-danger pointer" type="button"><i class="material-icons">clear</i></button>
                     </span>
@@ -46,18 +46,19 @@
                     {% endfor %}
                 </div>
                 <hr>
-                <div class="display-5">Study</div>
-                <hr>
-                <div>
-                    {% for study in studies %}
-                    <div class="form-check">
-                        <label class="form-check-label">
-                            <input class="form-check-input" type="checkbox" value="">
-                            {{ study }}
-                        </label>
-                    </div>
-                    {% endfor %}
-                </div>
+{#                <div class="display-5">Study</div>#}
+{#                <hr>#}
+{#                <div>#}
+{#                    {% for study in studies %}#}
+{#                    <div class="form-check">#}
+{#                        <label class="form-check-label">#}
+{#                            <input class="form-check-input" type="checkbox" value="">#}
+{#                            {{ study }}#}
+{#                        </label>#}
+{#                    </div>#}
+{#                    {% endfor %}#}
+{#                </div>#}
+{#                <hr>#}
             </div>
             <div class="col-lg-9 students-table-column">
                 <div id="loading-spinner-box" class="loading-spinner text-center d-block">

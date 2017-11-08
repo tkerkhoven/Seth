@@ -159,7 +159,6 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     def test_test_import(self):
@@ -235,7 +234,6 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     # TEST INVALID STUDENT NUMBER
@@ -539,7 +537,6 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     def test_test_import_extra_columns(self):
@@ -769,7 +766,6 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        # print(response.content)
         self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     def test_test_import_extra_row(self):
@@ -1139,7 +1135,6 @@ class ImporterTest(TestCase):
             self.fail('Second signoff not imported correctly (at all or as exam)')
 
         # Test whether object removal works fine
-        print(ModulePart.objects.all())
         self.assertEqual(ModulePart.objects.filter(module_edition=module_edition).count(), 2)
         self.assertEqual(Test.objects.filter(module_part__module_edition=module_edition).count(), 4)
 

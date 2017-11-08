@@ -15,6 +15,12 @@ body {
   line-height: 1.1;
 }
 
+.display-6 {
+  font-size: 1.5rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
 .table-overflow {
   display: block;
   width: 100%;
@@ -112,6 +118,22 @@ hr {
     -webkit-column-count: 2;
     -moz-column-count: 2;
     column-count: 2;
+    @media(max-width: 768px) {
+      -webkit-column-count: 1;
+      -moz-column-count: 1;
+      column-count: 1;
+    }
+  }
+
+  &.teaching-assistant-cards {
+    -webkit-column-count: 2;
+    -moz-column-count: 2;
+    column-count: 2;
+    @media(max-width: 768px) {
+      -webkit-column-count: 1;
+      -moz-column-count: 1;
+      column-count: 1;
+    }
   }
 
   &.mc-dashboard-cards {
