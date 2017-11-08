@@ -488,18 +488,16 @@ class EmailBulkTestReleasedPreviewView(FormView):
     """
     template_name = 'Grades/email_preview.html'
     form_class = EmailPreviewForm
-    tests = []
 
     def __init__(self, *args, **kwargs):
-        instance = super(EmailGradeReleasedPreviewView, self).__init__(self, *args, **kwargs)
-        instance.tests = kwargs['tests']
+        instance = super(EmailBulkTestReleasedPreviewView, self).__init__(**kwargs)
 
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         test = get_object_or_404(Test, pk=kwargs['pk'])
         person = Person.objects.filter(user=self.request.user)
         if is_coordinator_of_module(person, test.module_part.module_edition):
-            return super(EmailGradeReleasedPreviewView, self).dispatch(request, *args, **kwargs)
+            return super(EmailBulkTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not allowed to send emails to students.")
 
@@ -509,7 +507,7 @@ class EmailBulkTestReleasedPreviewView(FormView):
                 'subject': '[SETH] {} ({}-{}) Grades released.'.format(test.module_part.module_edition.module.name, test.module_part.module_edition.year,
                                                               test.module_part.module_edition.block),
                 'message': 'Dear student, \n\nThe grades for some tests have been released. Go to {} to see your '
-                           'grades.\n\n Tests affected:\n' + ''.join(['{}\n'.format(test.name) for test in self.tests])
+                           'grades.'
                            + '\n\nKind regards,\n\n{}\n\n=======================================\n'
                            'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
                            ' grades or any other kinds of information in this system.'
@@ -529,13 +527,13 @@ class EmailBulkTestReleasedPreviewView(FormView):
             return redirect('grades:test', test.pk)
 
     def get_context_data(self, **kwargs):
-        context = super(EmailGradeReleasedPreviewView, self).get_context_data(**kwargs)
+        context = super(EmailBulkTestReleasedPreviewView, self).get_context_data(**kwargs)
         context['pk'] = context['view'].kwargs['pk']
         return context
 
 
 
-class EmailGradeReleasedPreviewView(FormView):
+class EmailTestReleasedPreviewView(FormView):
     template_name = 'Grades/email_preview.html'
     form_class = EmailPreviewForm
 
@@ -544,7 +542,7 @@ class EmailGradeReleasedPreviewView(FormView):
         test = get_object_or_404(Test, pk=kwargs['pk'])
         person = Person.objects.filter(user=self.request.user)
         if is_coordinator_of_module(person, test.module_part.module_edition):
-            return super(EmailGradeReleasedPreviewView, self).dispatch(request, *args, **kwargs)
+            return super(EmailTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not allowed to send emails to students.")
 
@@ -572,7 +570,7 @@ class EmailGradeReleasedPreviewView(FormView):
             return redirect('grades:test', test.pk)
 
     def get_context_data(self, **kwargs):
-        context = super(EmailGradeReleasedPreviewView, self).get_context_data(**kwargs)
+        context = super(EmailTestReleasedPreviewView, self).get_context_data(**kwargs)
         context['pk'] = context['view'].kwargs['pk']
         return context
 
@@ -646,17 +644,19 @@ def bulk_release(request, *args, **kwargs):
     data = {}
 
     if request.method == "POST":
-        print(request.POST)
 
-        test_list = json.loads(request.POST.get('tests', None))
-        print(test_list)
-        for pk in test_list:
+        json_test_list = json.loads(request.POST.get('tests', None))
+        test_list = []
+        print(json_test_list)
+        for pk in json_test_list:
+            print(pk)
             tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
                                                                       id=pk)
             if not tests:
                 raise PermissionDenied()
 
-            test = tests[0]
+            test_list.append(tests[0])
+        for test in test_list:
             rel = test.released
             test.released = not rel
             test.save()
@@ -664,7 +664,8 @@ def bulk_release(request, *args, **kwargs):
             request.session['change'] = (not rel) if 1 else 2
 
         data = {
-            'tests': test_list
+            'redirect': request.META.get('HTTP_REFERER'),
+            'post': json_test_list
         }
 
     # Return to the page the user came from.
