@@ -508,7 +508,7 @@ class EmailBulkTestReleasedPreviewView(FormView):
                 'subject': '[SETH] {} ({}-{}) Grades released.'.format(mod_ed.module.name, mod_ed.year, mod_ed.block),
                 'message': 'Dear student, \n\nThe grades for some tests have been released. Go to {} to see your '
                            'grades.'
-                           + '\n\nKind regards,\n\n{}\n\n=======================================\n'
+                           '\n\nKind regards,\n\n{}\n\n=======================================\n'
                            'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
                            ' grades or any other kinds of information in this system.'
                            .format(mailing.DOMAIN, Person.objects.get(user=self.request.user).name)}

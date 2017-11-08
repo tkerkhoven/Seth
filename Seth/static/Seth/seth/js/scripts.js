@@ -602,9 +602,6 @@ $(document).ready(function() {
                 } else {
                     $(this).hide();
                 }
-                else {
-                    $(this).hide();
-                }
             }
         });
     });
