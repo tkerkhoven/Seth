@@ -142,9 +142,9 @@ class PersonDetailViewTest(TestCase):
 
         # teacher, but not of student
         self.client.force_login(
-            User.objects.exclude(person__teacher__module_part__module_edition__studying__person=person)
-                .filter(person__studying__in=ModuleEdition.objects.all().values_list('pk', flat=True))
-                .first()
+            User.objects.filter(person__teacher__module_part__module_edition__in=
+                                ModuleEdition.objects.all().values_list('pk', flat=True))
+                .exclude(person__teacher__module_part__module_edition__studying__person=person).first()
         )
         response = self.client.get(reverse(self.view, args=[person.pk]))
         self.assertEqual(response.status_code, 403)
@@ -214,7 +214,7 @@ class PersonUpdateViewTest(TestCase):
 
         # teacher of student
         self.client.force_login(
-            User.objects.filter(person__teacher__module_part__module_edition__studying__person=person).first()
+            User.objects.filter(person__teacher__module_part__module_edition__studying__person=self.person).first()
         )
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
         self.assertEqual(response.status_code, 403)
@@ -222,9 +222,9 @@ class PersonUpdateViewTest(TestCase):
 
         # teacher, but not of student
         self.client.force_login(
-            User.objects.exclude(person__teacher__module_part__module_edition__studying__person=person)
-                .filter(person__studying__in=ModuleEdition.objects.all().values_list('pk', flat=True))
-                .first()
+            User.objects.filter(person__teacher__module_part__module_edition__in=
+                                ModuleEdition.objects.all().values_list('pk', flat=True))
+                .exclude(person__teacher__module_part__module_edition__studying__person=self.person).first()
         )
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
         self.assertEqual(response.status_code, 403)
@@ -233,18 +233,16 @@ class PersonUpdateViewTest(TestCase):
         # Module coordinator
         self.client.force_login(self.module_coordinator.user)
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
-        self.assertTemplateUsed(response, 'human_resource/person/update_person.html')
+        self.assertTemplateUsed(response, 'human_resource/person/update-person.html')
         self.client.logout()
 
         # Module coordinator
         self.client.force_login(self.module_coordinator_assistant.user)
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
-        self.assertTemplateUsed(response, 'human_resource/person/update_person.html')
+        self.assertTemplateUsed(response, 'human_resource/person/update-person.html')
         self.client.logout()
 
     def test_contents(self):
-
-
         self.client.force_login(self.module_coordinator.user)
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
 
@@ -253,10 +251,6 @@ class PersonUpdateViewTest(TestCase):
         self.assertTrue(self.person.name in web_page)
         self.assertTrue(self.person.university_number in web_page)
         self.assertTrue(self.person.email in web_page)
-        for module in ModuleEdition.objects.filter(studying__person=self.person):
-            self.assertTrue(module.name in web_page)
-            self.assertTrue(module.block in web_page)
-            self.assertTrue(module.year in web_page)
 
     def test_form_required_fields(self):
         self.client.force_login(self.module_coordinator.user)
