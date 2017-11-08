@@ -1,3 +1,4 @@
+import json
 import re
 from collections import OrderedDict
 
@@ -483,41 +484,39 @@ class TestView(generic.DetailView):
 class EmailBulkTestReleasedPreviewView(FormView):
     """Email view used to email students about a bulk-release of grades (multiple grades released at once.)
 
-    Use the argument tests to pass Test instances that have been released.
+    Use the argument pk to pass the id of the module edition
     """
     template_name = 'Grades/email_preview.html'
     form_class = EmailPreviewForm
-    tests = []
 
     def __init__(self, *args, **kwargs):
-        instance = super(EmailGradeReleasedPreviewView, self).__init__(self, *args, **kwargs)
-        instance.tests = kwargs['tests']
+        instance = super(EmailBulkTestReleasedPreviewView, self).__init__(**kwargs)
 
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
-        test = get_object_or_404(Test, pk=kwargs['pk'])
+        mod_ed = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
         person = Person.objects.filter(user=self.request.user)
-        if is_coordinator_of_module(person, test.module_part.module_edition):
-            return super(EmailGradeReleasedPreviewView, self).dispatch(request, *args, **kwargs)
+        if is_coordinator_of_module(person, mod_ed):
+            return super(EmailBulkTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not allowed to send emails to students.")
 
     def get_initial(self):
-        test = Test.objects.filter(pk=self.kwargs['pk']).prefetch_related('module_part__module_edition__module').first()
-        return {'test': test.pk,
-                'subject': '[SETH] {} ({}-{}) Grades released.'.format(test.module_part.module_edition.module.name, test.module_part.module_edition.year,
-                                                              test.module_part.module_edition.block),
+        mod_ed = ModuleEdition.objects.filter(pk=self.kwargs['pk']).prefetch_related('module').first()
+        print(Person.objects.get(user=self.request.user).name)
+        return {'mod_ed': mod_ed.pk,
+                'subject': '[SETH] {} ({}-{}) Grades released.'.format(mod_ed.module.name, mod_ed.year, mod_ed.block),
                 'message': 'Dear student, \n\nThe grades for some tests have been released. Go to {} to see your '
-                           'grades.\n\n Tests affected:\n' + ''.join(['{}\n'.format(test.name) for test in self.tests])
-                           + '\n\nKind regards,\n\n{}\n\n=======================================\n'
+                           'grades.'
+                           '\n\nKind regards,\n\n{}\n\n=======================================\n'
                            'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
                            ' grades or any other kinds of information in this system.'
                            .format(mailing.DOMAIN, Person.objects.get(user=self.request.user).name)}
 
     def form_valid(self, form):
-        test = get_object_or_404(Test, pk=self.kwargs['pk'])
+        mod_ed = get_object_or_404(ModuleEdition, pk=self.kwargs['pk'])
         failed = mail_module_edition_participants(
-            module_edition=test.module_part.module_edition,
+            module_edition=mod_ed,
             subject=form.cleaned_data['subject'],
             body=form.cleaned_data['message'])
         if failed:
@@ -525,16 +524,17 @@ class EmailBulkTestReleasedPreviewView(FormView):
                 ['{}\t{}\n'.format(student.university_number, student.name) for student in failed]
             ))
         else:
-            return redirect('grades:test', test.pk)
+            return redirect('grades:gradebook', mod_ed.pk)
 
     def get_context_data(self, **kwargs):
-        context = super(EmailGradeReleasedPreviewView, self).get_context_data(**kwargs)
+        context = super(EmailBulkTestReleasedPreviewView, self).get_context_data(**kwargs)
+        context['bulk'] = True
         context['pk'] = context['view'].kwargs['pk']
         return context
 
 
 
-class EmailGradeReleasedPreviewView(FormView):
+class EmailTestReleasedPreviewView(FormView):
     template_name = 'Grades/email_preview.html'
     form_class = EmailPreviewForm
 
@@ -543,7 +543,7 @@ class EmailGradeReleasedPreviewView(FormView):
         test = get_object_or_404(Test, pk=kwargs['pk'])
         person = Person.objects.filter(user=self.request.user)
         if is_coordinator_of_module(person, test.module_part.module_edition):
-            return super(EmailGradeReleasedPreviewView, self).dispatch(request, *args, **kwargs)
+            return super(EmailTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied("You are not allowed to send emails to students.")
 
@@ -571,7 +571,7 @@ class EmailGradeReleasedPreviewView(FormView):
             return redirect('grades:test', test.pk)
 
     def get_context_data(self, **kwargs):
-        context = super(EmailGradeReleasedPreviewView, self).get_context_data(**kwargs)
+        context = super(EmailTestReleasedPreviewView, self).get_context_data(**kwargs)
         context['pk'] = context['view'].kwargs['pk']
         return context
 
@@ -635,9 +635,39 @@ def export(request, *args, **kwargs):
                 ['{}'.format(u_num), '{}'.format(name), 'N/A', 'NVD', 'N/A', 'N/A']
             )
 
-    return excel.make_response_from_array(table, file_name='{} MODXX {} {}.xlsx'
+    return excel.make_response_from_array(table, file_name='{} MODxx {} {}.xlsx'
                                           .format(study.abbreviation, mod_ed.module.code, test.name),
                                           file_type='xlsx')
+
+
+def bulk_release(request, *args, **kwargs):
+    user = request.user
+    data = {}
+
+    if request.method == "POST":
+
+        json_test_list = json.loads(request.POST.get('tests', None))
+        if(len(json_test_list) == 0):
+            return JsonResponse()
+        test_list = []
+        for pk in json_test_list:
+            tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
+                                                                      id=pk)
+            if not tests:
+                raise PermissionDenied()
+
+            test_list.append(tests[0])
+        for test in test_list:
+            rel = test.released
+            test.released = not rel
+            test.save()
+
+        data = {
+            'redirect': reverse('grades:test_bulk_send_email', kwargs={'pk': test_list[0].module_part.module_edition.pk})
+        }
+
+    # Return to the page the user came from.
+    return JsonResponse(data)
 
 
 def release(request, *args, **kwargs):
@@ -803,11 +833,11 @@ def create_grades_query(view, pk, user, type=None):
     :return: (mod_ed, query_result) - The corresponding module edition and the result of the query. Returns None if a correct view isn't specified.
     """
     if type == 'A':
-        type = "type='A'"
+        type_str = "type='A'"
     elif type == 'E' or type =='P':
-        type = "type='E' OR type='P'"
+        type_str = "type='E' OR type='P'"
     else:
-        type = ""
+        type_str = ""
 
     if view == 'mod_ed':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
@@ -828,8 +858,8 @@ def create_grades_query(view, pk, user, type=None):
 
         in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
         where_test = "module_part_id IN (" + module_parts + ")"
-        if type != "":
-            where_test += " AND (" + type + ") "
+        if type_str != "":
+            where_test += " AND (" + type_str + ") "
 
     elif view == 'mod_part':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
@@ -844,8 +874,8 @@ def create_grades_query(view, pk, user, type=None):
 
         in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + ") "
         where_test = "module_part_id = " + pk
-        if type != "":
-            where_test += " AND (" + type + ") "
+        if type_str != "":
+            where_test += " AND (" + type_str + ") "
 
     elif view == 'mod_test':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |

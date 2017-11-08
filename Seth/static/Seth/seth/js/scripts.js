@@ -2,6 +2,9 @@ var oldto = 5.5;
 var oldfrom = 5;
 var searchString = "";
 var highlighted = "";
+var currentlySelected = 0;
+var added_button_table = false;
+var added_button_assign = false;
 
 $(".btn").mouseup(function(){
     $(this).blur();
@@ -86,7 +89,73 @@ gradeApp.controller('studentController', function($scope,$http) {
     });
 });
 
+function BulkRelease() {
+    test_list = [];
+    $('[id^="rel_button_"]').each(function() {
+        if($(this)[0].hasAttribute("data-selected")) {
+            test_list.push(($(this).attr("data-test")));
+        }
+    });
+
+    $.ajax({
+        beforeSend: function(xhr, settings) {
+          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          }
+        },
+
+        type: 'POST',
+        url: $("#gradebook").attr("data-rel-url"),
+        data: {
+            tests: JSON.stringify(test_list)
+        },
+
+        success: function(data) {
+            if(data != null)
+                window.location.href = data.redirect;
+        }
+    });
+};
+
 $(document).ready(function() {
+
+    $('[id^="rel_button_"]').on("mousedown", function() {
+        i = $(this).find("i");
+        current = $(this).attr("data-current") == "true";
+
+        if($(this).attr("data-selected") == "true") {
+            i.removeClass("text-muted");
+            if(current)
+                i.addClass("text-success");
+            else
+                i.addClass("text-danger");
+            $(this).removeAttr("data-selected")
+            i.removeClass("grey-border");
+            i.addClass("white-border");
+            currentlySelected--;
+            if(currentlySelected == 0) {
+                $("#bulk-release-table").css("display","none");
+                $("#bulk-release-assign").css("display","none");
+            }
+            return
+        }
+
+        if(current)
+            i.removeClass("text-success");
+        else
+            i.removeClass("text-danger");
+        i.addClass("text-muted");
+        i.removeClass("white-border");
+        i.addClass("grey-border");
+
+        $(this).attr("data-selected", "true")
+        currentlySelected++;
+
+        if(currentlySelected == 1) {
+            $("#bulk-release-table").css("display","inline");
+            $("#bulk-release-assign").css("display","inline");
+        }
+    });
 
     var table = $('#gradebook').on( 'processing.dt', function ( e, settings, processing ) {
         $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
@@ -165,18 +234,43 @@ $(document).ready(function() {
     });
 
     table.on('draw', function() {
+      if(!added_button_table) {
+        $("#gradebook_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-table" data-url="' + $("#gradebook").attr("data-rel-url") +'">Release/Retract</button>');
+        added_button_table = true;
+      }
       $('[data-toggle="popover"]').popover();
       updateColoring();
     });
 
     assign_table.on('draw', function() {
+      if(!added_button_assign) {
+        $("#assignment_table_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-assign" data-url="' + $("#assignment_table").attr("data-rel-url") +'">Release/Retract</button>');
+        added_button_assign = true;
+      }
       $('[data-toggle="popover"]').popover();
       updateColoring();
     });
 
     $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+        $('[id^="rel_button_"]').each(function() {
+            if($(this)[0].hasAttribute("data-selected")) {
+                $(this)[0].removeAttribute("data-selected");
+                i = $(this).find("i");
+                i.removeClass("text-muted");
+                i.removeClass("grey-border");
+                i.addClass("white-border");
+                if($(this).attr("data-current") == "true")
+                    i.addClass("text-success");
+                else
+                    i.addClass("text-danger");
+            }
+        });
+        currentlySelected = 0;
+        $("#bulk-release-table").css("display", "none");
+        $("#bulk-release-assign").css("display", "none");
+
         $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
-        $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade")
+        $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade");
     });
 
     // $('[id^="collapsePart"').on('show.bs.collapse', function () {
