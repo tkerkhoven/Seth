@@ -273,14 +273,14 @@ $(document).ready(function() {
         $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade");
     });
 
-    $('[id^="collapsePart"').on('show.bs.collapse', function () {
-      var id = $(this).attr("data-id");
-      $("#mp_collapse" + id).find("i").html("arrow_drop_up");
-    })
-    $('[id^="collapsePart"').on('hide.bs.collapse', function () {
-      var id = $(this).attr("data-id");
-      $("#mp_collapse" + id).find("i").html("arrow_drop_down");
-    })
+    // $('[id^="collapsePart"').on('show.bs.collapse', function () {
+    //   var id = $(this).attr("data-id");
+    //   $("#mp_collapse" + id).find("i").html("arrow_drop_up");
+    // })
+    // $('[id^="collapsePart"').on('hide.bs.collapse', function () {
+    //   var id = $(this).attr("data-id");
+    //   $("#mp_collapse" + id).find("i").html("arrow_drop_down");
+    // })
 
     $("#modal_yes").on("mousedown", function() {
 
@@ -565,32 +565,6 @@ $(document).ready(function() {
     $spinner_box.removeClass("d-block");
     $spinner_box.addClass("d-none");
 
-    // Function for searching students in the study adviser students table
-    // Input is the search field object and child is the class name of the table data
-    function search_students_table(input, child) {
-        var $input, filter, $table, $tr, $td, i;
-        $input = input;
-        filter = $input.val().toLowerCase();
-        $table = $("#sa_person_table");
-        $tr = $table.children("tbody").children("tr");
-        if (filter === "") {
-            $tr.hide();
-        } else {
-            $tr.each(function () {
-                $td = $(this).children(child);
-                // $tdNumber = $(this).children(".person_number");
-                // $tdName = $(this).children(".person_name");
-                if ($td) {
-                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                }
-            });
-        }
-    }
-
     // Study adviser students table search functions
     $("#search_student_name").on('keyup', function() {
         filter_sa_students();
@@ -625,6 +599,8 @@ $(document).ready(function() {
             if ($tdName || $tdNumber) {
                 if ($tdNumber.text().toLowerCase().indexOf(filter) > -1 || $tdName.text().toLowerCase().indexOf(filter) > -1) {
                     $(this).show();
+                } else {
+                    $(this).hide();
                 }
                 else {
                     $(this).hide();
@@ -685,8 +661,6 @@ $(document).ready(function() {
         }
     });
 
-
-
     //Functions for filtering the Study adviser index students list
     $("#module_edition_filter").children().children().children().on('click', function() {
         // $("#loading-spinner-box").show();
@@ -719,6 +693,36 @@ $(document).ready(function() {
                 }
             })
         }
+    });
+
+    // Function for flipping the expand icon
+    $(".flip-list-item").on('click', function() {
+        var $icon = $(this).find(".flip-icon");
+        flip_icon($icon);
+        var all_collapsed = false;
+        $(this).on('shown.bs.collapse hidden.bs.collapse', function() {
+            $(this).parent().children().each(function() {
+                if ($(this).hasClass("collapsed")) {
+                    all_collapsed = true;
+                    // all_collapsed === true als 1 van de list items de collapsed klasse heeft
+                    // Dus dat
+                }
+            });
+            if (!all_collapsed) {
+                $(this).parent().parent().find(".expand_collapse").text("expand_less");
+                collapsed = false;
+            }
+        });
+    });
+
+    $(".expand_collapse").on('click', function() {
+        var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
+        if (collapsed) {
+            $(this).text("expand_less");
+        } else {
+            $(this).text("expand_more");
+        }
+        expand_collapse_all($ul);
     })
 });
 
@@ -735,20 +739,17 @@ function filter_sa_students() {
     $table = $("#sa_person_table");
     $tr = $table.children("tbody").children("tr");
     if (sname === "" && snumber === "" && person_pks_global.length === 0 && !empty) {
-        console.log("Showing all");
         $tr.show();
     } else if (empty) {
-        console.log("Hiding all");
         $tr.hide();
     } else {
-        console.log("Looping all");
         $tr.each(function() {
             $tdName = $(this).children(".person_name");
             $tdNumber = $(this).children(".person_number");
             if ($tdName || $tdNumber) {
                 if ($tdName.text().toLowerCase().indexOf(sname) > -1 &&
                     $tdNumber.text().toLowerCase().indexOf(snumber) > -1 &&
-                    person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 &&
+                    (person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 || person_pks_global.length === 0) &&
                     !empty) {
                     $(this).show();
                 } else {
@@ -760,6 +761,41 @@ function filter_sa_students() {
     var $spinner_box = $("#loading-spinner-box");
     $spinner_box.removeClass("d-block");
     $spinner_box.addClass("d-none");
+}
+
+var collapsed = true;
+
+function expand_collapse_all(ul) {
+    if (collapsed) {
+        collapsed = false;
+        ul.children().each(function () {
+            if ($(this).find(".flip-icon").text() === "expand_more") {
+                flip_icon($(this).find(".flip-icon"));
+            }
+            $(this).children("div").each(function() {
+                $(this).collapse("show");
+            })
+        })
+    } else {
+        collapsed = true;
+        ul.children().each(function () {
+            if ($(this).find(".flip-icon").text() === "expand_less") {
+                flip_icon($(this).find(".flip-icon"));
+            }
+            $(this).children("div").each(function() {
+                $(this).collapse("hide");
+            })
+        })
+    }
+}
+
+function flip_icon(icon) {
+    var $list_item = icon.parent().parent().parent();
+    if (icon.text() === "expand_less" && $list_item.attr("aria-expanded") === "true") {
+        icon.text("expand_more");
+    } else if (icon.text() === "expand_more" && $list_item.attr("aria-expanded") === "false"){
+        icon.text("expand_less");
+    }
 }
 
 // Functions for deleting persons from a module edition

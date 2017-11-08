@@ -846,7 +846,7 @@ class EditDataTest(TestCase):
 
         # Check the response and see if the grade has changed
         self.assertEqual(response.status_code, 200)
-        self.assertEqual((Grade.objects.filter(test=pk, student=s_pk).distinct()[0]).grade, 5.5)
+        self.assertEqual((Grade.objects.filter(test=pk, student=s_pk).order_by('-id').first()).grade, 5.5)
 
     def test_remove(self):
         g = Grade.objects.get(grade=9)

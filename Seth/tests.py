@@ -166,7 +166,6 @@ class PermissionUtilsTests(TestCase):
 
         Studying.objects.get_or_create(
             person=self.student,
-            study=self.study_assigned,
             module_edition=self.module_ed_assigned,
             role='Bachelor'
         )
