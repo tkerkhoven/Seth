@@ -11,9 +11,16 @@
                     <h3 class="display-4">Send email to students</h3>
 
                     <ul class="navbar-nav mr-auto"></ul>
+                    {% if bulk %}
+
+                    <a href="{% url 'grades:gradebook' pk %}" data-toggle="tooltip" data-placement="bottom" title="Do not send mails">
+                        <i class="material-icons md-36 title-bar text-danger">clear</i>
+                    </a>
+                    {% else %}
                     <a href="{% url 'grades:test' pk %}" data-toggle="tooltip" data-placement="bottom" title="Do not send mails">
                         <i class="material-icons md-36 title-bar text-danger">clear</i>
                     </a>
+                    {% endif %}
                 </nav>
             </div>
         </div>

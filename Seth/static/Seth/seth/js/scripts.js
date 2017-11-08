@@ -111,7 +111,8 @@ function BulkRelease() {
         },
 
         success: function(data) {
-            window.location.href = data.redirect;
+            if(data != null)
+                window.location.href = data.redirect;
         }
     });
 };
