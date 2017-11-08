@@ -116,7 +116,7 @@ class ModuleEditionDetailView(generic.DetailView):
 class ModuleEditionUpdateView(generic.UpdateView):
     template_name = 'module_management/module_edition_update.html'
     model = ModuleEdition
-    fields = ['year', 'block']
+    fields = ['year', 'module_code', 'block']
 
     def get_context_data(self, **kwargs):
         context = super(ModuleEditionUpdateView, self).get_context_data(**kwargs)
