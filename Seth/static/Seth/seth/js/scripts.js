@@ -118,6 +118,37 @@ function BulkRelease() {
 };
 
 $(document).ready(function() {
+    if($("#id_type").val() == "A") {
+        $("#id_maximum_grade").val(1);
+        $("#id_maximum_grade").prop("disabled", true);
+        $("#id_minimum_grade").val(0);
+        $("#id_minimum_grade").prop("disabled", true);
+    }
+
+    $('#id_type').change(function() {
+        if($(this).val() == "A") {
+            $("#id_maximum_grade").val(1);
+            $("#id_maximum_grade").prop("disabled", true);
+            $("#id_minimum_grade").val(0);
+            $("#id_minimum_grade").prop("disabled", true);
+        }
+        else {
+            $("#id_maximum_grade").val(10);
+            $("#id_maximum_grade").prop("disabled", false);
+            $("#id_minimum_grade").val(1);
+            $("#id_minimum_grade").prop("disabled", false);
+        }
+    });
+
+    $("#createTestSave").click(function() {
+        $("#id_maximum_grade").prop("disabled", false);
+        $("#id_minimum_grade").prop("disabled", false);
+    });
+
+    $("#updateTestSave").click(function() {
+        $("#id_maximum_grade").prop("disabled", false);
+        $("#id_minimum_grade").prop("disabled", false);
+    });
 
     $('[id^="rel_button_"]').on("mousedown", function() {
         i = $(this).find("i");
