@@ -37,7 +37,8 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-edit-url', $(this).attr('data-url'));
+        viewableText.attr('data-remove-url', $(this).attr('data-remove-url'));
         viewableText.attr('data-grade', $(this).attr('data-grade'));
         viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
         viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
@@ -48,12 +49,11 @@ function BlurEdit() {
     else {
         oldHtml = $(this).attr("old");
 
-        console.log(oldHtml)
-
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-edit-url', $(this).attr('data-url'));
+        viewableText.attr('data-remove-url', $(this).attr('data-remove-url'));
         viewableText.attr('data-grade', $(this).attr('data-grade'));
         viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
         viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
@@ -423,6 +423,9 @@ $(document).ready(function() {
       if($("#can_edit").html().trim() == "False") {
         return;
       }
+      if($(this).find("i").length != 0) {
+        return;
+      }
 
       if(highlighted != $(this).attr("id")) {
 
@@ -440,7 +443,8 @@ $(document).ready(function() {
           " data-grade=\"" + a.attr("data-grade") + "\"" +
           " data-grade-min=\"" + a.attr("data-grade-min") + "\"" +
           " data-grade-max=\"" + a.attr("data-grade-max") + "\"" +
-          " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"/>";
+          " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"" +
+          " data-remove-url=\"" + remove_url + "\"/>";
 
         if($(this).find("a").attr("data-grade") != "-") {
           text += " <a id=\"remove_grade_a\">" +
