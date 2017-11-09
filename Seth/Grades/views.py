@@ -684,40 +684,6 @@ def bulk_release(request, *args, **kwargs):
     return JsonResponse(data)
 
 
-def release(request, *args, **kwargs):
-    """ The view gotten when trying to release/retract grades.
-    :param request: Django request
-    :param kwargs: Arguments: Module edition key (pk).
-    """
-    user = request.user
-
-    if request.method == "POST":
-        # Check whether the user is able to release/retract grades.
-        tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
-                                                              id=kwargs['pk'])
-        if not tests:
-            raise PermissionDenied()
-
-        test = tests[0]
-
-        if not 'rel' in request.POST:
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        if request.POST['rel'] == "False":
-            test.released = True
-            test.save()
-            request.session['change'] = 1
-            return redirect('grades:test_send_email', test.id)
-
-        else:
-            test.released = False
-            test.save()
-            request.session['change'] = 2
-
-    # Return to the page the user came from.
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-
 def remove(request, *args, **kwargs):
 
     user = request.user
