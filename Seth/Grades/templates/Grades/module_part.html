@@ -24,7 +24,29 @@
     }
 
     .table td {
-        padding: 0rem;
+        padding: 0.2rem 0rem;
+        text-align: center;
+    }
+
+    .s_class {
+        text-align: left !important;
+    }
+
+    .table th {
+        padding 0rem 0.2rem;
+    }
+
+    .table thead td {
+        padding: 0rem 0.2rem;
+    }
+
+    .table-bordered td, .table-bordered th {
+        border: none;
+        border-right: 1px solid #cccccc !important;
+    }
+
+    .table.dataTable {
+        border-collapse: collapse !important
     }
 
     .min_width {
@@ -53,6 +75,14 @@
     .grade-input {
         height:14px;
         width: 60%;
+    }
+
+    .white-border {
+        border: 8px solid #ffffff !important;
+    }
+
+    .grey-border {
+        border: 8px solid #cdd5dd !important;
     }
     </style>
 
@@ -131,17 +161,30 @@
                             <div class="tab-content" id="card-tab-content">
                                 <div class="tab-pane fade show active" id="tests-projects" role="tabpanel" aria-labelledby="home-tab">
                                 <div class="table-overflow">
-                                    <table id="gradebook" data-url="{% url 'grades:get' pk=module_part.id t='E' %}" data-view="mod_part" class="table table-striped table-bordered table-responsive">
+                                    <table id="gradebook" data-url="{% url 'grades:get' pk=module_part.id t='E' %}" data-rel-url="{% url 'grades:bulk-release' %}" data-view="mod_part" class="table table-striped table-bordered table-responsive">
                                         <thead>
                                         <tr>
                                             <th>Student</th>
                                             {% for test in tests %}
                                                 <th  class="no-sort">
                                                     <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
+                                                    <br>
                                                     {% if test.released %}
-                                                    <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>
+                                                    {% if can_release %}
+                                                    <a id="rel_button_{{ test.id }}_1" data-current="true" data-test="{{ test.id }}">
+                                                    {% endif %}
+                                                        <i class="material-icons rounded-circle white-border text-center text-success" title="The grades in this test have been released">check_circle</i>
+                                                    {% if can_release %}
+                                                    </a>
+                                                    {% endif %}
                                                     {% else %}
-                                                    <i class="material-icons float-right text-danger" title="The grades in this test have not been released">cancel</i>
+                                                    {% if can_release %}
+                                                    <a id="rel_button_{{ test.id }}_2" data-current="false" data-test="{{ test.id }}">
+                                                    {% endif %}
+                                                        <i class="material-icons rounded-circle white-border text-center text-danger" title="The grades in this test have not been released">cancel</i>
+                                                    {% if can_release %}
+                                                    </a>
+                                                    {% endif %}
                                                     {% endif %}
                                                 </th>
                                             {% endfor %}
@@ -154,19 +197,32 @@
                                 </div>
                                 <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="profile-tab">
                                     <div class="table-overflow">
-                                        <table id="assignment_table" data-url="{% url 'grades:get' pk=module_part.id t='A' %}" data-view="mod_part" class="table table-striped table-bordered table-responsive">
+                                        <table id="assignment_table" data-url="{% url 'grades:get' pk=module_part.id t='A' %}" data-rel-url="{% url 'grades:bulk-release' %}" data-view="mod_part" class="table table-striped table-bordered table-responsive">
                                         <thead>
                                         <tr>
                                             <th class="min_width">Student</th>
                                             {% for assignment in assignments %}
-                                            <td class="no-sort">
+                                            <th class="no-sort">
                                                 <a href="{% url 'grades:test' pk=assignment.id %}">{{ assignment.name }}</a>
+                                                <br>
                                                 {% if assignment.released %}
-                                                <i class="material-icons float-right text-success" title="The grades in this test have been released">check_circle</i>
-                                                {% else %}
-                                                <i class="material-icons float-right text-danger" title="The grades in this test have not been released">cancel</i>
+                                                {% if can_release %}
+                                                <a id="rel_button_{{ assignment.id }}_1" data-current="true" data-test="{{ assignment.id }}">
                                                 {% endif %}
-                                            </td>
+                                                    <i class="material-icons rounded-circle white-border text-center text-success" title="The grades in this test have been released">check_circle</i>
+                                                {% if can_release %}
+                                                </a>
+                                                {% endif %}
+                                                {% else %}
+                                                {% if can_release %}
+                                                <a id="rel_button_{{ assignment.id }}_2" data-current="false" data-test="{{ assignment.id }}">
+                                                {% endif %}
+                                                    <i class="material-icons rounded-circle white-border text-center text-danger" title="The grades in this test have not been released">cancel</i>
+                                                {% if can_release %}
+                                                </a>
+                                                {% endif %}
+                                                {% endif %}
+                                            </th>
                                             {% endfor %}
                                         </tr>
                                         </thead>

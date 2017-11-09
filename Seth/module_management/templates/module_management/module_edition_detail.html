@@ -81,7 +81,7 @@
                     <th>Assistant</th>
                 </tr>
                 {% for coordinator in coordinators %}
-                <tr>
+                <tr class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=coordinator.person.pk%}">
                     <td>{{ coordinator.person.name }}</td>
                     <td>{{ coordinator.person.university_number }}</td>
                     <td>
@@ -109,10 +109,10 @@
                     <th>Name</th>
                     <th>University Number</th>
                     <th>Role</th>
-                    <th>Delete</th>
+                    <th>Unenroll</th>
                 </tr>
                 {% for s in studying %}
-                <tr id="row{{ s.person.pk }}">
+                <tr id="row{{ s.person.pk }}" class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=s.person.pk%}">
                     <td>{{ s.person.name }}</td>
                     <td>{{ s.person.university_number }}</td>
                     <td>{{ s.role }}</td>

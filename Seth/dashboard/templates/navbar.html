@@ -30,7 +30,7 @@
                     {% endif %}
                 {% endif %}
                 {% if hr_installed %}
-                    {% if is_module_coordinator or is_mc_assistant or is_adviser %}
+                    {% if is_module_coordinator or is_mc_assistant or is_adviser or is_teacher or is_ta %}
                     <li class="nav-item {% if active_page == "human_resource" %}active{% endif %}">
                         <a class="nav-link" href="{%  url 'human_resource:persons' %}">Human Resources<span class="sr-only">(current)</span></a>
                     </li>
