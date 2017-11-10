@@ -1016,49 +1016,36 @@ class ImporterTest(TestCase):
                 module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
 
-    def test_student_import_missing_rows(self):
+    def test_student_import_missing_columns(self):
         module_edition = \
             ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
-        table = [['university_number', 'name', '', 'role']]
+        tables = [[['', 'name', 'email', 'role']],
+                  [['university_number', '', 'email', 'role']],
+                  [['university_number', 'name', '', 'role']],
+                  [['university_number', 'name', 'email', '']]]
 
-        university_number = 'm54321'
+        for table in tables:
 
-        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+            university_number = 'm54321'
 
-        sheet = Sheet(sheet=table)
+            table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
 
-        sheet.save_as(filename='test.xlsx')
-        self.client.force_login(User.objects.get(username='mverkleij'))
-        file = ContentFile(open('test.xlsx', 'rb').read())
-        file.name = 'test.xlsx'
+            sheet = Sheet(sheet=table)
 
-        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
-        self.assertTrue('Not all required columns [university_number, name, email, role] are in the excel sheet'
-                        in response.content.decode())
+            sheet.save_as(filename='test.xlsx')
+            self.client.force_login(User.objects.get(username='mverkleij'))
+            file = ContentFile(open('test.xlsx', 'rb').read())
+            file.name = 'test.xlsx'
+
+            response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                        {'title': 'test.xlsx', 'file': file})
+            self.assertTrue('Not all required columns [university_number, name, email, role] are in the excel sheet'
+                            in response.content.decode())
 
     def test_student_import_too_little_rows(self):
         module_edition = \
             ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
-
-        table = [['university_number', 'name', 'e-mail']]
-
-        university_number = 'm54321'
-
-        table.append([university_number, 'Pietje PPPuk', 'leet@example.com'])
-
-        sheet = Sheet(sheet=table)
-
-        sheet.save_as(filename='test.xlsx')
-        self.client.force_login(User.objects.get(username='mverkleij'))
-        file = ContentFile(open('test.xlsx', 'rb').read())
-        file.name = 'test.xlsx'
-
-        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
-        self.assertTrue('Not all required columns [university_number, name, email, role] are in the excel sheet, or no rows to import.'
-                        in response.content.decode())
 
         table = [['university_number', 'name', 'e-mail', 'role']]
 
@@ -1457,6 +1444,9 @@ class MakeGradeTest(TestCase):
         tests = [Test.objects.create(name='Theory Test {}'.format(course.name), module_part=course, type='E') for course
                  in module_parts]
 
+        # Create sign-off exercise
+        Test.objects.create(name='signoff1', module_part=module_parts[0], minimum_grade=0.0, maximum_grade=1.0, type='A')
+
         students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
                     in range(4)]
 
@@ -1482,6 +1472,24 @@ class MakeGradeTest(TestCase):
         self.assertEqual(saved_grade.teacher, corrector)
         self.assertEqual(saved_grade.test, test)
         self.assertEqual(saved_grade.grade, grade)
+        self.assertEqual(saved_grade.description, description)
+
+    def test_make_signoff_grade(self):
+        student = Person.objects.filter(name='Student')[0]
+        corrector = Person.objects.filter(name='Teacher')[0]
+        test = Test.objects.filter(type='A').first()
+        grade = 'MV'
+        description = 'foo'
+
+        grade_obj = make_grade(student, corrector, test, grade, description)
+        grade_obj.save()
+
+        saved_grade = Grade.objects.all()[0]
+
+        self.assertEqual(saved_grade.student, student)
+        self.assertEqual(saved_grade.teacher, corrector)
+        self.assertEqual(saved_grade.test, test)
+        self.assertEqual(saved_grade.grade, 1)
         self.assertEqual(saved_grade.description, description)
 
     def test_make_too_small_grade(self):
