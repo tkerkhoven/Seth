@@ -61,6 +61,9 @@
 {#                  {% endif %}#}
 {#              </div>#}
 {#            </div>#}
+             {% if is_module_coordinator or is_mc_assistant or is_adviser or is_teacher or is_ta %}
+                <a href="{% url 'manual' %}" data-toggle="tooltip" data-placement="bottom" title="Help" style="padding-right: 10px;"><i class="material-icons text-white">help_outline</i></a>
+             {% endif %}
              {% if user.is_authenticated %}
                  <a href="{% url 'logout' %}" data-toggle="tooltip" data-placement="bottom" title="Logout"><i class="fa fa-sign-out fa-24 text-white" aria-hidden="true"></i></a>
              {% else %}
