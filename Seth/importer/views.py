@@ -261,7 +261,7 @@ def import_module_part(request, pk):
     ).first()
     if not ModuleEdition.objects.filter(modulepart=module_part):
         raise Http404('Module does not exist.')
-    if not (is_coordinator_or_assistant_of_module(person, module_edition) or is_teacher_of_part(person, module_part)):
+    if not (is_coordinator_or_assistant_of_module(person, module_edition) or is_coordinator_or_teacher_of_module_part(person, module_part)):
         raise PermissionDenied('You are not allowed to do this.')
 
     if request.method == "POST":
@@ -825,7 +825,7 @@ def import_student_to_module(request, pk):
     else:  # if Module_ed.objects.filter(pk=pk):
         student_form = ImportStudentModule()
         return render(request, 'importer/import-module-student.html',
-                      {'form': student_form, 'pk': pk})
+                      {'form': student_form, 'pk': pk, 'module_edition': ModuleEdition.objects.get(pk=pk)})
 
 
 
@@ -872,23 +872,30 @@ class ModuleStructureImporter(LoginRequiredMixin, View):
 
                         for i in range(1, len(workbook[page][0])):
 
-                            min_grade = float(workbook[page][2][i])
-                            max_grade = float(workbook[page][3][i])
+                            try:
 
-                            if min_grade == 0 and max_grade == 1:
-                                test_type = 'A'
-                            else:
-                                test_type = 'E'
+                                min_grade = float(workbook[page][2][i])
+                                max_grade = float(workbook[page][3][i])
 
-                            test, test_created = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
-                                                       defaults={'type': test_type,
-                                                                 'minimum_grade': min_grade,
-                                                                 'maximum_grade': max_grade})
-                            test.type = test_type
-                            test.minimum_grade = min_grade
-                            test.maximum_grade = max_grade
-                            test.save()
-                            tests_in_sheet.append(test.pk)
+                                if min_grade == 0 and max_grade == 1:
+                                    test_type = 'A'
+                                else:
+                                    test_type = 'E'
+
+                                test, test_created = Test.objects.get_or_create(name=workbook[page][1][i], module_part=module_part,
+                                                           defaults={'type': test_type,
+                                                                     'minimum_grade': min_grade,
+                                                                     'maximum_grade': max_grade})
+                                test.type = test_type
+                                test.minimum_grade = min_grade
+                                test.maximum_grade = max_grade
+                                test.save()
+                                tests_in_sheet.append(test.pk)
+                            except ValueError as e:
+                                # If the either the minimum_grade or maximum_grade is not defined, it's not a test at
+                                # all.
+                                continue
+
 
                     for test in Test.objects.filter(module_part__module_edition=module_edition).exclude(
                             pk__in=tests_in_sheet):
