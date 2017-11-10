@@ -5,6 +5,7 @@ Seth/static/Seth/bootstrap_new/*
 Seth/_build
 Seth/_static
 Seth/_templates
+*.xlsx
 
 # Not ignore:
 !Seth/static/Seth/bootstrap_new/dist

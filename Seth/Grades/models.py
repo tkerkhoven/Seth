@@ -11,11 +11,10 @@ from django.utils import timezone
 
 
 class Module(models.Model):
-    code = models.CharField(max_length=32, primary_key=True)
     name = models.CharField(max_length=255)
 
     def __str__(self):
-        return '{} ({})'.format(self.name, self.code)
+        return '{}'.format(self.name)
 
 
 ####################################################################
@@ -61,6 +60,7 @@ def getyear():
 
 
 class ModuleEdition(models.Model):
+    module_code = models.CharField(max_length=32)
     year = models.IntegerField(default=getyear)
     module = models.ForeignKey(Module)
     # Update BLOCKS in @property:get_blocks()
@@ -78,7 +78,7 @@ class ModuleEdition(models.Model):
 
     @property
     def code(self):
-        return '{}-{}-{}'.format(self.year, self.module.code, self.block)
+        return '{}-{}-{}'.format(self.year, self.module_code, self.block)
 
     # Should be the same as BLOCKS
     @property

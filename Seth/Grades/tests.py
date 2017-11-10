@@ -48,10 +48,10 @@ def set_up_base_data():
     student_person2.save()
 
     # Define Modules
-    module0 = Module(code='001', name='Module 1')
+    module0 = Module(name='Module 1')
     module0.save()
 
-    module1 = Module(code='002', name='Module 2')
+    module1 = Module(name='Module 2')
     module1.save()
 
     # Define Study
@@ -61,16 +61,16 @@ def set_up_base_data():
     study.modules.add(module0)
 
     # Define Module Editions
-    module_ed0 = ModuleEdition(module=module0, block='1A', year=timezone.now().year)
+    module_ed0 = ModuleEdition(module_code='001', module=module0, block='1A', year=timezone.now().year)
     module_ed0.save()
 
-    module_ed1 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 2)
+    module_ed1 = ModuleEdition(module_code='001', module=module0, block='1A', year=timezone.now().year - 2)
     module_ed1.save()
 
-    module_ed2 = ModuleEdition(module=module1, block='1B', year=timezone.now().year)
+    module_ed2 = ModuleEdition(module_code='002', module=module1, block='1B', year=timezone.now().year)
     module_ed2.save()
 
-    module_ed3 = ModuleEdition(module=module0, block='1A', year=timezone.now().year - 1)
+    module_ed3 = ModuleEdition(module_code='002', module=module0, block='1A', year=timezone.now().year - 1)
     module_ed3.save()
 
     # Define Module Parts
@@ -199,7 +199,7 @@ class GradesGradeViewTest(TestCase):
         set_up_base_data()
 
     def test_no_login(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
 
         self.client.logout()
         url = reverse('grades:gradebook', kwargs={'pk': pk})
@@ -207,7 +207,7 @@ class GradesGradeViewTest(TestCase):
         self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
     def test_insufficient_permissions(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse('grades:gradebook', kwargs={'pk': pk})
 
         # Login as student
@@ -217,7 +217,7 @@ class GradesGradeViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_sufficient_permissions(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse('grades:gradebook', kwargs={'pk': pk})
 
         # Login as teaching assistant
@@ -245,7 +245,7 @@ class GradesGradeViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_contents(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse('grades:gradebook', kwargs={'pk': pk})
         user = User.objects.get(username='coordinator0')
 
@@ -339,7 +339,7 @@ class GradesModuleStudentViewTest(TestCase):
         set_up_base_data()
 
     def test_no_login(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         uid = Person.objects.get(university_number='s0').pk
 
         self.client.logout()
@@ -348,7 +348,7 @@ class GradesModuleStudentViewTest(TestCase):
         self.assertRedirects(response, LOGIN_URL + '?next=' + url)
 
     def test_insufficient_permissions(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         uid = Person.objects.get(university_number='s0').pk
         url = reverse('grades:modstudent', kwargs={'pk': pk, 'sid': uid})
 
@@ -359,7 +359,7 @@ class GradesModuleStudentViewTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_sufficient_permissions(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         uid = Person.objects.get(university_number='s0').pk
         url = reverse('grades:modstudent', kwargs={'pk': pk, 'sid': uid})
 
@@ -388,7 +388,7 @@ class GradesModuleStudentViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_contents(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         uid = Person.objects.get(university_number='s0').pk
         url = reverse('grades:modstudent', kwargs={'pk': pk, 'sid': uid})
         user = User.objects.get(username='coordinator0')
@@ -536,13 +536,13 @@ class GetDataTest(TestCase):
 
     def test_no_login(self):
         self.client.logout()
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse("grades:get", kwargs={'pk': pk, 't': 'E'})
         response = self.client.get(url + "?view=mod_ed", follow=True)
         self.assertRedirects(response, LOGIN_URL + '?next=' + url + "%3Fview%3Dmod_ed")
 
     def test_insufficient_permissions(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse("grades:get", kwargs={'pk': pk, 't': 'E'}) + "?view=mod_ed"
         # Login as student
         self.client.logout()
@@ -551,7 +551,7 @@ class GetDataTest(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_sufficient_permissions(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse("grades:get", kwargs={'pk': pk, 't': 'E'}) + "?view=mod_ed"
 
         # Login as teaching assistant
@@ -579,7 +579,7 @@ class GetDataTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_exams_mod_ed(self):
-        pk = ModuleEdition.objects.get(module__code='001', year=timezone.now().year).pk
+        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
         url = reverse("grades:get", kwargs={'pk': pk, 't': 'E'}) + "?view=mod_ed"
         user = User.objects.get(username='coordinator0')
 
