@@ -203,5 +203,5 @@ def permission_denied(request):
     return render(request, 'errors/403.html', status=403, )
 
 
-def bad_request(request):
-    return render(request, 'errors/400.html', status=400)
+def bad_request(request, context):
+    return render(request, 'errors/400.html', status=400, context=context)

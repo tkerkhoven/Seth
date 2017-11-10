@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Email failed{% endblock %}
+
+{% block content %}
+{% include 'navbar.html' %}
+    <div class="container">
+        <div class="col-lg-12">
+            <div class="display-4 text-danger">Sending the email failed for:</div>
+            <div class="display-4 text-danger">{{ message }}</div>
+            <hr>
+            <div>
+                {% for person in failed %}
+                <div class="display-5 text-danger"> > {{ person.university_number }} -- {{ person.name }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
