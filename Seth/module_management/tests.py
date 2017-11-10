@@ -714,35 +714,36 @@ class ModuleManagementModuleEditionUpdateFormTests(TestCase):
         response = self.client.post(self.url_1, {})
         self.assertFormError(response, 'form', 'year', 'This field is required.')
         self.assertFormError(response, 'form', 'block', 'This field is required.')
+        self.assertFormError(response, 'form', 'module_code', 'This field is required.')
 
     def test_protected_fields(self):
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
         self.client.post(self.url_1,
-                         {'year': 2020, 'block': '1A', 'module': Module.objects.get(name='Module 2').pk})
-        self.assertEqual('001', ModuleEdition.objects.get(year=2020).module_code)
+                         {'year': 2020, 'module_code': '001', 'block': '1A', 'module': Module.objects.get(name='Module 2').pk})
+        self.assertEqual(Module.objects.get(name='Module 1').pk, ModuleEdition.objects.get(year=2020).module.pk)
 
     def test_invalid_input_year(self):
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1, {'year': 'a', 'block': '1A'})
+        response = self.client.post(self.url_1, {'year': 'a', 'module_code': '001', 'block': '1A'})
         self.assertFormError(response, 'form', 'year', 'Enter a whole number.')
-        response = self.client.post(self.url_1, {'year': 2017.2, 'block': '1A'})
+        response = self.client.post(self.url_1, {'year': 2017.2, 'module_code': '001', 'block': '1A'})
         self.assertFormError(response, 'form', 'year', 'Enter a whole number.')
 
     def test_invalid_input_block(self):
         # Login as coordinator
         self.client.logout()
         self.client.force_login(user=self.user)
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1C'})
+        response = self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1C'})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1C is not one of the available choices.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': '1'})
+        response = self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1'})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1 is not one of the available choices.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': 1})
+        response = self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': 1})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. 1 is not one of the available choices.')
-        response = self.client.post(self.url_1, {'year': 2020, 'block': 'Block 1A'})
+        response = self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': 'Block 1A'})
         self.assertFormError(response, 'form', 'block', 'Select a valid choice. Block 1A is not one of the available choices.')
 
 
@@ -829,7 +830,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
         self.client.logout()
         self.client.force_login(user=self.user)
         self.assertTrue(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
-        self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
+        self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1A'})
         self.assertFalse(ModuleEdition.objects.filter(year=timezone.now().year, block='1A'))
         self.assertTrue(ModuleEdition.objects.filter(year=2020))
 
@@ -843,7 +844,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(8):
-            self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
+            self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1A'})
 
     @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_independent(self):
@@ -856,7 +857,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(8):
-            self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
+            self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1A'})
 
     @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_dependent(self):
@@ -869,7 +870,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(8):
-            self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
+            self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1A'})
 
     @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')
     def test_queries_all(self):
@@ -883,7 +884,7 @@ class ModuleManagementModuleEditionUpdateTests(TestCase):
             self.client.get(self.url_1, follow=True)
 
         with self.assertNumQueries(8):
-            self.client.post(self.url_1, {'year': 2020, 'block': '1A'})
+            self.client.post(self.url_1, {'year': 2020, 'module_code': '001', 'block': '1A'})
 
 
 class ModuleManagementModuleEditionCreateTests(TestCase):

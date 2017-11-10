@@ -37,9 +37,9 @@
                             {{ moduleedition.module }}
                         </a>
                     </li>
-                    <li class="list-group-item">Code: <span class="font-italic">{{ moduleedition.code }}</span></li>
+                    <li class="list-group-item">Code: <span class="font-italic">{{ moduleedition.module_code }}</span></li>
                     <li class="list-group-item">Year: <span class="font-italic">{{ moduleedition.year }}</span></li>
-                    <li class="list-group-item">Bock: <span class="font-italic">{{ moduleedition.block }}</span></li>
+                    <li class="list-group-item">Block: <span class="font-italic">{{ moduleedition.block }}</span></li>
                     {% if studies %}
                     {% for study in studies %}
                         <li class="list-group-item">Study: <span class="font-italic">{{ study.name }}</span></li>
