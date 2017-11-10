@@ -1023,49 +1023,36 @@ class ImporterTest(TestCase):
                 module_edition=module_edition):
             self.fail('Studying imported to module does not exist.')
 
-    def test_student_import_missing_rows(self):
+    def test_student_import_missing_columns(self):
         module_edition = \
             ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
-        table = [['university_number', 'name', '', 'role']]
+        tables = [[['', 'name', 'email', 'role']],
+                  [['university_number', '', 'email', 'role']],
+                  [['university_number', 'name', '', 'role']],
+                  [['university_number', 'name', 'email', '']]]
 
-        university_number = 'm54321'
+        for table in tables:
 
-        table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
+            university_number = 'm54321'
 
-        sheet = Sheet(sheet=table)
+            table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
 
-        sheet.save_as(filename='test.xlsx')
-        self.client.force_login(User.objects.get(username='mverkleij'))
-        file = ContentFile(open('test.xlsx', 'rb').read())
-        file.name = 'test.xlsx'
+            sheet = Sheet(sheet=table)
 
-        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
-        self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
-                        in response.content.decode())
+            sheet.save_as(filename='test.xlsx')
+            self.client.force_login(User.objects.get(username='mverkleij'))
+            file = ContentFile(open('test.xlsx', 'rb').read())
+            file.name = 'test.xlsx'
+
+            response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
+                                        {'title': 'test.xlsx', 'file': file})
+            self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
+                            in response.content.decode())
 
     def test_student_import_too_little_rows(self):
         module_edition = \
             ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
-
-        table = [['university_number', 'name', 'e-mail']]
-
-        university_number = 'm54321'
-
-        table.append([university_number, 'Pietje PPPuk', 'leet@example.com'])
-
-        sheet = Sheet(sheet=table)
-
-        sheet.save_as(filename='test.xlsx')
-        self.client.force_login(User.objects.get(username='mverkleij'))
-        file = ContentFile(open('test.xlsx', 'rb').read())
-        file.name = 'test.xlsx'
-
-        response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file})
-        self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
-                        in response.content.decode())
 
         table = [['university_number', 'name', 'e-mail', 'role']]
 
