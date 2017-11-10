@@ -226,13 +226,13 @@ class PersonUpdateViewTest(TestCase):
         # Module coordinator
         self.client.force_login(self.module_coordinator.user)
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
-        self.assertTemplateUsed(response, 'human_resource/person/update-person.html')
+        self.assertTemplateUsed(response, 'human_resource/update-person.html')
         self.client.logout()
 
         # Module coordinator
         self.client.force_login(self.module_coordinator_assistant.user)
         response = self.client.get(reverse(self.view, args=[self.person.pk]))
-        self.assertTemplateUsed(response, 'human_resource/person/update-person.html')
+        self.assertTemplateUsed(response, 'human_resource/update-person.html')
         self.client.logout()
 
     def test_contents(self):
