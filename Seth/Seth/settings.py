@@ -89,7 +89,7 @@ with open('{}secrets/postgres_host'.format(OS_PATH)) as hfile:
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql_psycopg2',
-                'NAME': 'djangoseth_refactor',
+                'NAME': 'djangoseth',
                 'USER': 'djangoseth',
                 'PASSWORD': pwfile.read().strip(),
                 'HOST': hfile.read().strip(),
