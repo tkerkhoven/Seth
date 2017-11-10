@@ -1451,6 +1451,9 @@ class MakeGradeTest(TestCase):
         tests = [Test.objects.create(name='Theory Test {}'.format(course.name), module_part=course, type='E') for course
                  in module_parts]
 
+        # Create sign-off exercise
+        Test.objects.create(name='signoff1', module_part=module_parts[0], minimum_grade=0.0, maximum_grade=1.0, type='A')
+
         students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
                     in range(4)]
 
@@ -1476,6 +1479,24 @@ class MakeGradeTest(TestCase):
         self.assertEqual(saved_grade.teacher, corrector)
         self.assertEqual(saved_grade.test, test)
         self.assertEqual(saved_grade.grade, grade)
+        self.assertEqual(saved_grade.description, description)
+
+    def test_make_signoff_grade(self):
+        student = Person.objects.filter(name='Student')[0]
+        corrector = Person.objects.filter(name='Teacher')[0]
+        test = Test.objects.filter(type='A').first()
+        grade = 'MV'
+        description = 'foo'
+
+        grade_obj = make_grade(student, corrector, test, grade, description)
+        grade_obj.save()
+
+        saved_grade = Grade.objects.all()[0]
+
+        self.assertEqual(saved_grade.student, student)
+        self.assertEqual(saved_grade.teacher, corrector)
+        self.assertEqual(saved_grade.test, test)
+        self.assertEqual(saved_grade.grade, 1)
         self.assertEqual(saved_grade.description, description)
 
     def test_make_too_small_grade(self):
