@@ -637,7 +637,7 @@ def export(request, *args, **kwargs):
             )
 
     return excel.make_response_from_array(table, file_name='{} MODxx {} {}.xlsx'
-                                          .format(study.abbreviation, mod_ed.module.code, test.name),
+                                          .format(study.abbreviation, mod_ed.module_code, test.name),
                                           file_type='xlsx')
 
 

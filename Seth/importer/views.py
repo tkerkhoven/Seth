@@ -207,7 +207,7 @@ def import_module(request, pk):
                         invalid_students.append(row[university_number_field])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
                 if [student for student in invalid_students if student is not '']:
-                    return bad_request(request, {'message', 'Students {} are not enrolled in this module. '
+                    return bad_request(request, {'message': 'Students {} are not enrolled in this module. '
                                                             'Enroll these students first before retrying.'
                                                             .format(invalid_students)})
 
@@ -450,7 +450,7 @@ def import_test(request, pk):
                                 description=row[description_field]
                             ))
                     except GradeException as e:  # Called for either: bad grade, grade out of bounds
-                        return bad_request(request, {'error', e})
+                        return bad_request(request, {'error': e})
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:test', pk)
         else:
