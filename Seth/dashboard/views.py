@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q
+from django.http import FileResponse
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponseForbidden, HttpResponse, JsonResponse
 from django.utils import timezone
@@ -164,6 +165,17 @@ def filter_students_by_module_edition(request):
 @login_required
 def not_in_seth(request):
     return render(request, 'dashboard/not_in_seth.html')
+
+@login_required
+def manual_view(request):
+    person = Person.objects.filter(user=request.user).first()
+    if pu.is_coordinator_or_assistant(person) or pu.is_study_adviser(person) or pu.is_teacher(person) or pu.is_teaching_assistant(person):
+        try:
+            return FileResponse(open('manual.pdf', 'rb'), content_type='application/pdf')
+        except FileNotFoundError:
+            return not_found(request)
+    else:
+        return permission_denied(request)
 
 
 def logged_out(request):
