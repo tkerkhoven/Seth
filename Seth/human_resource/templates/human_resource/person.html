@@ -13,9 +13,16 @@
                     <a href="{% url 'human_resource:update_person' person.pk %}">
                         <i class="material-icons md-36 text-info" data-toggle="tooltip" data-placement="bottom" title="Edit person">mode_edit</i>
                     </a>
+                    {% if can_delete %}
+                    {% if can_not_be_deleted_grades %}
+                        <i class="material-icons md-36 text-muted" data-toggle="tooltip" data-placement="bottom" title="Can not delete person, as they have grades.">delete_forever</i>
+                    {% endif %}
+                    {% if not can_not_be_deleted and not can_not_be_deleted_grades %}
                     <a href="{% url 'human_resource:remove_person' person.pk %}">
                         <i class="material-icons md-36 text-danger" data-toggle="tooltip" data-placement="bottom" title="Delete person">delete_forever</i>
                     </a>
+                    {% endif %}
+                    {% endif %}
                 </nav>
 {#                <div style="height: 65px;">#}
 {#                    <h3 class="display-4 d-inline-block">{{ person.name }}</h3>#}

@@ -2,6 +2,9 @@ var oldto = 5.5;
 var oldfrom = 5;
 var searchString = "";
 var highlighted = "";
+var currentlySelected = 0;
+var added_button_table = false;
+var added_button_assign = false;
 
 $(".btn").mouseup(function(){
     $(this).blur();
@@ -34,7 +37,8 @@ function BlurEdit() {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-edit-url', $(this).attr('data-url'));
+        viewableText.attr('data-remove-url', $(this).attr('data-remove-url'));
         viewableText.attr('data-grade', $(this).attr('data-grade'));
         viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
         viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
@@ -45,12 +49,11 @@ function BlurEdit() {
     else {
         oldHtml = $(this).attr("old");
 
-        console.log(oldHtml)
-
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
-        viewableText.attr('data-url', $(this).attr('data-url'));
+        viewableText.attr('data-edit-url', $(this).attr('data-url'));
+        viewableText.attr('data-remove-url', $(this).attr('data-remove-url'));
         viewableText.attr('data-grade', $(this).attr('data-grade'));
         viewableText.attr('data-grade-min', $(this).attr('data-grade-min'));
         viewableText.attr('data-grade-max', $(this).attr('data-grade-max'));
@@ -86,7 +89,104 @@ gradeApp.controller('studentController', function($scope,$http) {
     });
 });
 
+function BulkRelease() {
+    test_list = [];
+    $('[id^="rel_button_"]').each(function() {
+        if($(this)[0].hasAttribute("data-selected")) {
+            test_list.push(($(this).attr("data-test")));
+        }
+    });
+
+    $.ajax({
+        beforeSend: function(xhr, settings) {
+          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          }
+        },
+
+        type: 'POST',
+        url: $("#gradebook").attr("data-rel-url"),
+        data: {
+            tests: JSON.stringify(test_list)
+        },
+
+        success: function(data) {
+            if(data != null)
+                window.location.href = data.redirect;
+        }
+    });
+};
+
 $(document).ready(function() {
+    if($("#id_type").val() == "A") {
+        $("#id_maximum_grade").val(1);
+        $("#id_maximum_grade").prop("disabled", true);
+        $("#id_minimum_grade").val(0);
+        $("#id_minimum_grade").prop("disabled", true);
+    }
+
+    $('#id_type').change(function() {
+        if($(this).val() == "A") {
+            $("#id_maximum_grade").val(1);
+            $("#id_maximum_grade").prop("disabled", true);
+            $("#id_minimum_grade").val(0);
+            $("#id_minimum_grade").prop("disabled", true);
+        }
+        else {
+            $("#id_maximum_grade").val(10);
+            $("#id_maximum_grade").prop("disabled", false);
+            $("#id_minimum_grade").val(1);
+            $("#id_minimum_grade").prop("disabled", false);
+        }
+    });
+
+    $("#createTestSave").click(function() {
+        $("#id_maximum_grade").prop("disabled", false);
+        $("#id_minimum_grade").prop("disabled", false);
+    });
+
+    $("#updateTestSave").click(function() {
+        $("#id_maximum_grade").prop("disabled", false);
+        $("#id_minimum_grade").prop("disabled", false);
+    });
+
+    $('[id^="rel_button_"]').on("mousedown", function() {
+        i = $(this).find("i");
+        current = $(this).attr("data-current") == "true";
+
+        if($(this).attr("data-selected") == "true") {
+            i.removeClass("text-muted");
+            if(current)
+                i.addClass("text-success");
+            else
+                i.addClass("text-danger");
+            $(this).removeAttr("data-selected")
+            i.removeClass("grey-border");
+            i.addClass("white-border");
+            currentlySelected--;
+            if(currentlySelected == 0) {
+                $("#bulk-release-table").css("display","none");
+                $("#bulk-release-assign").css("display","none");
+            }
+            return
+        }
+
+        if(current)
+            i.removeClass("text-success");
+        else
+            i.removeClass("text-danger");
+        i.addClass("text-muted");
+        i.removeClass("white-border");
+        i.addClass("grey-border");
+
+        $(this).attr("data-selected", "true")
+        currentlySelected++;
+
+        if(currentlySelected == 1) {
+            $("#bulk-release-table").css("display","inline");
+            $("#bulk-release-assign").css("display","inline");
+        }
+    });
 
     var table = $('#gradebook').on( 'processing.dt', function ( e, settings, processing ) {
         $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
@@ -165,28 +265,53 @@ $(document).ready(function() {
     });
 
     table.on('draw', function() {
+      if(!added_button_table) {
+        $("#gradebook_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-table" data-url="' + $("#gradebook").attr("data-rel-url") +'">Release/Retract</button>');
+        added_button_table = true;
+      }
       $('[data-toggle="popover"]').popover();
       updateColoring();
     });
 
     assign_table.on('draw', function() {
+      if(!added_button_assign) {
+        $("#assignment_table_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-assign" data-url="' + $("#assignment_table").attr("data-rel-url") +'">Release/Retract</button>');
+        added_button_assign = true;
+      }
       $('[data-toggle="popover"]').popover();
       updateColoring();
     });
 
     $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
+        $('[id^="rel_button_"]').each(function() {
+            if($(this)[0].hasAttribute("data-selected")) {
+                $(this)[0].removeAttribute("data-selected");
+                i = $(this).find("i");
+                i.removeClass("text-muted");
+                i.removeClass("grey-border");
+                i.addClass("white-border");
+                if($(this).attr("data-current") == "true")
+                    i.addClass("text-success");
+                else
+                    i.addClass("text-danger");
+            }
+        });
+        currentlySelected = 0;
+        $("#bulk-release-table").css("display", "none");
+        $("#bulk-release-assign").css("display", "none");
+
         $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
-        $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade")
+        $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade");
     });
 
-    $('[id^="collapsePart"').on('show.bs.collapse', function () {
-      var id = $(this).attr("data-id");
-      $("#mp_collapse" + id).find("i").html("arrow_drop_up");
-    })
-    $('[id^="collapsePart"').on('hide.bs.collapse', function () {
-      var id = $(this).attr("data-id");
-      $("#mp_collapse" + id).find("i").html("arrow_drop_down");
-    })
+    // $('[id^="collapsePart"').on('show.bs.collapse', function () {
+    //   var id = $(this).attr("data-id");
+    //   $("#mp_collapse" + id).find("i").html("arrow_drop_up");
+    // })
+    // $('[id^="collapsePart"').on('hide.bs.collapse', function () {
+    //   var id = $(this).attr("data-id");
+    //   $("#mp_collapse" + id).find("i").html("arrow_drop_down");
+    // })
 
     $("#modal_yes").on("mousedown", function() {
 
@@ -329,6 +454,9 @@ $(document).ready(function() {
       if($("#can_edit").html().trim() == "False") {
         return;
       }
+      if($(this).find("i").length != 0) {
+        return;
+      }
 
       if(highlighted != $(this).attr("id")) {
 
@@ -346,7 +474,8 @@ $(document).ready(function() {
           " data-grade=\"" + a.attr("data-grade") + "\"" +
           " data-grade-min=\"" + a.attr("data-grade-min") + "\"" +
           " data-grade-max=\"" + a.attr("data-grade-max") + "\"" +
-          " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"/>";
+          " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"" +
+          " data-remove-url=\"" + remove_url + "\"/>";
 
         if($(this).find("a").attr("data-grade") != "-") {
           text += " <a id=\"remove_grade_a\">" +
@@ -471,32 +600,6 @@ $(document).ready(function() {
     $spinner_box.removeClass("d-block");
     $spinner_box.addClass("d-none");
 
-    // Function for searching students in the study adviser students table
-    // Input is the search field object and child is the class name of the table data
-    function search_students_table(input, child) {
-        var $input, filter, $table, $tr, $td, i;
-        $input = input;
-        filter = $input.val().toLowerCase();
-        $table = $("#sa_person_table");
-        $tr = $table.children("tbody").children("tr");
-        if (filter === "") {
-            $tr.hide();
-        } else {
-            $tr.each(function () {
-                $td = $(this).children(child);
-                // $tdNumber = $(this).children(".person_number");
-                // $tdName = $(this).children(".person_name");
-                if ($td) {
-                    if ($td.text().toLowerCase().indexOf(filter) > -1) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                }
-            });
-        }
-    }
-
     // Study adviser students table search functions
     $("#search_student_name").on('keyup', function() {
         filter_sa_students();
@@ -520,7 +623,7 @@ $(document).ready(function() {
     // Human research table search function
     $("#persons_search").on('keyup', function() {
         var $input, filter, $table, $tr, $tdNumber, $tdName, i;
-        $input = $("#searchInput")[0];
+        $input = $("#persons_search")[0];
         filter = $input.value.toLowerCase();
         $table = $("#personTable");
         $tr = $table.children("tbody").children("tr");
@@ -531,6 +634,8 @@ $(document).ready(function() {
             if ($tdName || $tdNumber) {
                 if ($tdNumber.text().toLowerCase().indexOf(filter) > -1 || $tdName.text().toLowerCase().indexOf(filter) > -1) {
                     $(this).show();
+                } else {
+                    $(this).hide();
                 }
             }
         });
@@ -588,8 +693,6 @@ $(document).ready(function() {
         }
     });
 
-
-
     //Functions for filtering the Study adviser index students list
     $("#module_edition_filter").children().children().children().on('click', function() {
         // $("#loading-spinner-box").show();
@@ -622,6 +725,36 @@ $(document).ready(function() {
                 }
             })
         }
+    });
+
+    // Function for flipping the expand icon
+    $(".flip-list-item").on('click', function() {
+        var $icon = $(this).find(".flip-icon");
+        flip_icon($icon);
+        var all_collapsed = false;
+        $(this).on('shown.bs.collapse hidden.bs.collapse', function() {
+            $(this).parent().children().each(function() {
+                if ($(this).hasClass("collapsed")) {
+                    all_collapsed = true;
+                    // all_collapsed === true als 1 van de list items de collapsed klasse heeft
+                    // Dus dat
+                }
+            });
+            if (!all_collapsed) {
+                $(this).parent().parent().find(".expand_collapse").text("expand_less");
+                collapsed = false;
+            }
+        });
+    });
+
+    $(".expand_collapse").on('click', function() {
+        var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
+        if (collapsed) {
+            $(this).text("expand_less");
+        } else {
+            $(this).text("expand_more");
+        }
+        expand_collapse_all($ul);
     })
 });
 
@@ -638,20 +771,17 @@ function filter_sa_students() {
     $table = $("#sa_person_table");
     $tr = $table.children("tbody").children("tr");
     if (sname === "" && snumber === "" && person_pks_global.length === 0 && !empty) {
-        console.log("Showing all");
         $tr.show();
     } else if (empty) {
-        console.log("Hiding all");
         $tr.hide();
     } else {
-        console.log("Looping all");
         $tr.each(function() {
             $tdName = $(this).children(".person_name");
             $tdNumber = $(this).children(".person_number");
             if ($tdName || $tdNumber) {
                 if ($tdName.text().toLowerCase().indexOf(sname) > -1 &&
                     $tdNumber.text().toLowerCase().indexOf(snumber) > -1 &&
-                    person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 &&
+                    (person_pks_global.indexOf(parseInt($(this).attr("id"))) > -1 || person_pks_global.length === 0) &&
                     !empty) {
                     $(this).show();
                 } else {
@@ -663,6 +793,41 @@ function filter_sa_students() {
     var $spinner_box = $("#loading-spinner-box");
     $spinner_box.removeClass("d-block");
     $spinner_box.addClass("d-none");
+}
+
+var collapsed = true;
+
+function expand_collapse_all(ul) {
+    if (collapsed) {
+        collapsed = false;
+        ul.children().each(function () {
+            if ($(this).find(".flip-icon").text() === "expand_more") {
+                flip_icon($(this).find(".flip-icon"));
+            }
+            $(this).children("div").each(function() {
+                $(this).collapse("show");
+            })
+        })
+    } else {
+        collapsed = true;
+        ul.children().each(function () {
+            if ($(this).find(".flip-icon").text() === "expand_less") {
+                flip_icon($(this).find(".flip-icon"));
+            }
+            $(this).children("div").each(function() {
+                $(this).collapse("hide");
+            })
+        })
+    }
+}
+
+function flip_icon(icon) {
+    var $list_item = icon.parent().parent().parent();
+    if (icon.text() === "expand_less" && $list_item.attr("aria-expanded") === "true") {
+        icon.text("expand_more");
+    } else if (icon.text() === "expand_more" && $list_item.attr("aria-expanded") === "false"){
+        icon.text("expand_less");
+    }
 }
 
 // Functions for deleting persons from a module edition

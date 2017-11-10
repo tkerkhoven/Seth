@@ -87,7 +87,7 @@
                             <th>Role</th>
                         </tr>
                         {% for teacher in teachers %}
-                            <tr>
+                            <tr class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=teacher.person.pk%}">
                                 <td>{{ teacher.person.name }}</td>
                                 <td>{{ teacher.person.university_number }}</td>
                                 <td>{{ teacher.get_role }}</td>
@@ -110,7 +110,7 @@
                             <th>Role</th>
                         </tr>
                         {% for s in studying %}
-                            <tr>
+                            <tr class="clickable-row pointer" data-href="{% url 'human_resource:person' pk=s.person.pk%}">
                                 <td>{{ s.person.name }}</td>
                                 <td>{{ s.person.university_number }}</td>
                                 <td>{{ s.role }}</td>
