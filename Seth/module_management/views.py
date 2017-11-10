@@ -14,6 +14,7 @@ from django_select2.forms import Select2MultipleWidget
 
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying, Study
 
+from dashboard.views import bad_request
 
 class ModuleListView(generic.ListView):
     template_name = 'module_management/module_overview.html'
@@ -205,7 +206,8 @@ class ModuleEditionCreateView(generic.CreateView):
             module_edition.full_clean()
         except ValidationError as e:
             pp = pprint.PrettyPrinter(indent=4, width=120)
-            return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
+            return bad_request(request, {'message': pp.pformat(('Form data is invalid: ', e.message_dict))})
+            # return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_edition.save()
 
         old_module_parts = ModulePart.objects.filter(module_edition=latest_module_edition).prefetch_related('test_set')
@@ -374,7 +376,8 @@ class ModulePartCreateView(generic.CreateView):
             module_part.full_clean()
         except ValidationError as e:
             pp = pprint.PrettyPrinter(indent=4, width=120)
-            return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
+            return bad_request(request, {'message': pp.pformat(('Form data is invalid: ', e.message_dict))})
+            # return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         module_part.save()
 
         for t in data.getlist('teachers'):
@@ -526,7 +529,8 @@ class TestCreateView(generic.CreateView):
             test.full_clean()
         except ValidationError as e:
             pp = pprint.PrettyPrinter(indent=4, width=120)
-            return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
+            return bad_request(request, {'message': pp.pformat(('Form data is invalid: ', e.message_dict))})
+            # return HttpResponseBadRequest(pp.pformat(('Form data is invalid: ', e.message_dict)))
         test.save()
 
         return redirect(reverse_lazy('module_management:test_detail', kwargs={'pk': test.pk}))

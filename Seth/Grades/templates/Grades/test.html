@@ -176,7 +176,7 @@
                             {% if can_release %}
                             <a id="rel_button_{{ test.id }}_1" data-current="true" data-test="{{ test.id }}">
                             {% endif %}
-                                <i class="material-icons rounded-circle white-border text-center text-success" title="The grades in this test have been released">check_circle</i>
+                                <i class="material-icons rounded-circle white-border text-center text-success pointer" title="The grades in this test have been released">check_circle</i>
                             {% if can_release %}
                             </a>
                             {% endif %}
@@ -184,7 +184,7 @@
                             {% if can_release %}
                             <a id="rel_button_{{ test.id }}_2" data-current="false" data-test="{{ test.id }}">
                             {% endif %}
-                                <i class="material-icons rounded-circle white-border text-center text-danger" title="The grades in this test have not been released">cancel</i>
+                                <i class="material-icons rounded-circle white-border text-center text-danger pointer" title="The grades in this test have not been released">cancel</i>
                             {% if can_release %}
                             </a>
                             {% endif %}

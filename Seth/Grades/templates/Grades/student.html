@@ -21,7 +21,7 @@
     }
     </style>
 
-    {% include 'navbar.html' with active_page="gradebook" %}
+    {% include 'navbar.html' with active_page="gradebook" ta=True %}
     {% load grade_extras %}
     {% if studentname %}
         <div class="container-fluid">

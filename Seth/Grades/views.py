@@ -9,11 +9,12 @@ from django.db.models import Q, Count, Sum
 from django.db.models import When
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse
 from django.views import generic, View
 import django_excel as excel
 from django.views.generic import FormView
+from django.template import loader
 
 from Grades import mailing
 from Grades.mailing import mail_module_edition_participants
@@ -520,9 +521,9 @@ class EmailBulkTestReleasedPreviewView(FormView):
             subject=form.cleaned_data['subject'],
             body=form.cleaned_data['message'])
         if failed:
-            return HttpResponse('Sending of the email failed for: \n{}'.format(
-                ['{}\t{}\n'.format(student.university_number, student.name) for student in failed]
-            ))
+            template = loader.get_template('Grades/mail_failed.html')
+            context = {'failed': failed}
+            return HttpResponse(template.render(context, self.request))
         else:
             return redirect('grades:gradebook', mod_ed.pk)
 
@@ -564,9 +565,9 @@ class EmailTestReleasedPreviewView(FormView):
             subject=form.cleaned_data['subject'],
             body=form.cleaned_data['message'])
         if failed:
-            return HttpResponse('Sending of the email failed for: \n{}'.format(
-                ['{}\t{}\n'.format(student.university_number, student.name) for student in failed]
-            ))
+            template = loader.get_template('Grades/mail_failed.html')
+            context = {'failed': failed}
+            return HttpResponse(template.render(context, self.request))
         else:
             return redirect('grades:test', test.pk)
 
@@ -682,40 +683,6 @@ def bulk_release(request, *args, **kwargs):
 
     # Return to the page the user came from.
     return JsonResponse(data)
-
-
-def release(request, *args, **kwargs):
-    """ The view gotten when trying to release/retract grades.
-    :param request: Django request
-    :param kwargs: Arguments: Module edition key (pk).
-    """
-    user = request.user
-
-    if request.method == "POST":
-        # Check whether the user is able to release/retract grades.
-        tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
-                                                              id=kwargs['pk'])
-        if not tests:
-            raise PermissionDenied()
-
-        test = tests[0]
-
-        if not 'rel' in request.POST:
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-        if request.POST['rel'] == "False":
-            test.released = True
-            test.save()
-            request.session['change'] = 1
-            return redirect('grades:test_send_email', test.id)
-
-        else:
-            test.released = False
-            test.save()
-            request.session['change'] = 2
-
-    # Return to the page the user came from.
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
 def remove(request, *args, **kwargs):

@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import render
 from django.contrib.auth.models import User
-from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator
+from Grades.models import Person, ModuleEdition, Studying, ModulePart, Study, Module, Teacher, Coordinator, Grade
 from django.views import generic
 from django.urls import reverse_lazy
 from .forms import UpdatePersonForm, CreatePersonForm, CreatePersonTeacherForm
@@ -67,7 +67,7 @@ class PersonsView(generic.ListView):
     def dispatch(self, request, *args, **kwargs):
         self.person = Person.objects.filter(user=request.user).first()
         if pu.is_coordinator_or_assistant(self.person) or pu.is_teacher(self.person) or pu.is_study_adviser(
-                self.person):
+                self.person) or pu.is_teaching_assistant(self.person):
             return super(PersonsView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not a module coordinator')
@@ -99,6 +99,9 @@ class PersonDetailView(generic.DetailView):
         data = dict()
         context['person'] = person
         context['studies'] = Studying.objects.filter(person=person)
+        context['can_not_be_deleted'] = Coordinator.objects.filter(person=person).exists() or (person.user is not None and person.user.is_superuser)
+        context['can_delete'] = Coordinator.objects.filter(person__user=self.request.user).exists()
+        context['can_not_be_deleted_grades'] = Grade.objects.filter(student=person).exists()
         return context
 
 

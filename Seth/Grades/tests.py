@@ -1,3 +1,4 @@
+import json
 from collections import OrderedDict
 
 from django.contrib.auth.models import User
@@ -256,18 +257,6 @@ class GradesGradeViewTest(TestCase):
         self.assertEqual(response.resolver_match.func.__name__, GradeView.as_view().__name__)
         self.assertTemplateUsed(response, 'Grades/gradebook.html')
 
-    def test_queries(self):
-        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
-        url = reverse('grades:gradebook', kwargs={'pk': pk})
-        user = User.objects.get(username='coordinator0')
-
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=user)
-
-        with self.assertNumQueries(15):
-            self.client.get(url, follow=True)
-
 
 class GradesStudentViewTest(TestCase):
     def setUp(self):
@@ -412,19 +401,6 @@ class GradesModuleStudentViewTest(TestCase):
         self.assertEqual(response.resolver_match.func.__name__, ModuleStudentView.as_view().__name__)
         self.assertTemplateUsed(response, 'Grades/modulestudent.html')
 
-    def test_queries(self):
-        pk = ModuleEdition.objects.get(module_code='001', year=timezone.now().year).pk
-        uid = Person.objects.get(university_number='s0').pk
-        url = reverse('grades:modstudent', kwargs={'pk': pk, 'sid': uid})
-        user = User.objects.get(username='coordinator0')
-
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=user)
-
-        with self.assertNumQueries(17):
-            self.client.get(url, follow=True)
-
 
 class GradesModulePartViewTest(TestCase):
     def setUp(self):
@@ -489,18 +465,6 @@ class GradesModulePartViewTest(TestCase):
         self.assertEqual(response.resolver_match.func.__name__, ModulePartView.as_view().__name__)
         self.assertTemplateUsed(response, 'Grades/module_part.html')
 
-    def test_queries(self):
-        pk = ModulePart.objects.get(name='module_part0').pk
-        url = reverse('grades:module_part', kwargs={'pk': pk})
-        user = User.objects.get(username='coordinator0')
-
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=user)
-
-        with self.assertNumQueries(15):
-            self.client.get(url, follow=True)
-
 
 class GradesTestViewTest(TestCase):
     def setUp(self):
@@ -564,18 +528,6 @@ class GradesTestViewTest(TestCase):
 
         self.assertEqual(response.resolver_match.func.__name__, TestView.as_view().__name__)
         self.assertTemplateUsed(response, 'Grades/test.html')
-
-    def test_queries(self):
-        pk = ModulePart.objects.get(name='module_part0').pk
-        url = reverse('grades:module_part', kwargs={'pk': pk})
-        user = User.objects.get(username='coordinator0')
-
-        # Login as coordinator
-        self.client.logout()
-        self.client.force_login(user=user)
-
-        with self.assertNumQueries(15):
-            self.client.get(url, follow=True)
 
 
 class GetDataTest(TestCase):
@@ -681,11 +633,11 @@ class EditDataTest(TestCase):
         g = Grade.objects.get(grade=9)
         pk = g.test.pk
         s_pk = g.student.pk
-        url_release = reverse("grades:release", kwargs={'pk': pk})
+        url_release = reverse("grades:bulk-release")
         url_edit = reverse("grades:edit", kwargs={'pk': pk, 'sid': s_pk})
         url_remove = reverse("grades:edit", kwargs={'pk': pk, 'sid': s_pk})
 
-        response = self.client.get(url_release, follow=True)
+        response = self.client.post(url_release, follow=True)
         self.assertRedirects(response, LOGIN_URL + '?next=' + url_release)
 
         response = self.client.get(url_edit, follow=True)
@@ -698,7 +650,7 @@ class EditDataTest(TestCase):
         g = Grade.objects.get(grade=9)
         pk = g.test.pk
         s_pk = g.student.pk
-        url_release = reverse("grades:release", kwargs={'pk': pk})
+        url_release = reverse("grades:bulk-release")
         url_edit = reverse("grades:edit", kwargs={'pk': pk, 'sid': s_pk})
         url_remove = reverse("grades:edit", kwargs={'pk': pk, 'sid': s_pk})
 
@@ -707,7 +659,7 @@ class EditDataTest(TestCase):
         self.client.force_login(user=User.objects.get(username='teaching_assistant0'))
 
         # Release
-        response = self.client.get(url_release)
+        response = self.client.post(url_release, {'tests': json.dumps([pk])})
         self.assertEqual(response.status_code, 403)
 
         # Edit
@@ -723,7 +675,7 @@ class EditDataTest(TestCase):
         self.client.force_login(user=User.objects.get(username='teacher0'))
 
         # Release
-        response = self.client.get(url_release)
+        response = self.client.post(url_release, {'tests': json.dumps([pk])})
         self.assertEqual(response.status_code, 403)
 
         # Edit
@@ -739,8 +691,8 @@ class EditDataTest(TestCase):
         self.client.force_login(user=User.objects.get(username='coordinator0'))
 
         # Release
-        response = self.client.get(url_release)
-        self.assertEqual(response.status_code, 302)
+        response = self.client.post(url_release, {'tests': json.dumps([pk])})
+        self.assertEqual(response.status_code, 200)
 
         # Edit
         response = self.client.get(url_edit)
@@ -755,7 +707,7 @@ class EditDataTest(TestCase):
         self.client.force_login(user=User.objects.get(username='study_adviser0'))
 
         # Release
-        response = self.client.get(url_release)
+        response = self.client.post(url_release, {'tests': json.dumps([pk])})
         self.assertEqual(response.status_code, 403)
 
         # Edit
@@ -771,7 +723,7 @@ class EditDataTest(TestCase):
         self.client.force_login(user=User.objects.get(username='student0'))
 
         # Release
-        response = self.client.get(url_release)
+        response = self.client.post(url_release, {'tests': json.dumps([pk])})
         self.assertEqual(response.status_code, 403)
 
         # Edit
@@ -784,7 +736,7 @@ class EditDataTest(TestCase):
 
     def test_release(self):
         pk = Test.objects.get(name='test0').pk
-        url = reverse("grades:release", kwargs={'pk': pk})
+        url = reverse("grades:bulk-release")
         user = User.objects.get(username='coordinator0')
 
         # Login as coordinator
@@ -795,15 +747,15 @@ class EditDataTest(TestCase):
         self.assertEqual(Test.objects.get(name='test0').released, False)
 
         # Release the test
-        response = self.client.post(url, {'rel': 'False'})
+        response = self.client.post(url, {'tests': json.dumps([pk])})
 
         # Check if a redirect happened and the test got released
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Test.objects.get(name='test0').released, True)
 
     def test_retract(self):
         pk = Test.objects.get(name='test0').pk
-        url = reverse("grades:release", kwargs={'pk': pk})
+        url = reverse("grades:bulk-release")
         user = User.objects.get(username='coordinator0')
 
         # Login as coordinator
@@ -814,17 +766,17 @@ class EditDataTest(TestCase):
         self.assertEqual(Test.objects.get(name='test0').released, False)
 
         # Release the test
-        response = self.client.post(url, {'rel': 'False'})
+        response = self.client.post(url, {'tests': json.dumps([pk])})
 
         # Check if a redirect happened and the test got released
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Test.objects.get(name='test0').released, True)
 
         # Retract the test
-        response = self.client.post(url, {'rel': True})
+        response = self.client.post(url, {'tests': json.dumps([pk])})
 
         # Check if a redirect happened and if the test got retracted
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Test.objects.get(name='test0').released, False)
 
     def test_edit(self):
