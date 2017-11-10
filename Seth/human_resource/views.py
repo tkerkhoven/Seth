@@ -110,7 +110,7 @@ class UpdatePerson(generic.UpdateView):
     Gives a generic.UpdateView of a specific Person relevant to the logged in user.
     """
     model = Person
-    template_name = 'human_resource/person/update-person.html'
+    template_name = 'human_resource/update-person.html'
     # template_name_suffix = '/update-user'
     form_class = UpdatePersonForm
 
@@ -190,7 +190,7 @@ class CreatePerson(generic.CreateView):
 
     def get_success_url(self):
         if not self.success_url:
-            return reverse_lazy('human_resource:user', args=(self.object.id,))
+            return reverse_lazy('human_resource:persons')
         else:
             return self.success_url
 
