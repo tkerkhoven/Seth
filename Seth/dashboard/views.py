@@ -128,6 +128,9 @@ class DashboardView(View):
 
 @login_required
 def study_adviser_view(request):
+    person = Person.objects.filter(user=request.user).first()
+    if not pu.is_study_adviser(person):
+        raise PermissionDenied()
     context = dict()
     person = Person.objects.filter(user=request.user).first()
     if pu.is_study_adviser(person):
