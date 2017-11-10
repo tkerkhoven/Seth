@@ -111,19 +111,19 @@ class PermissionUtilsTests(TestCase):
             name='Permission Test Unassigned'
         )[0]
         self.module = Module.objects.get_or_create(
-            code='1738494738393',
             name='PermissionTestModuleAss',
         )[0]
         self.module_unassigned = Module.objects.get_or_create(
-            code='1738494738394',
             name='PermissionTestModuleUnass',
         )[0]
         self.module_ed_assigned = ModuleEdition.objects.get_or_create(
+            module_code='1738494738393',
             year=2000,
             module=self.module,
             block='JAAR',
         )[0]
         self.module_ed_unassigned = ModuleEdition.objects.get_or_create(
+            module_code='1738494738394',
             year=2000,
             module=self.module_unassigned,
             block='JAAR',

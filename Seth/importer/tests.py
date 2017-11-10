@@ -1,12 +1,9 @@
 import unittest
 from collections import OrderedDict
 
-import pyexcel
-import pyexcel_xlsx
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-
 # Create your tests here.
 from pyexcel import Sheet, Book
 
@@ -14,10 +11,6 @@ from Grades.exceptions import GradeException
 from Grades.models import *
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule, COLUMN_TITLE_ROW
 from importer.views import make_grade
-from django.contrib.auth.models import User
-
-import django_excel as excel
-from django.urls import reverse
 
 
 @unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
@@ -25,13 +18,13 @@ class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         teacher = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
 
         module_ed.save()
 
@@ -78,15 +71,15 @@ class ImporterTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         teacher = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
 
-        module_ed2 = ModuleEdition.objects.create(module=module_tcs, year=2018, block='A1')
+        module_ed2 = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2018, block='A1')
 
         module_parts = [
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[teacher]) for i in
@@ -110,7 +103,7 @@ class ImporterTest(TestCase):
 
     def test_module_import(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -163,7 +156,7 @@ class ImporterTest(TestCase):
 
     def test_test_import(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -190,7 +183,7 @@ class ImporterTest(TestCase):
 
     def test_module_import_by_name(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -240,7 +233,7 @@ class ImporterTest(TestCase):
 
     def test_module_import_invalid_university_number(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -297,7 +290,7 @@ class ImporterTest(TestCase):
 
     def test_test_import_invalid_university_number(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -460,7 +453,7 @@ class ImporterTest(TestCase):
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue(
-            'Attempt to register grades for a test that is not part of this module.' in response.content.decode())
+            'Attempt to register grades for a test that is not part of this module' in response.content.decode())
 
     def test_test_import_invalid_test(self):
         module_edition = \
@@ -589,7 +582,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file,
                                                                           'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('One of the required fields [student_id, grade, description] could not be found.'
+        self.assertTrue('One of the required field [student_id, grade, description] could not be found.'
                         in response.content.decode())
 
         table = [['' for _ in range(5)] for _ in range(COLUMN_TITLE_ROW)] + \
@@ -608,7 +601,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/test/{}'.format(test.pk), {'title': 'test.xlsx', 'file': file,
                                                                           'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('One of the required fields [student_id, grade, description] could not be found.'
+        self.assertTrue('One of the required field [student_id, grade, description] could not be found.'
                         in response.content.decode())
 
     # No tests
@@ -687,7 +680,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('excel file misses required header: \"university_number\"' in response.content.decode())
+        self.assertTrue('excel file misses required header: &quot;university_number&quot;' in response.content.decode())
 
     def test_module_part_import_no_university_number(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -711,13 +704,13 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('excel file misses required header: \"university_number\"' in response.content.decode())
+        self.assertTrue('excel file misses required header: &quot;university_number&quot;' in response.content.decode())
 
     # EXTRA ROWS
 
     def test_module_import_extra_row(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
 
         tests = Test.objects.filter(module_part__module_edition=module_edition)
@@ -770,7 +763,7 @@ class ImporterTest(TestCase):
 
     def test_test_import_extra_row(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
         students = Person.objects.filter(studying__module_edition=module_edition)
@@ -823,8 +816,8 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': -1})
-        self.assertTrue('The file that was uploaded was not recognised as a grade excel file. Are you'
-                        'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
+        self.assertTrue('The file that was uploaded was not recognised as a grade excel file. Are you '
+                        'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try '
                         'using that instead.'
                         in response.content.decode())
 
@@ -851,9 +844,9 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': -1})
-        self.assertTrue('The file that was uploaded was not recognised as a grade excel file. Are you'
-                        'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try'
-                        'using that instead.'
+        self.assertTrue('The file uploaded was not recognised as a grade excel file. Are you '
+                        'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try '
+                        'using that instead'
                         in response.content.decode())
 
     def test_module_import_too_large_title_row(self):
@@ -913,7 +906,7 @@ class ImporterTest(TestCase):
 
     def test_student_import(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         table = [['university_number', 'name', 'email', 'role']]
 
@@ -1047,7 +1040,7 @@ class ImporterTest(TestCase):
 
             response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
                                         {'title': 'test.xlsx', 'file': file})
-            self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
+            self.assertTrue('Not all required columns [university_number, name, email, role] are in the excel sheet'
                             in response.content.decode())
 
     def test_student_import_too_little_rows(self):
@@ -1065,7 +1058,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/import-module-student/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file})
-        self.assertTrue('Not all required columns (university_number, name, e-mail, role) are in the Excel sheet'
+        self.assertTrue('Not all required columns [university_number, name, email, role] are in the excel sheet, or no rows to import.'
                         in response.content.decode())
 
     # MODULE STRUCTURE IMPORT
@@ -1185,14 +1178,14 @@ class ImporterPermissionsTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         module_coordinator = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
-        module_ed_2 = ModuleEdition.objects.create(module=module_tcs, year=2018, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
+        module_ed_2 = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2018, block='A1')
 
         module_parts = [
             ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[module_coordinator])
@@ -1270,7 +1263,7 @@ class ImporterPermissionsTest(TestCase):
 
     def test_importer_views_as_module_coordinator(self):
         module_edition = \
-        ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
 
         test = Test.objects.filter(module_part__module_edition=module_edition)[0]
 
@@ -1319,7 +1312,7 @@ class ImporterPermissionsTest(TestCase):
         module_edition = ModuleEdition.objects.filter(modulepart__teacher__person__user__username='teacher')[0]
 
         test = Test.objects.filter(module_part__teacher__person__user=user)[0]
-        other_test = Test.objects.exclude(module_part__teacher__person__user=user)[0]
+        other_test = Test.objects.filter(module_part__module_edition=module_edition).exclude(module_part__teacher__person__user=user)[0]
 
         self.client.force_login(user)
 
@@ -1425,13 +1418,13 @@ class MakeGradeTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
 
-        module_tcs = Module.objects.create(code='201300070', name='Parels der Informatica')
+        module_tcs = Module.objects.create(name='Parels der Informatica')
 
         user = User.objects.create(username='mverkleij', password='welkom123')
 
         module_coordinator = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
 
-        module_ed = ModuleEdition.objects.create(module=module_tcs, year=2017, block='A1')
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
 
         module_ed.save()
 

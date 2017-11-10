@@ -89,6 +89,82 @@ gradeApp.controller('studentController', function($scope,$http) {
     });
 });
 
+function modalYesFunc() {
+    if($("#modal_yes").attr("func") == "remove") {
+          var url = $("#modal_yes").attr('data-url');
+          var changeID = $("#modal_yes").attr('data-id');
+          var change = $("#" + changeID).find("a");
+
+          var oldHtml = change.html();
+          change.html('<i class="material-icons">loop</i>');
+          change.parent().removeClass("success warning error loading");
+          change.parent().addClass("loading");
+
+          $.ajax({
+            url:url,
+
+            method: "GET",
+            dataType: "json",
+
+            success: function(data) {
+              if(data.deleted) {
+                change.attr("title", "N/A");
+                change.html("-");
+                change.attr("data-grade", "-");
+                updateOrRemoveColoring(change.parent());
+              }
+              else {
+                change.html(oldHtml);
+                updateOrRemoveColoring(change.parent());
+              }
+            },
+
+            error: function(data) {
+              change.html(oldHtml);
+              updateOrRemoveColoring(change.parent());
+            }
+          });
+      }
+      else if($("#modal_yes").attr("func") == "edit") {
+        viewableText = $("#" + $("#modal_yes").attr("v-text"));
+        text = $("#modal_yes").attr("text");
+
+        viewableText.html('<i class="material-icons">loop</i>');
+        viewableText.attr('data-url', $("#modal_yes").attr('data-url'));
+
+        viewableText.parent().removeClass("success warning error loading");
+        viewableText.parent().addClass("loading");
+
+        var csrftoken = getCookie('csrftoken');
+        $.ajax({
+          beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+
+          url: $("#modal_yes").attr('data-url'),
+          data: {
+            'grade': parseFloat(text)
+          },
+
+          method: "POST",
+          dataType: 'json',
+
+          success: function(data) {
+            viewableText.attr("data-grade", data.grade);
+            viewableText.html(data.grade);
+            updateOrRemoveColoring(viewableText.parent());
+          },
+
+          error: function(data) {
+            viewableText.html(oldHtml);
+            updateOrRemoveColoring(viewableText.parent());
+          }
+        });
+      }
+};
+
 function BulkRelease() {
     test_list = [];
     $('[id^="rel_button_"]').each(function() {
@@ -304,90 +380,17 @@ $(document).ready(function() {
         $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade");
     });
 
-    // $('[id^="collapsePart"').on('show.bs.collapse', function () {
-    //   var id = $(this).attr("data-id");
-    //   $("#mp_collapse" + id).find("i").html("arrow_drop_up");
-    // })
-    // $('[id^="collapsePart"').on('hide.bs.collapse', function () {
-    //   var id = $(this).attr("data-id");
-    //   $("#mp_collapse" + id).find("i").html("arrow_drop_down");
-    // })
+    $(document).on('keydown keyup input click',  function (e) {
+        if ($('#gradeModal').is(':visible')) {
+            if (e.which == 13) {
+                modalYesFunc();
+                $("#gradeModal").modal('hide');
+            }
+        }
+    });
 
     $("#modal_yes").on("mousedown", function() {
-
-      if($("#modal_yes").attr("func") == "remove") {
-          var url = $("#modal_yes").attr('data-url');
-          var changeID = $("#modal_yes").attr('data-id');
-          var change = $("#" + changeID).find("a");
-
-          var oldHtml = change.html();
-          change.html('<i class="material-icons">loop</i>');
-          change.parent().removeClass("success warning error loading");
-          change.parent().addClass("loading");
-
-          $.ajax({
-            url:url,
-
-            method: "GET",
-            dataType: "json",
-
-            success: function(data) {
-              if(data.deleted) {
-                change.attr("title", "N/A");
-                change.html("-");
-                change.attr("data-grade", "-");
-                updateOrRemoveColoring(change.parent());
-              }
-              else {
-                change.html(oldHtml);
-                updateOrRemoveColoring(change.parent());
-              }
-            },
-
-            error: function(data) {
-              change.html(oldHtml);
-              updateOrRemoveColoring(change.parent());
-            }
-          });
-      }
-      else if($("#modal_yes").attr("func") == "edit") {
-        viewableText = $("#" + $("#modal_yes").attr("v-text"));
-        text = $("#modal_yes").attr("text");
-
-        viewableText.html('<i class="material-icons">loop</i>');
-        viewableText.attr('data-url', $("#modal_yes").attr('data-url'));
-
-        viewableText.parent().removeClass("success warning error loading");
-        viewableText.parent().addClass("loading");
-
-        var csrftoken = getCookie('csrftoken');
-        $.ajax({
-          beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-              xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-          },
-
-          url: $(this).attr('data-url'),
-          data: {
-            'grade': parseFloat(text)
-          },
-
-          method: "POST",
-          dataType: 'json',
-
-          success: function(data) {
-            viewableText.attr("data-grade", data.grade);
-            viewableText.html(data.grade);
-            updateOrRemoveColoring(viewableText.parent());
-          },
-
-          error: function(data) {
-            viewableText.html(oldHtml);
-            updateOrRemoveColoring(viewableText.parent());
-          }
-        });
-      }
+      modalYesFunc();
     });
 
     $("#assignment_table").on("click", "td[id^='gradeid_']", function() {

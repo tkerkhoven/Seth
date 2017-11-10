@@ -21,7 +21,7 @@
     }
     </style>
 
-    {% include 'navbar.html' with active_page="gradebook" %}
+    {% include 'navbar.html' with active_page="gradebook" ta=True %}
     {% load grade_extras %}
     {% if studentname %}
         <div class="container-fluid">
@@ -82,7 +82,7 @@
                                                         <td>{{ test.name }}</td>
                                                         {% with grade=grades|key:test.id %}
                                                             <td id="gradeid_{{ test.id }}" data-grade="{{ grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                                <a data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}</a>
+                                                                <a data-toggle="tooltip" title="{{ grade }}">{{ grade|round }}<a class="text-muted">/{{ test.maximum_grade }}</a></a>
                                                             </td>
                                                         {% endwith %}
                                                     </tr>

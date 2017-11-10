@@ -67,7 +67,7 @@ class PersonsView(generic.ListView):
     def dispatch(self, request, *args, **kwargs):
         self.person = Person.objects.filter(user=request.user).first()
         if pu.is_coordinator_or_assistant(self.person) or pu.is_teacher(self.person) or pu.is_study_adviser(
-                self.person):
+                self.person) or pu.is_teaching_assistant(self.person):
             return super(PersonsView, self).dispatch(request, *args, **kwargs)
         else:
             raise PermissionDenied('You are not a module coordinator')
