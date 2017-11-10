@@ -187,6 +187,7 @@ class StudentView(generic.DetailView):
         assignments_dict = dict()
         name_override_dict = dict()
 
+        # Get the grades of the student
         grades_list = Grade.objects \
             .prefetch_related('test') \
             .filter(student=person, test__released=True) \
@@ -194,13 +195,16 @@ class StudentView(generic.DetailView):
             .order_by('test_id', '-id') \
             .distinct('test_id')
 
+        # Add them to a easy-to-use dictionary
         for grade in grades_list:
             grades_dict[grade['test']] = grade['grade']
 
+        # Get all module edition the students participates in.
         modules_list = ModuleEdition.objects \
             .filter(studying__person=person) \
             .order_by('id')
 
+        # Get all module parts and tests in these module editions.
         for module in modules_list:
             module_parts_list = ModulePart.objects \
                 .prefetch_related('test_set') \
@@ -224,6 +228,7 @@ class StudentView(generic.DetailView):
                 current = ""
                 remove_list = []
 
+                # Replace the assignments with a string (Ex: x to x, x, x, x to x)
                 for assignment in assignments:
                     if assignment.id in grades_dict and grades_dict[assignment.id] == 1.0:
                         if streak > 0:
@@ -580,9 +585,9 @@ class EmailTestReleasedPreviewView(FormView):
 def export(request, *args, **kwargs):
     """ The view gotten when trying to export grades to .xls format.
     :param request: The HTML request
-    :param args:
-    :param kwargs:
-    :return:
+    :param args: Not used
+    :param kwargs: The parameters
+    :return: The excel file
     """
     user = request.user
 
@@ -608,6 +613,7 @@ def export(request, *args, **kwargs):
 
     mod_ed = test.module_part.module_edition
 
+    # Set up the first part of the table.
     table = [
         ['Cursus', '{}'.format(mod_ed.module.code), '', '', 'Tijdstip', 'N/A'],
         ['Collegejaar', '{}'.format(mod_ed.year)],
@@ -620,6 +626,8 @@ def export(request, *args, **kwargs):
 
     temp_dict = OrderedDict()
     grade_dict = dict()
+
+    # Set up the second part of the table.
     for grade in grades:
         grade_dict[grade.student.university_number] = grade.grade
 
@@ -636,46 +644,69 @@ def export(request, *args, **kwargs):
                 ['{}'.format(u_num), '{}'.format(name), 'N/A', 'NVD', 'N/A', 'N/A']
             )
 
+    # Return the excel file.
     return excel.make_response_from_array(table, file_name='{} MODxx {} {}.xlsx'
                                           .format(study.abbreviation, mod_ed.module.code, test.name),
                                           file_type='xlsx')
 
 
 def bulk_release(request, *args, **kwargs):
+    """
+    The release/retract functionality.
+    :param request: The HTML request
+    :param args: Not used
+    :param kwargs: The parameters
+    :return: A JSON Response with where to redirect to
+    """
     user = request.user
     data = {}
 
+    # Only works when it's a post request.
     if request.method == "POST":
 
+        # Get the list of tests which need to be released/retracted.
         json_test_list = json.loads(request.POST.get('tests', None))
         if(len(json_test_list) == 0):
             return JsonResponse()
+        temp_list = []
         test_list = []
         released = 0
         last_test = 0
 
+        # For each test
         for pk in json_test_list:
             tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
                                                                       id=pk)
+            # If there is no test with that ID or the user doesn't have permissions to release the test, raise an error.
             if not tests:
                 raise PermissionDenied()
 
-            rel = tests[0].released
-            tests[0].released = not rel
-            tests[0].save()
-            if not rel:
-                last_test = tests[0].pk
-                released += 1
-                test_list.append(tests[0])
+            # Add the test to the list of tests.
+            temp_list.append(tests[0])
 
+        # Release/Retract the tests
+        for test in temp_list:
+            rel = test.released
+            test.released = not rel
+            test.save()
+
+            # If the test is released, add it to the released test list, to be used for mailing.
+            if not rel:
+                last_test = test.pk
+                released += 1
+                test_list.append(test)
+
+        # If there were no tests released, reload the page.
         if released == 0:
             data = {
                 'redirect': request.META.get('HTTP_REFERER')
             }
+        # If there was one test released, go to the singular test email page.
         elif released == 1:
             data = {
                 'redirect': reverse('grades:test_send_email', kwargs={'pk': last_test})
             }
+        # Else, got to the mulitple test email page.
         else:
             data = {
                 'redirect': reverse('grades:test_bulk_send_email', kwargs={'pk': test_list[0].module_part.module_edition.pk})
@@ -686,9 +717,16 @@ def bulk_release(request, *args, **kwargs):
 
 
 def remove(request, *args, **kwargs):
-
+    """
+    Removes a grade.
+    :param request: The HTML request
+    :param args: Not used
+    :param kwargs: The paramaters
+    :return: JSON Response with a boolean wether or not the test was released.
+    """
     user = request.user
 
+    # Get the test
     test = Test.objects.prefetch_related('grade_set').get(module_part__module_edition__coordinators__user=user,
                                                           id=kwargs['pk'])
     if not test:
@@ -696,6 +734,7 @@ def remove(request, *args, **kwargs):
 
     data = {}
 
+    # Delete the student's grades.
     student = kwargs['sid']
     test.grade_set.filter(student=student).delete()
 
@@ -703,14 +742,21 @@ def remove(request, *args, **kwargs):
         'deleted': not test.grade_set.filter(student=student).exists()
     }
 
-    # Return to the page the user came from.
+    # Return the JSON response.
     return JsonResponse(data)
 
 
 def edit(request, *args, **kwargs):
-
+    """
+    Edits a grade.
+    :param request: The HTML Request
+    :param args: Not used
+    :param kwargs: The parameters
+    :return: JSON Response with the new grade
+    """
     user = request.user
 
+    # Get the test.
     tests = Test.objects.prefetch_related('grade_set').filter(Q(module_part__module_edition__coordinators__user=user) |
                                                           Q(module_part__teachers__user=user),
                                                           id=kwargs['pk']).distinct()
@@ -722,6 +768,7 @@ def edit(request, *args, **kwargs):
     data = {}
 
     if request.POST:
+        # Change the grade (this means making a new grade).
         student = kwargs['sid']
         g = test.grade_set.create(student_id=student,
                               teacher=Person.objects.get(user=user),
@@ -733,28 +780,39 @@ def edit(request, *args, **kwargs):
             'grade': g.grade
         }
 
-    # Return to the page the user came from.
+    # Return JSON Response.
     return JsonResponse(data)
 
 
 def get(request, *args, **kwargs):
+    """
+    Gets the grades.
+    :param request: The HTML Request
+    :param args: Not used
+    :param kwargs: The parameters
+    :return: The JSON Response containing all data for the tables.
+    """
     user = request.user
 
     if request.method == "GET":
 
         data_array = []
 
+        # Get the module edition and the query results.
         (mod_ed, query_result) = create_grades_query(request.GET.get('view'), kwargs['pk'], user, (kwargs['t']) if kwargs['t'] else None)
 
         student_grades_exam = OrderedDict()
+        # Loop over each student
         for student in query_result:
             if student.person_id is None:
                 continue
 
+            # Create the name column.
             key = "<a href={}>{} ({})</a>".format(
                 reverse('grades:modstudent', kwargs={'pk': mod_ed.id, 'sid': student.person_id}),
                 student.name, student.university_number)
 
+            # Create the grade column
             if (student.type == 'E' or student.type == 'P'):
                 value = '<a id="grade_{}_{}"' \
                         'data-grade="{}"'\
@@ -788,6 +846,7 @@ def get(request, *args, **kwargs):
                 student_grades_exam[key] = []
             student_grades_exam[key].append(value)
 
+        # Add them together
         for key, value in student_grades_exam.items():
             data_array.append([key] + value)
 
@@ -795,7 +854,7 @@ def get(request, *args, **kwargs):
             "data": data_array
         }
 
-    # Return to the page the user came from.
+    # Return the JSON Response.
     return JsonResponse(data)
 
 
@@ -813,6 +872,7 @@ def create_grades_query(view, pk, user, type=None):
     :param type: The type of the test to be returned by the query. Can be omitted.
     :return: (mod_ed, query_result) - The corresponding module edition and the result of the query. Returns None if a correct view isn't specified.
     """
+    # If a specific type was requested, add it to the query.
     if type == 'A':
         type_str = "type='A'"
     elif type == 'E' or type =='P':
@@ -820,6 +880,7 @@ def create_grades_query(view, pk, user, type=None):
     else:
         type_str = ""
 
+    # If all grades of a module edition were requested.
     if view == 'mod_ed':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
@@ -842,6 +903,7 @@ def create_grades_query(view, pk, user, type=None):
         if type_str != "":
             where_test += " AND (" + type_str + ") "
 
+    # If all grades of a module part were requested.
     elif view == 'mod_part':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
@@ -858,6 +920,7 @@ def create_grades_query(view, pk, user, type=None):
         if type_str != "":
             where_test += " AND (" + type_str + ") "
 
+    # If all grades from a test  were requested.
     elif view == 'mod_test':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
                                               Q(modulepart__teachers__user=user) |
@@ -875,6 +938,7 @@ def create_grades_query(view, pk, user, type=None):
     else:
         return None
 
+    # The query getting all grades.
     query_result = Grade.objects.raw(
         "SELECT S.person_id, P.name, P.university_number, T.module_part_id, T.minimum_grade, T.maximum_grade, T.id AS test_id, T.type, G.grade, G.id "
         "FROM \"Grades_test\" T FULL OUTER JOIN ( "
@@ -895,31 +959,5 @@ def create_grades_query(view, pk, user, type=None):
         [mod_ed.id]
     )
 
+    # Return the module edition and the result.
     return (mod_ed, query_result)
-
-
-def QuerySetChanger(dicts, grade_dict, testallreleased=None):
-    """ Change a queryset to something more useable.
-    :param dicts: The queryset to be changed.
-    :param students: An empty dictionary to be filled with student information.
-    :param temp_dict: An empty dictionary to be filled with grades.
-    :param testallreleased: An empty dictionary to be filled with whether or not a test has all its grades released.
-    :return: -
-    """
-    for d in dicts:
-        student = (d['person'], d['person__name'], d['person__university_number'])
-        test = d['person__Submitter__test']
-
-        if student not in grade_dict.keys():
-            grade_dict[student] = dict()
-
-        # Create the grade dictionary.
-        grade_dict[student][test] = (
-            d['person__Submitter__grade'], d['person__Submitter__released'])
-
-        # Create the test released dictionary.
-        if not testallreleased == None:
-            if not test in testallreleased.keys():
-                testallreleased[test] = True
-            if not d['person__Submitter__released']:
-                testallreleased[test] = False
