@@ -117,7 +117,7 @@ class ModuleEditionDetailView(generic.DetailView):
 class ModuleEditionUpdateView(generic.UpdateView):
     template_name = 'module_management/module_edition_update.html'
     model = ModuleEdition
-    fields = ['year', 'block']
+    fields = ['year', 'module_code', 'block']
 
     def get_context_data(self, **kwargs):
         context = super(ModuleEditionUpdateView, self).get_context_data(**kwargs)
@@ -137,7 +137,7 @@ class ModuleEditionUpdateView(generic.UpdateView):
 class ModuleEditionCreateForm(ModelForm):
     class Meta:
         model = ModuleEdition
-        fields = ['module', 'year', 'block', 'coordinators']
+        fields = ['module', 'module_code', 'year', 'block', 'coordinators']
 
     def __init__(self, *args, **kwargs):
         super(ModuleEditionCreateForm, self).__init__(*args, **kwargs)
@@ -151,10 +151,11 @@ class ModuleEditionCreateView(generic.CreateView):
 
     def get_initial(self):
         pk = self.kwargs['pk']
-        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
+        latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0]
         return {
             'module': Module.objects.get(pk=pk),
-            'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition)
+            'module_code': latest_module_edition.module_code,
+            'coordinators': Person.objects.filter(coordinator__module_edition=latest_module_edition.pk)
         }
 
     def get_context_data(self, **kwargs):
@@ -190,8 +191,13 @@ class ModuleEditionCreateView(generic.CreateView):
         pk = self.kwargs['pk']
         latest_module_edition = ModuleEdition.objects.filter(module=pk).order_by('-year', '-block')[0].pk
 
+        module_code = initial['module_code']
+        if 'module_code' in data and not data['module_code'] == "":
+            module_code = data['module_code']
+
         module_edition = ModuleEdition(
             module=initial['module'],
+            module_code=module_code,
             year=data['year'],
             block=data['block']
         )
@@ -221,7 +227,7 @@ class ModuleEditionCreateView(generic.CreateView):
 
         new_tests = []
         for i in range(len(old_module_parts)):
-            old_tests = old_module_parts[i].test_set.all()  # Test.objects.filter(module_part=old_module_parts[i].pk).distinct()
+            old_tests = old_module_parts[i].test_set.all()
             for old_test in old_tests:
                 test = Test(
                     maximum_grade=old_test.maximum_grade,
@@ -245,7 +251,6 @@ class ModuleEditionCreateView(generic.CreateView):
             coordinator = Coordinator(
                 module_edition=module_edition,
                 person=person,
-                # is_assistant=Coordinator.objects.get(person=person, module_edition=latest_module_edition).is_assistant
                 is_assistant=person.coordinator_set.get(module_edition=latest_module_edition).is_assistant
             )
             try:
@@ -578,5 +583,4 @@ def remove_user(request, spk, mpk):
         context['success'] = True
     else:
         context['success'] = False
-    # return render(request, 'module_management/user_delete.html', context=context)
     return JsonResponse(context)

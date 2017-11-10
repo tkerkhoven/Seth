@@ -615,7 +615,7 @@ def export(request, *args, **kwargs):
 
     # Set up the first part of the table.
     table = [
-        ['Cursus', '{}'.format(mod_ed.module.code), '', '', 'Tijdstip', 'N/A'],
+        ['Cursus', '{}'.format(mod_ed.module_code), '', '', 'Tijdstip', 'N/A'],
         ['Collegejaar', '{}'.format(mod_ed.year)],
         ['Toets', '{}'.format(test.name)],
         ['Blok', '{}'.format(mod_ed.block), '', 'Resultaatschaal', ''],
@@ -646,7 +646,7 @@ def export(request, *args, **kwargs):
 
     # Return the excel file.
     return excel.make_response_from_array(table, file_name='{} MODxx {} {}.xlsx'
-                                          .format(study.abbreviation, mod_ed.module.code, test.name),
+                                          .format(study.abbreviation, mod_ed.module_code, test.name),
                                           file_type='xlsx')
 
 
