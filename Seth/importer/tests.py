@@ -629,7 +629,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('There are no tests to import' in response.content.decode())
+        self.assertTrue('There were no tests recognized to import' in response.content.decode())
 
     def test_module_part_import_no_tests(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -653,7 +653,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('There are no tests to import' in response.content.decode())
+        self.assertTrue('There were no tests recognized to import' in response.content.decode())
 
     # No tests
 
@@ -680,7 +680,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('excel file misses required header: &quot;university_number&quot;' in response.content.decode())
+        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
     def test_module_part_import_no_university_number(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -704,7 +704,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertTrue('excel file misses required header: &quot;university_number&quot;' in response.content.decode())
+        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
 
     # EXTRA ROWS
 
