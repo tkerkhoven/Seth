@@ -100,7 +100,6 @@ class ModuleEdition(models.Model):
         return '{} ({}-{})'.format(self.module.name, self.year, self.block)
 
     class Meta:
-        unique_together = (('year', 'module', 'block'),)
         ordering = ['module', '-year', '-block']
 
     def validate_unique(self, exclude=None):
