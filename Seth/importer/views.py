@@ -143,6 +143,9 @@ def import_module(request, pk):
         if form.is_valid():
             title_row = form.cleaned_data.get('title_row') - 1
 
+            # Check if /any/ tests and/or grades are imported.
+            any_tests = False
+
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
                 # Check if the sheet has enough rows
@@ -173,6 +176,7 @@ def import_module(request, pk):
                                     return bad_request(request, {'message': 'Attempt to register grades for a test that'
                                                                             ' is not part of this module.'})
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
+                                any_tests = True
                         except ValueError:
                             # search by name
                             if Test.objects.filter(
@@ -181,12 +185,13 @@ def import_module(request, pk):
                                 test_rows[title_index] = Test.objects.filter(
                                     name=sheet[table][title_row][title_index]
                                 ).filter(module_part__module_edition=pk)[0].pk  # pk of Test
+                                any_tests = True
                             # Else not a test, continue...
 
                 if university_number_field is None:
-                    return bad_request(request, {'message': 'excel file misses required header: \"university_number\"'})
+                    continue  # Ignore this sheet
                 if len(test_rows.keys()) == 0:
-                    return bad_request(request, {'message': 'There are no tests to import'})
+                    continue  # Ignore this sheet
 
 
                 # The current user's Person is the corrector of the grades.
@@ -227,6 +232,12 @@ def import_module(request, pk):
                             except GradeException as e:  # Called for either: bad grade, grade out of bounds
                                 return HttpResponseBadRequest(e)
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
+
+
+            # Check if anything was imported.
+            if not any_tests:
+                return bad_request(request, {'message': 'There were no tests recognized to import.'})
+
             return redirect('grades:gradebook', pk)
         else:
             return bad_request(request, {'message': 'The file that was uploaded was not recognised as a grade excel '
@@ -271,6 +282,9 @@ def import_module_part(request, pk):
         if form.is_valid():
             title_row = form.cleaned_data.get('title_row') - 1
 
+            # Check if /any/ tests and/or grades are imported.
+            any_tests = False
+
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
                 # Check if the sheet has enough rows
@@ -301,23 +315,25 @@ def import_module_part(request, pk):
                                     return bad_request(request, {'message': 'Attempt to register grades for a test that'
                                                                             ' is not part of this module'})
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
+                                any_tests = True
                         except ValueError:
                             pass  # Not an int.
                         # search by name
-                        if Test.objects.filter(module_part__module_edition=module_edition).filter(
+                        if Test.objects.filter(module_part=module_part).filter(
                                 name=sheet[table][title_row][title_index]):
                             test_rows[title_index] = Test.objects.filter(
                                 name=sheet[table][title_row][title_index]
-                            ).filter(module_part__module_edition=module_edition)[0].pk  # pk of Test
+                            ).filter(module_part=module_part)[0].pk  # pk of Test
+                            any_tests = True
 
                         # Attempt to ignore test altogether.
                         else:
                             pass
 
                 if university_number_field is None:
-                    return bad_request(request, {'message':'excel file misses required header: \"university_number\"'})
+                    continue  # Ignore this sheet
                 if len(test_rows.keys()) == 0:
-                    return bad_request(request, {'message':'There are no tests to import.'})
+                    continue  # Ignore this sheet
 
                 # The current user's Person is the corrector of the grades.
                 teacher = Person.objects.filter(user=request.user).first()
@@ -357,6 +373,10 @@ def import_module_part(request, pk):
                             except GradeException as e:  # Called for either: bad grade, grade out of bounds
                                 return bad_request(request, {'error': e})
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
+
+            # Check if anything was imported.
+            if not any_tests:
+                return bad_request(request, {'message': 'There were no tests recognized to import.'})
             return redirect('grades:module_part', pk)
         else:
             return bad_request(request, {'message': 'The file uploaded was not recognised as a grade excel file.'
