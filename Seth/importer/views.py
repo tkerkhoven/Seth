@@ -304,11 +304,11 @@ def import_module_part(request, pk):
                         except ValueError:
                             pass  # Not an int.
                         # search by name
-                        if Test.objects.filter(module_part__module_edition=module_edition).filter(
+                        if Test.objects.filter(module_part=module_part).filter(
                                 name=sheet[table][title_row][title_index]):
                             test_rows[title_index] = Test.objects.filter(
                                 name=sheet[table][title_row][title_index]
-                            ).filter(module_part__module_edition=module_edition)[0].pk  # pk of Test
+                            ).filter(module_part=module_part)[0].pk  # pk of Test
 
                         # Attempt to ignore test altogether.
                         else:
