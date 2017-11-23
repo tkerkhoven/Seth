@@ -162,7 +162,7 @@ def import_module(request, pk):
                 # Detect university_number and test columns
                 for title_index in range(0, len(sheet[table][title_row])):
                     # This is the university number column
-                    if str(sheet[table][title_row][title_index]).lower() == 'university_number':
+                    if 'number' in str(sheet[table][title_row][title_index]).lower():
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -301,7 +301,7 @@ def import_module_part(request, pk):
                 # Detect university_number and test columns
                 for title_index in range(0, len(sheet[table][title_row])):
                     # This is the university number column
-                    if str(sheet[table][title_row][title_index]).lower() == 'university_number':
+                    if 'number' in str(sheet[table][title_row][title_index]).lower():
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
