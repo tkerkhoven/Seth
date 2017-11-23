@@ -171,6 +171,8 @@ class RADIUSBackend(object):
         doesn't already exist. If `password` is given, then set the user's
         password to that (regardless of whether the user was created or not).
         """
+
+        username = username.lower()
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -190,6 +192,7 @@ class RADIUSBackend(object):
         Check credentials against RADIUS server and return a User object or
         None.
         """
+        username = username.lower()
         username = username.encode('utf-8')
         password = password.encode('utf-8')
 
