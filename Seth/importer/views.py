@@ -177,7 +177,7 @@ def import_module(request, pk):
                                                                             ' is not part of this module.'})
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                                 any_tests = True
-                        except ValueError:
+                        except (ValueError, TypeError):
                             # search by name
                             if Test.objects.filter(
                                     name=sheet[table][title_row][title_index]
@@ -316,7 +316,7 @@ def import_module_part(request, pk):
                                                                             ' is not part of this module'})
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                                 any_tests = True
-                        except ValueError:
+                        except (ValueError, TypeError):
                             pass  # Not an int.
                         # search by name
                         if Test.objects.filter(module_part=module_part).filter(
@@ -673,7 +673,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
         return  # Field is empty, assume it does not need to be imported.
     try:
         float(grade)
-    except ValueError:
+    except (ValueError, TypeError):
         if test.type == 'A':
             grade = 1
         else:
