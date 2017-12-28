@@ -348,7 +348,7 @@ def import_module_part(request, pk):
                 # Check excel file for invalid students
                 invalid_students = []
                 for row in sheet[table][(title_row + 1):]:
-                    if not Studying.objects.filter(person__university_number=row[university_number_field]).filter(
+                    if not Studying.objects.filter(person__university_number__contains=row[university_number_field]).filter(
                             module_edition=module_edition):
                         invalid_students.append(row[university_number_field])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
@@ -359,7 +359,7 @@ def import_module_part(request, pk):
 
                 # Make Grades
                 for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
-                    student = Person.objects.filter(university_number=row[university_number_field]).first()
+                    student = Person.objects.filter(university_number__contains=row[university_number_field]).first()
                     # check if this is not an empty line, else continue.
                     if student:
                         for test_column in test_rows.keys():
