@@ -162,7 +162,8 @@ def import_module(request, pk):
                 # Detect university_number and test columns
                 for title_index in range(0, len(sheet[table][title_row])):
                     # This is the university number column
-                    if 'number' in str(sheet[table][title_row][title_index]).lower():
+                    if ('number' in str(sheet[table][title_row][title_index]).lower()) or \
+                            ('nummer' in str(sheet[table][title_row][title_index]).lower()):
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -171,10 +172,7 @@ def import_module(request, pk):
                         try:
                             test = Test.objects.filter(
                                 pk=sheet[table][title_row][title_index])
-                            if test:
-                                if not test.filter(module_part__module_edition=module_edition):
-                                    return bad_request(request, {'message': 'Attempt to register grades for a test that'
-                                                                            ' is not part of this module.'})
+                            if test and test.filter(module_part__module_edition=module_edition):
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                                 any_tests = True
                         except (ValueError, TypeError):
@@ -207,7 +205,7 @@ def import_module(request, pk):
                 # Check excel file for invalid students
                 invalid_students = []
                 for row in sheet[table][(title_row + 1):]:
-                    if not Studying.objects.filter(person__university_number=row[university_number_field]).filter(
+                    if not Studying.objects.filter(person__university_number__contains=row[university_number_field]).filter(
                             module_edition=pk):
                         invalid_students.append(row[university_number_field])
                 # Check for invalid student numbers in the university_number column, but ignore empty fields.
@@ -218,7 +216,7 @@ def import_module(request, pk):
 
                 # Make Grades
                 for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
-                    student = Person.objects.filter(university_number=row[university_number_field]).first()
+                    student = Person.objects.filter(university_number__contains=row[university_number_field]).first()
                     # check if this is not an empty line, else continue.
                     if student:
                         for test_column in test_rows.keys():
@@ -301,7 +299,8 @@ def import_module_part(request, pk):
                 # Detect university_number and test columns
                 for title_index in range(0, len(sheet[table][title_row])):
                     # This is the university number column
-                    if 'number' in str(sheet[table][title_row][title_index]).lower():
+                    if ('number' in str(sheet[table][title_row][title_index]).lower()) or \
+                            ('nummer' in str(sheet[table][title_row][title_index]).lower()):
                         university_number_field = title_index
                     else:
                         # Attempt to find a Test
@@ -310,10 +309,7 @@ def import_module_part(request, pk):
                         try:
                             test = Test.objects.filter(
                                 pk=sheet[table][title_row][title_index])
-                            if test:
-                                if not test.filter(module_part=module_part):
-                                    return bad_request(request, {'message': 'Attempt to register grades for a test that'
-                                                                            ' is not part of this module'})
+                            if test and test.filter(module_part=module_part):
                                 test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
                                 any_tests = True
                         except (ValueError, TypeError):
