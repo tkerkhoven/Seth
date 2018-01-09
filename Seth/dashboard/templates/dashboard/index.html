@@ -65,11 +65,6 @@
                                                         <li class="list-group-item" style="background: rgba(0,0,0,.03)">
                                                             {{ test.name }} - <a href="{% url 'grades:module_part' test.module_part_pk %}"><span class="font-italic"> Assignments
                                                             </span></a>
-                                                            {% if test.released %}
-                                                                <i class="material-icons float-right text-success" data-toggle="tooltip" data-placement="bottom" title="Released">check_circle</i>
-                                                            {% else %}
-                                                                <i class="material-icons float-right text-danger" data-toggle="tooltip" data-placement="bottom" title="Not released">cancel</i>
-                                                            {% endif %}
                                                         </li>
                                                     {% endif %}
                                                 {% endfor %}
