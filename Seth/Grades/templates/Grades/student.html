@@ -110,18 +110,20 @@
                                                     </td>
                                                 </tr>
                                                 {% else %}
-                                                <tr>
-                                                    <th>Assignments</th>
-                                                    <th>Done</th>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        No assignments have been signed off yet.
-                                                    </td>
-                                                    <td>
-                                                        <i class="material-icons text-danger">cancel</i>
-                                                    </td>
-                                                </tr>
+{#                                                    This temporarily fixes mudule parts without sign off assignments showing a text #}
+{#                                                     that implies they do exist, which confuses users #}
+{#                                                <tr>#}
+{#                                                    <th>Assignments</th>#}
+{#                                                    <th>Done</th>#}
+{#                                                </tr>#}
+{#                                                <tr>#}
+{#                                                    <td>#}
+{#                                                        No assignments have been signed off yet.#}
+{#                                                    </td>#}
+{#                                                    <td>#}
+{#                                                        <i class="material-icons text-danger">cancel</i>#}
+{#                                                    </td>#}
+{#                                                </tr>#}
                                                 {% endif %}
                                             </tbody>
                                         </table>

@@ -16,6 +16,8 @@ from django.contrib.auth.decorators import login_required
 import permission_utils as pu
 from django.core.exceptions import PermissionDenied
 
+from Seth.settings import OS_PATH
+
 
 class DashboardView(View):
 
@@ -171,7 +173,7 @@ def manual_view(request):
     person = Person.objects.filter(user=request.user).first()
     if pu.is_coordinator_or_assistant(person) or pu.is_study_adviser(person) or pu.is_teacher(person) or pu.is_teaching_assistant(person):
         try:
-            return FileResponse(open('manual.pdf', 'rb'), content_type='application/pdf')
+            return FileResponse(open('{}Seth/Seth/manual.pdf'.format(OS_PATH), 'rb'), content_type='application/pdf')
         except FileNotFoundError:
             return not_found(request)
     else:
