@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, NON_FIELD_ERRORS
 from django.db import models
+from django.db.models import CASCADE
 from django.urls import reverse
 from django.utils import timezone
 
@@ -26,7 +27,7 @@ class Person(models.Model):
     name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
     email = models.EmailField(verbose_name='Student e-mail', null=True)
-    user = models.ForeignKey(User, null=True)
+    user = models.ForeignKey(User, null=True, on_delete=CASCADE)
 
     @property
     def full_id(self):
@@ -62,7 +63,7 @@ def getyear():
 class ModuleEdition(models.Model):
     module_code = models.CharField(max_length=32)
     year = models.IntegerField(default=getyear)
-    module = models.ForeignKey(Module)
+    module = models.ForeignKey(Module, on_delete=CASCADE)
     # Update BLOCKS in @property:get_blocks()
     BLOCKS = (
         ('1A', 'Block 1A'),
@@ -116,7 +117,7 @@ class ModuleEdition(models.Model):
 
 class ModulePart(models.Model):
     name = models.CharField(max_length=255)
-    module_edition = models.ForeignKey(ModuleEdition)
+    module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
     teachers = models.ManyToManyField(Person, through='Teacher')
 
     @property
@@ -134,8 +135,8 @@ class ModulePart(models.Model):
 
 
 class Coordinator(models.Model):
-    person = models.ForeignKey(Person)
-    module_edition = models.ForeignKey(ModuleEdition)
+    person = models.ForeignKey(Person, on_delete=CASCADE)
+    module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
     is_assistant = models.BooleanField(default=False)
 
     class Meta:
@@ -143,8 +144,8 @@ class Coordinator(models.Model):
 
 
 class Teacher(models.Model):
-    person = models.ForeignKey(Person)
-    module_part = models.ForeignKey(ModulePart)
+    person = models.ForeignKey(Person, on_delete=CASCADE)
+    module_part = models.ForeignKey(ModulePart, on_delete=CASCADE)
     # Update ROLES in @property:get_role()
     ROLES = (
         ('T', 'Teacher'),
@@ -169,7 +170,7 @@ class Teacher(models.Model):
 ####################################################################
 
 class Test(models.Model):
-    module_part = models.ForeignKey(ModulePart)
+    module_part = models.ForeignKey(ModulePart, on_delete=CASCADE)
     name = models.CharField(max_length=255, blank=True)
     # Update TEST_TYPES in @property:get_type()
     TEST_TYPES = (  # Defaults to Exam
@@ -202,9 +203,9 @@ class Test(models.Model):
 
 
 class Studying(models.Model):
-    person = models.ForeignKey(Person)
+    person = models.ForeignKey(Person, on_delete=CASCADE)
     # study = models.ForeignKey(Study)
-    module_edition = models.ForeignKey(ModuleEdition)
+    module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
     role = models.CharField(max_length=32)
 
     class Meta:
@@ -215,8 +216,8 @@ class Studying(models.Model):
 
 
 class Criterion(models.Model):
-    study = models.ForeignKey(Study)
-    module_edition = models.ForeignKey(ModuleEdition)
+    study = models.ForeignKey(Study, on_delete=CASCADE)
+    module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
     condition = models.CharField(max_length=32)
     role = models.CharField(max_length=32)
 
@@ -229,9 +230,9 @@ class Criterion(models.Model):
 ####################################################################
 
 class Grade(models.Model):
-    test = models.ForeignKey(Test)
-    teacher = models.ForeignKey(Person, related_name='Correcter')
-    student = models.ForeignKey(Person, related_name='Submitter')
+    test = models.ForeignKey(Test, on_delete=CASCADE)
+    teacher = models.ForeignKey(Person, related_name='Correcter', on_delete=CASCADE)
+    student = models.ForeignKey(Person, related_name='Submitter', on_delete=CASCADE)
     time = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=255, blank=True)
     grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
