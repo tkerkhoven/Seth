@@ -57,8 +57,8 @@ class ImporterIndexView(LoginRequiredMixin, View):
         return render(request, 'importer/mcindex2.html', context)
 
     def make_modules_context(self):
-        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).order_by('-year', '-block').prefetch_related(
-            'modulepart_set__test_set')
+        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user) #.order_by('-year', '-block').prefetch_related(
+            #'modulepart_set__test_set')
 
         context = dict()
         context['module_editions'] = []
@@ -87,8 +87,8 @@ class ImporterIndexView(LoginRequiredMixin, View):
         return context
 
     def make_module_parts_context(self):
-        module_parts =  ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
-            'test_set')
+        module_parts =  ModulePart.objects.filter(teacher__person__user=self.request.user)#.prefetch_related(
+            # 'test_set')
 
         context = dict()
         context['module_parts'] = []
