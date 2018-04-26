@@ -36,29 +36,26 @@ class DashboardView(View):
             context = {
                 'modules': self.make_modules_context()['module_editions'],
                 'time': get_current_date(),
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
             return redirect('sa_dashboard')
             # return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
-            print(self.make_module_parts_context()['module_parts'])
             context = {
                 'module_parts': self.make_module_parts_context()['module_parts'],
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/teacher_index.html', context)
         if pu.is_teaching_assistant(person):
-            print(Person.objects.filter(user=request.user))
             context = {
                 'module_parts': self.make_module_parts_context()['module_parts'],
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/ta_index.html', context)
         if pu.is_student(person):
-            studying = Studying.objects.filter(person=person)
-            return redirect('grades:student', studying.get(person__user=self.request.user).person.id)
+            return redirect('grades:student', person.id)
         else:
             return redirect('not_in_seth')
 
