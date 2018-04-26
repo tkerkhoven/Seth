@@ -36,7 +36,7 @@ class DashboardView(View):
             context = {
                 'modules': self.make_modules_context()['module_editions'],
                 'time': get_current_date(),
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
