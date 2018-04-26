@@ -218,8 +218,8 @@ def not_found(request):
     return render(request, 'errors/404.html', status=404)
 
 
-def permission_denied(request):
-    return render(request, 'errors/403.html', status=403, )
+def permission_denied(request, exception):
+    return render(request, 'errors/403.html', status=403, context={'exception': exception})
 
 
 def bad_request(request, context):
