@@ -200,7 +200,7 @@ class RADIUSBackend(object):
         result = self._radius_auth(server, username, password)
 
         if result:
-            return self.get_django_user(username, password)
+            return self.get_django_user(username.decode('utf-8'))
 
         return None
 
