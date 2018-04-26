@@ -157,9 +157,10 @@ class RADIUSBackend(object):
         except User.DoesNotExist:
             user = User(username=username)
 
-        if password is not None:
-            user.set_password(password)
-            user.save()
+        ## Disable password caching
+        # if password is not None:
+        #     user.set_password(password)
+        #     user.save()
 
         return user
 
@@ -178,7 +179,8 @@ class RADIUSBackend(object):
         result = self._radius_auth(server, username, password)
 
         if result:
-            return self.get_django_user(username, password)
+            # Disabled password caching by not passing password argument.
+            return self.get_django_user(username, None)
 
         return None
 
