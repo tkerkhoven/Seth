@@ -101,7 +101,7 @@ class ModuleEdition(models.Model):
         return '{} ({}-{})'.format(self.module.name, self.year, self.block)
 
     class Meta:
-        ordering = ['module', '-year', '-block']
+        ordering = ['-year', '-block', 'module']
 
     def validate_unique(self, exclude=None):
         super(ModuleEdition, self).validate_unique()
