@@ -10,7 +10,7 @@ def permissions(request):
     #     return {'module_coordinator:': False}
     context = dict()
 
-    if not request.user.is_anonymous():
+    if request.user.is_authenticated:
         context['is_module_coordinator'] = False
         context['is_teacher'] = False
         context['is_ta'] = False

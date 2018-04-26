@@ -16,6 +16,8 @@ from django.contrib.auth.decorators import login_required
 import permission_utils as pu
 from django.core.exceptions import PermissionDenied
 
+from Seth.settings import OS_PATH
+
 
 class DashboardView(View):
 
@@ -61,8 +63,8 @@ class DashboardView(View):
             return redirect('not_in_seth')
 
     def make_modules_context(self):
-        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).prefetch_related(
-            'modulepart_set__test_set')
+        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user) \
+            .prefetch_related('modulepart_set__test_set')
         context = dict()
         context['module_editions'] = []
         num_grades = dict()
@@ -96,8 +98,8 @@ class DashboardView(View):
         return context
 
     def make_module_parts_context(self):
-        module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
-            'test_set')
+        module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user) \
+            .prefetch_related('test_set')
         num_grades = dict()
 
         for test in Test.objects.filter(module_part__teacher__person__user=self.request.user).annotate(num_grades=Count('grade__student', distinct=True)):
@@ -171,7 +173,7 @@ def manual_view(request):
     person = Person.objects.filter(user=request.user).first()
     if pu.is_coordinator_or_assistant(person) or pu.is_study_adviser(person) or pu.is_teacher(person) or pu.is_teaching_assistant(person):
         try:
-            return FileResponse(open('manual.pdf', 'rb'), content_type='application/pdf')
+            return FileResponse(open('{}Seth/Seth/manual.pdf'.format(OS_PATH), 'rb'), content_type='application/pdf')
         except FileNotFoundError:
             return not_found(request)
     else:
@@ -214,8 +216,8 @@ def not_found(request):
     return render(request, 'errors/404.html', status=404)
 
 
-def permission_denied(request):
-    return render(request, 'errors/403.html', status=403, )
+def permission_denied(request, exception):
+    return render(request, 'errors/403.html', status=403, context={'exception': exception})
 
 
 def bad_request(request, context):

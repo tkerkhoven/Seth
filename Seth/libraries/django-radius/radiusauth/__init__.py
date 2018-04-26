@@ -1,1 +1,1 @@
-VERSION = '1.2.0-seth'
+VERSION = '1.2.0-seth-2'
