@@ -800,10 +800,10 @@ def import_student_to_module(request, pk):
 
                     student, created = Person.objects.get_or_create(
                         university_number=str(students_to_module[i][0]),
+                        name=students_to_module[i][1],
+                        email=students_to_module[i][2],
                         defaults={
                             'user': user,
-                            'name': students_to_module[i][1],
-                            'email': students_to_module[i][2],
                         }
                     )
                     if created:
