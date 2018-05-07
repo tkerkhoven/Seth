@@ -13,7 +13,7 @@ Import grades into test: {{ test.name }}
             <h3 class="display-3">New Students</h3>
             <hr>
             {% if context.failed %}
-            <h4 class="display-4">Failed</h4>
+            <h4 class="display-4">Already enrolled:</h4>
             The following students were already enrolled to this module under this student:<br>
             <table>
                 <tr>
@@ -74,19 +74,17 @@ Import grades into test: {{ test.name }}
                     <th> Module-code </th>
                     <th> Study </th>
                 </tr>
-                {% for fail in context.studying %}
+                {% for student in context.studying %}
                     <tr>
-                        <td> {{fail.0 }} </td>
-                        <td> {{fail.1 }} </td>
-                        <td> {{fail.2 }} </td>
-                        <td> {{fail.3 }} </td>
-                        <td> {{fail.4 }} </td>
+                        <td> {{student.0 }} </td>
+                        <td> {{student.1 }} </td>
+                        <td> {{student.2 }} </td>
+                        <td> {{student.3 }} </td>
+                        <td> {{student.4 }} </td>
                     </tr>
                 {% endfor %}
             </table>
             {% endif %}
-
-
         </div>
     </div>
 </div>
