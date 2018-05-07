@@ -810,6 +810,7 @@ def import_student_to_module(request, pk):
                     # Update name and email
                     student.name = students_to_module[i][1]
                     student.email = students_to_module[i][2]
+                    student.save()
 
                     if created:
                         context['created'].append([student.name, student.full_id])
