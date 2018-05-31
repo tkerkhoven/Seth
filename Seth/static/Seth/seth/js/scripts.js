@@ -6,7 +6,7 @@ var currentlySelected = 0;
 var added_button_table = false;
 var added_button_assign = false;
 
-$(".btn").mouseup(function(){
+$(".btn").mouseup(function () {
     $(this).blur();
 });
 
@@ -33,7 +33,7 @@ function getCookie(name) {
 function BlurEdit() {
     var text = $(this).val();
     var viewableText = $("<a></a>");
-    if(text == "" || parseInt(text) < $(this).attr("min") || parseInt(text) > $(this).attr("max")) {
+    if (text == "" || parseInt(text) < $(this).attr("min") || parseInt(text) > $(this).attr("max")) {
         viewableText.html($(this).attr('old'));
         viewableText.attr('id', $(this).attr('id'));
         viewableText.attr('title', $(this).attr('title'));
@@ -62,7 +62,7 @@ function BlurEdit() {
         highlighted = "";
         $(this).replaceWith(viewableText);
 
-        if(text != oldHtml) {
+        if (text != oldHtml) {
             $("#modal_yes").attr("data-url", $(this).attr("data-url"));
             $("#modal_yes").attr("v-text", viewableText.attr("id"));
             $("#modal_yes").attr("text", text);
@@ -75,14 +75,14 @@ function BlurEdit() {
 
 var gradeApp = angular.module("gradeApp", []);
 
-gradeApp.controller('studentController', function($scope,$http) {
+gradeApp.controller('studentController', function ($scope, $http) {
     url = $("#gradeboo2k").attr("data-url")
 
     $.ajax({
         url: url,
         method: "GET",
         dataType: "json",
-        success: function(data) {
+        success: function (data) {
             console.log(data)
             $scope.students = data
         }
@@ -90,42 +90,42 @@ gradeApp.controller('studentController', function($scope,$http) {
 });
 
 function modalYesFunc() {
-    if($("#modal_yes").attr("func") == "remove") {
-          var url = $("#modal_yes").attr('data-url');
-          var changeID = $("#modal_yes").attr('data-id');
-          var change = $("#" + changeID).find("a");
+    if ($("#modal_yes").attr("func") == "remove") {
+        var url = $("#modal_yes").attr('data-url');
+        var changeID = $("#modal_yes").attr('data-id');
+        var change = $("#" + changeID).find("a");
 
-          var oldHtml = change.html();
-          change.html('<i class="material-icons">loop</i>');
-          change.parent().removeClass("success warning error loading");
-          change.parent().addClass("loading");
+        var oldHtml = change.html();
+        change.html('<i class="material-icons">loop</i>');
+        change.parent().removeClass("success warning error loading");
+        change.parent().addClass("loading");
 
-          $.ajax({
-            url:url,
+        $.ajax({
+            url: url,
 
             method: "GET",
             dataType: "json",
 
-            success: function(data) {
-              if(data.deleted) {
-                change.attr("title", "N/A");
-                change.html("-");
-                change.attr("data-grade", "-");
-                updateOrRemoveColoring(change.parent());
-              }
-              else {
-                change.html(oldHtml);
-                updateOrRemoveColoring(change.parent());
-              }
+            success: function (data) {
+                if (data.deleted) {
+                    change.attr("title", "N/A");
+                    change.html("-");
+                    change.attr("data-grade", "-");
+                    updateOrRemoveColoring(change.parent());
+                }
+                else {
+                    change.html(oldHtml);
+                    updateOrRemoveColoring(change.parent());
+                }
             },
 
-            error: function(data) {
-              change.html(oldHtml);
-              updateOrRemoveColoring(change.parent());
+            error: function (data) {
+                change.html(oldHtml);
+                updateOrRemoveColoring(change.parent());
             }
-          });
-      }
-      else if($("#modal_yes").attr("func") == "edit") {
+        });
+    }
+    else if ($("#modal_yes").attr("func") == "edit") {
         viewableText = $("#" + $("#modal_yes").attr("v-text"));
         text = $("#modal_yes").attr("text");
 
@@ -137,47 +137,47 @@ function modalYesFunc() {
 
         var csrftoken = getCookie('csrftoken');
         $.ajax({
-          beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            },
+
+            url: $("#modal_yes").attr('data-url'),
+            data: {
+                'grade': parseFloat(text)
+            },
+
+            method: "POST",
+            dataType: 'json',
+
+            success: function (data) {
+                viewableText.attr("data-grade", data.grade);
+                viewableText.html(data.grade);
+                updateOrRemoveColoring(viewableText.parent());
+            },
+
+            error: function (data) {
+                viewableText.html(oldHtml);
+                updateOrRemoveColoring(viewableText.parent());
             }
-          },
-
-          url: $("#modal_yes").attr('data-url'),
-          data: {
-            'grade': parseFloat(text)
-          },
-
-          method: "POST",
-          dataType: 'json',
-
-          success: function(data) {
-            viewableText.attr("data-grade", data.grade);
-            viewableText.html(data.grade);
-            updateOrRemoveColoring(viewableText.parent());
-          },
-
-          error: function(data) {
-            viewableText.html(oldHtml);
-            updateOrRemoveColoring(viewableText.parent());
-          }
         });
-      }
+    }
 };
 
 function BulkRelease() {
     test_list = [];
-    $('[id^="rel_button_"]').each(function() {
-        if($(this)[0].hasAttribute("data-selected")) {
+    $('[id^="rel_button_"]').each(function () {
+        if ($(this)[0].hasAttribute("data-selected")) {
             test_list.push(($(this).attr("data-test")));
         }
     });
 
     $.ajax({
-        beforeSend: function(xhr, settings) {
-          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-          }
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            }
         },
 
         type: 'POST',
@@ -186,23 +186,23 @@ function BulkRelease() {
             tests: JSON.stringify(test_list)
         },
 
-        success: function(data) {
-            if(data != null)
+        success: function (data) {
+            if (data != null)
                 window.location.href = data.redirect;
         }
     });
 };
 
-$(document).ready(function() {
-    if($("#id_type").val() == "A") {
+$(document).ready(function () {
+    if ($("#id_type").val() == "A") {
         $("#id_maximum_grade").val(1);
         $("#id_maximum_grade").prop("disabled", true);
         $("#id_minimum_grade").val(0);
         $("#id_minimum_grade").prop("disabled", true);
     }
 
-    $('#id_type').change(function() {
-        if($(this).val() == "A") {
+    $('#id_type').change(function () {
+        if ($(this).val() == "A") {
             $("#id_maximum_grade").val(1);
             $("#id_maximum_grade").prop("disabled", true);
             $("#id_minimum_grade").val(0);
@@ -216,23 +216,23 @@ $(document).ready(function() {
         }
     });
 
-    $("#createTestSave").click(function() {
+    $("#createTestSave").click(function () {
         $("#id_maximum_grade").prop("disabled", false);
         $("#id_minimum_grade").prop("disabled", false);
     });
 
-    $("#updateTestSave").click(function() {
+    $("#updateTestSave").click(function () {
         $("#id_maximum_grade").prop("disabled", false);
         $("#id_minimum_grade").prop("disabled", false);
     });
 
-    $('[id^="rel_button_"]').on("mousedown", function() {
+    $('[id^="rel_button_"]').on("mousedown", function () {
         i = $(this).find("i");
         current = $(this).attr("data-current") == "true";
 
-        if($(this).attr("data-selected") == "true") {
+        if ($(this).attr("data-selected") == "true") {
             i.removeClass("text-muted");
-            if(current)
+            if (current)
                 i.addClass("text-success");
             else
                 i.addClass("text-danger");
@@ -240,14 +240,14 @@ $(document).ready(function() {
             i.removeClass("grey-border");
             i.addClass("white-border");
             currentlySelected--;
-            if(currentlySelected == 0) {
-                $("#bulk-release-table").css("display","none");
-                $("#bulk-release-assign").css("display","none");
+            if (currentlySelected == 0) {
+                $("#bulk-release-table").css("display", "none");
+                $("#bulk-release-assign").css("display", "none");
             }
             return
         }
 
-        if(current)
+        if (current)
             i.removeClass("text-success");
         else
             i.removeClass("text-danger");
@@ -258,115 +258,125 @@ $(document).ready(function() {
         $(this).attr("data-selected", "true")
         currentlySelected++;
 
-        if(currentlySelected == 1) {
-            $("#bulk-release-table").css("display","inline");
-            $("#bulk-release-assign").css("display","inline");
+        if (currentlySelected == 1) {
+            $("#bulk-release-table").css("display", "inline");
+            $("#bulk-release-assign").css("display", "inline");
         }
     });
 
-    var table = $('#gradebook').on( 'processing.dt', function ( e, settings, processing ) {
-        $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
-      } ).DataTable({
-      "ordering": false,
-      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-      "scrollX": true,
+    var table = $('#gradebook').on('processing.dt', function (e, settings, processing) {
+        $('#processingIndicator').css('display', processing ? 'block' : 'none');
+    }).DataTable({
+        "ordering": false,
+        "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
 
-      "processing": true,
-      "language": { 'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
-                    'emptyTable': '<a class="float-left">No grades found!</a>'},
+        "sScrollX": "100%",
+        "scrollX": true,
+        "scrollY": "700",
 
-      "ajax": {
-        "url": $("#gradebook").attr("data-url"),
-        "method": "GET",
-        "data": {
-          "view": $("#gradebook").attr("data-view"),
+        "fixedColumns": true,
+        "fixedHeader": true,
+
+        "processing": true,
+        "language": {
+            'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
+            'emptyTable': '<a class="float-left">No grades found!</a>'
         },
-      },
 
-      createdRow: function( row, data, dataIndex ) {
-        // Set the data-status attribute, and add a class
-        $(row).find('td:eq(0)').addClass('s_class nowrap');
-
-        $(row).children(":not(.s_class)").each(function() {
-          a = $(this).find("a");
-          $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
-        });
-      },
-
-      drawCallback: function(settings){
-        var api = this.api();
-
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
-    });
-
-    var assign_table = $('#assignment_table').on( 'processing.dt', function ( e, settings, processing ) {
-        $('#processingIndicator').css( 'display', processing ? 'block' : 'none');
-      } ).DataTable({
-      "ordering": false,
-      "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-      "scrollX": true,
-
-      "processing": true,
-      "language": { 'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
-                    'emptyTable': '<a class="float-left">No grades found!</a>'},
-
-      "ajax": {
-        "url": $("#assignment_table").attr("data-url"),
-        "method": "GET",
-        "data": {
-          "view": $("#gradebook").attr("data-view"),
+        "ajax": {
+            "url": $("#gradebook").attr("data-url"),
+            "method": "GET",
+            "data": {
+                "view": $("#gradebook").attr("data-view"),
+            },
         },
-      },
 
-      createdRow: function( row, data, dataIndex ) {
-        // Set the data-status attribute, and add a class
-        $(row).find('td:eq(0)').addClass('s_class nowrap');
+        createdRow: function (row, data, dataIndex) {
+            // Set the data-status attribute, and add a class
+            $(row).find('td:eq(0)').addClass('s_class nowrap');
 
-        $(row).children(":not(.s_class)").each(function() {
-          a = $(this).find("a");
-          $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
-        });
-      },
+            $(row).children(":not(.s_class)").each(function () {
+                a = $(this).find("a");
+                $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
+            });
+        },
 
-      drawCallback: function(settings){
-        var api = this.api();
+        drawCallback: function (settings) {
+            var api = this.api();
 
-        $('td', api.table().container()).tooltip({
-           container: 'body'
-        });
-      }
+            $('td', api.table().container()).tooltip({
+                container: 'body'
+            });
+        }
     });
 
-    table.on('draw', function() {
-      if(!added_button_table) {
-        $("#gradebook_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-table" data-url="' + $("#gradebook").attr("data-rel-url") +'">Release/Retract</button>');
-        added_button_table = true;
-      }
-      $('[data-toggle="popover"]').popover();
-      updateColoring();
+    var assign_table = $('#assignment_table').on('processing.dt', function (e, settings, processing) {
+        $('#processingIndicator').css('display', processing ? 'block' : 'none');
+    }).DataTable({
+        "ordering": false,
+        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+        "scrollX": true,
+
+        "processing": true,
+        "language": {
+            'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
+            'emptyTable': '<a class="float-left">No grades found!</a>'
+        },
+
+        "ajax": {
+            "url": $("#assignment_table").attr("data-url"),
+            "method": "GET",
+            "data": {
+                "view": $("#gradebook").attr("data-view"),
+            },
+        },
+
+        createdRow: function (row, data, dataIndex) {
+            // Set the data-status attribute, and add a class
+            $(row).find('td:eq(0)').addClass('s_class nowrap');
+
+            $(row).children(":not(.s_class)").each(function () {
+                a = $(this).find("a");
+                $(this).attr("id", "gradeid_" + a.attr("id").split("_")[1] + "_" + a.attr("id").split("_")[2]);
+            });
+        },
+
+        drawCallback: function (settings) {
+            var api = this.api();
+
+            $('td', api.table().container()).tooltip({
+                container: 'body'
+            });
+        }
     });
 
-    assign_table.on('draw', function() {
-      if(!added_button_assign) {
-        $("#assignment_table_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-assign" data-url="' + $("#assignment_table").attr("data-rel-url") +'">Release/Retract</button>');
-        added_button_assign = true;
-      }
-      $('[data-toggle="popover"]').popover();
-      updateColoring();
+    table.on('draw', function () {
+        if (!added_button_table) {
+            $("#gradebook_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-table" data-url="' + $("#gradebook").attr("data-rel-url") + '">Release/Retract</button>');
+            added_button_table = true;
+        }
+        $('[data-toggle="popover"]').popover();
+        updateColoring();
     });
 
-    $('a[data-toggle="tab"]').on( 'shown.bs.tab', function (e) {
-        $('[id^="rel_button_"]').each(function() {
-            if($(this)[0].hasAttribute("data-selected")) {
+    assign_table.on('draw', function () {
+        if (!added_button_assign) {
+            $("#assignment_table_filter").prepend('<button onclick="BulkRelease()" class="btn btn-secondary" style="width: 189px; height:31px; display: none; padding: 0px 0px 0.1px; margin-right: 5px;" id="bulk-release-assign" data-url="' + $("#assignment_table").attr("data-rel-url") + '">Release/Retract</button>');
+            added_button_assign = true;
+        }
+        $('[data-toggle="popover"]').popover();
+        updateColoring();
+    });
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        $('[id^="rel_button_"]').each(function () {
+            if ($(this)[0].hasAttribute("data-selected")) {
                 $(this)[0].removeAttribute("data-selected");
                 i = $(this).find("i");
                 i.removeClass("text-muted");
                 i.removeClass("grey-border");
                 i.addClass("white-border");
-                if($(this).attr("data-current") == "true")
+                if ($(this).attr("data-current") == "true")
                     i.addClass("text-success");
                 else
                     i.addClass("text-danger");
@@ -376,11 +386,11 @@ $(document).ready(function() {
         $("#bulk-release-table").css("display", "none");
         $("#bulk-release-assign").css("display", "none");
 
-        $.fn.dataTable.tables( {visible: true, api: true} ).columns.adjust();
+        $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
         $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade");
     });
 
-    $(document).on('keydown keyup input click',  function (e) {
+    $(document).on('keydown keyup input click', function (e) {
         if ($('#gradeModal').is(':visible')) {
             if (e.which == 13) {
                 modalYesFunc();
@@ -389,155 +399,155 @@ $(document).ready(function() {
         }
     });
 
-    $("#modal_yes").on("mousedown", function() {
-      modalYesFunc();
+    $("#modal_yes").on("mousedown", function () {
+        modalYesFunc();
     });
 
-    $("#assignment_table").on("click", "td[id^='gradeid_']", function() {
-      if($("#can_edit").html().trim() == "False") {
-        return;
-      }
+    $("#assignment_table").on("click", "td[id^='gradeid_']", function () {
+        if ($("#can_edit").html().trim() == "False") {
+            return;
+        }
 
-      var i = $(this).find("i");
-      if(i.html().trim() == "done") {
-        $(this).find("a").attr("data-grade", 0.0);
-        i.html("loop");
-      }
-      else {
-        $(this).find("a").attr("data-grade", 1.0);
-        i.html("loop");
-      }
-
-      $(this).removeClass("success warning error loading");
-      $(this).addClass("loading");
-
-      var t = $(this)
-      var ids = $(this).attr('id').split('_');
-      var csrftoken = getCookie('csrftoken');
-      $.ajax({
-        beforeSend: function(xhr, settings) {
-          if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-            xhr.setRequestHeader("X-CSRFToken", csrftoken);
-          }
-        },
-
-        url: $(this).find("a").attr('data-url'),
-        data: {
-          'grade': $(this).find("a").attr("data-grade")
-        },
-
-        method: "POST",
-        dataType: 'json',
-
-        success: function(data) {
-          if(data.grade == 0) {
-            i.html("clear");
-          }
-          else {
-            i.html("done");
-          }
-          updateOrRemoveColoring(t);
-        },
-
-        error: function(data) {
-          if($(this).find("a").attr("data-grade") == 0) {
-            $(this).find("a").attr("data-grade", 1.0);
-            i.html("done");
-          }
-          else {
+        var i = $(this).find("i");
+        if (i.html().trim() == "done") {
             $(this).find("a").attr("data-grade", 0.0);
-            i.html("clear");
-          }
-          updateOrRemoveColoring(t);
+            i.html("loop");
         }
-      });
+        else {
+            $(this).find("a").attr("data-grade", 1.0);
+            i.html("loop");
+        }
+
+        $(this).removeClass("success warning error loading");
+        $(this).addClass("loading");
+
+        var t = $(this)
+        var ids = $(this).attr('id').split('_');
+        var csrftoken = getCookie('csrftoken');
+        $.ajax({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            },
+
+            url: $(this).find("a").attr('data-url'),
+            data: {
+                'grade': $(this).find("a").attr("data-grade")
+            },
+
+            method: "POST",
+            dataType: 'json',
+
+            success: function (data) {
+                if (data.grade == 0) {
+                    i.html("clear");
+                }
+                else {
+                    i.html("done");
+                }
+                updateOrRemoveColoring(t);
+            },
+
+            error: function (data) {
+                if ($(this).find("a").attr("data-grade") == 0) {
+                    $(this).find("a").attr("data-grade", 1.0);
+                    i.html("done");
+                }
+                else {
+                    $(this).find("a").attr("data-grade", 0.0);
+                    i.html("clear");
+                }
+                updateOrRemoveColoring(t);
+            }
+        });
     });
 
-    $("#gradebook").on('click', 'td[id^="gradeid_"]', function() {
-      if($("#can_edit").html().trim() == "False") {
-        return;
-      }
-      if($(this).find("i").length != 0) {
-        return;
-      }
-
-      if(highlighted != $(this).attr("id")) {
-
-        highlighted = $(this).attr("id")
-        remove_url = $(this).find("a").attr("data-remove-url")
-        var a = $(this).find("a").first();
-
-        var text = "<input type=number max=" + $(this).find("a").attr('data-grade-max') +
-          " class=\"grade-input\"" +
-          " min=" + $(this).find("a").attr('data-grade-min') +
-          " step=0.1" +
-          " old=\"" + a.html() + "\"" +
-          " id=\"" + a.attr("id") + "\"" +
-          " title=\"" + a.attr("title") + "\"" +
-          " data-grade=\"" + a.attr("data-grade") + "\"" +
-          " data-grade-min=\"" + a.attr("data-grade-min") + "\"" +
-          " data-grade-max=\"" + a.attr("data-grade-max") + "\"" +
-          " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"" +
-          " data-remove-url=\"" + remove_url + "\"/>";
-
-        if($(this).find("a").attr("data-grade") != "-") {
-          text += " <a id=\"remove_grade_a\">" +
-              "<i class=\"material-icons float-right\">" +
-              "delete_forever" +
-              "</i>" +
-            " </a>";
+    $("#gradebook").on('click', 'td[id^="gradeid_"]', function () {
+        if ($("#can_edit").html().trim() == "False") {
+            return;
+        }
+        if ($(this).find("i").length != 0) {
+            return;
         }
 
-        edit = $(text);
-        edit.val(a.html());
+        if (highlighted != $(this).attr("id")) {
 
-        edit.keypress(function(event) {
-          if (event.keyCode == 13) {
-            event.preventDefault();
-            edit.blur();
-          }
-        });
+            highlighted = $(this).attr("id")
+            remove_url = $(this).find("a").attr("data-remove-url")
+            var a = $(this).find("a").first();
 
-        a.replaceWith(edit);
+            var text = "<input type=number max=" + $(this).find("a").attr('data-grade-max') +
+                " class=\"grade-input\"" +
+                " min=" + $(this).find("a").attr('data-grade-min') +
+                " step=0.1" +
+                " old=\"" + a.html() + "\"" +
+                " id=\"" + a.attr("id") + "\"" +
+                " title=\"" + a.attr("title") + "\"" +
+                " data-grade=\"" + a.attr("data-grade") + "\"" +
+                " data-grade-min=\"" + a.attr("data-grade-min") + "\"" +
+                " data-grade-max=\"" + a.attr("data-grade-max") + "\"" +
+                " data-url=\"" + $(this).find("a").attr("data-edit-url") + "\"" +
+                " data-remove-url=\"" + remove_url + "\"/>";
 
-        $("#remove_grade_a").on("mousedown", function() {
-            $("#modal_yes").attr("data-id", highlighted);
-            $("#modal_yes").attr("data-url", remove_url);
-            $("#modal_yes").attr("func", "remove");
-            $("#modal-p").html("Are you sure you want to remove this grade?");
-            $("#gradeModal").modal("show");
-        });
+            if ($(this).find("a").attr("data-grade") != "-") {
+                text += " <a id=\"remove_grade_a\">" +
+                    "<i class=\"material-icons float-right\">" +
+                    "delete_forever" +
+                    "</i>" +
+                    " </a>";
+            }
 
-        edit.focus();
-        edit.blur(BlurEdit)
-      }
+            edit = $(text);
+            edit.val(a.html());
+
+            edit.keypress(function (event) {
+                if (event.keyCode == 13) {
+                    event.preventDefault();
+                    edit.blur();
+                }
+            });
+
+            a.replaceWith(edit);
+
+            $("#remove_grade_a").on("mousedown", function () {
+                $("#modal_yes").attr("data-id", highlighted);
+                $("#modal_yes").attr("data-url", remove_url);
+                $("#modal_yes").attr("func", "remove");
+                $("#modal-p").html("Are you sure you want to remove this grade?");
+                $("#gradeModal").modal("show");
+            });
+
+            edit.focus();
+            edit.blur(BlurEdit)
+        }
     });
 
     $("#lowerNum").bind('keyup mouseup', function () {
-      if(+$(this).val() <= +$("#upperNum").val()) {
-        oldfrom = $(this).val();
-        oldto = $("#upperNum").val();
-      }
-      else {
-        oldfrom = $("#upperNum").val();
-        oldto = $(this).val();
-      }
-      updateColoring();
+        if (+$(this).val() <= +$("#upperNum").val()) {
+            oldfrom = $(this).val();
+            oldto = $("#upperNum").val();
+        }
+        else {
+            oldfrom = $("#upperNum").val();
+            oldto = $(this).val();
+        }
+        updateColoring();
     });
 
     $("#upperNum").bind('keyup mouseup', function () {
-      if(+$(this).val() > +$("#lowerNum").val()) {
-        oldto = $(this).val();
-        oldfrom = $("#lowerNum").val();
-      }
-      else {
-        oldto = $("#lowerNum").val();
-        oldfrom = $(this).val();
-      }
-      updateColoring();
+        if (+$(this).val() > +$("#lowerNum").val()) {
+            oldto = $(this).val();
+            oldfrom = $("#lowerNum").val();
+        }
+        else {
+            oldto = $("#lowerNum").val();
+            oldfrom = $(this).val();
+        }
+        updateColoring();
     });
 
-    $(".clickable-row").click(function() {
+    $(".clickable-row").click(function () {
         window.location = $(this).data("href");
     });
 
@@ -558,7 +568,7 @@ $(document).ready(function() {
         table = $($(searchInput).data("target"))[0];
         tr = table.getElementsByTagName("tr");
 
-        for (i=0; i < tr.length; i++) {
+        for (i = 0; i < tr.length; i++) {
             if (i <= $($(searchInput).data("target")).data("skip-to-row")) {
                 continue;
             }
@@ -572,11 +582,11 @@ $(document).ready(function() {
                 }
             }
         }
-        if(target2 != null) {
+        if (target2 != null) {
             table = $(target2)[0];
             tr = table.getElementsByTagName("tr");
 
-            for (i=0; i < tr.length; i++) {
+            for (i = 0; i < tr.length; i++) {
                 if (i <= $(target2).data("skip-to-row")) {
                     continue;
                 }
@@ -593,8 +603,8 @@ $(document).ready(function() {
         }
     };
 
-    $("#searchInput").on('keyup', function() {
-        if($(this).data("target2") != "") {
+    $("#searchInput").on('keyup', function () {
+        if ($(this).data("target2") != "") {
             searchTable(this, $(this).data("target2"));
         }
     });
@@ -604,27 +614,27 @@ $(document).ready(function() {
     $spinner_box.addClass("d-none");
 
     // Study adviser students table search functions
-    $("#search_student_name").on('keyup', function() {
+    $("#search_student_name").on('keyup', function () {
         filter_sa_students();
     });
 
-    $("#search_student_number").on('keyup', function() {
+    $("#search_student_number").on('keyup', function () {
         filter_sa_students()
     });
 
     // Clear input field buttons
-    $("#clear-search-sname").on('click', function() {
-       $("#search_student_name").val("");
-       filter_sa_students();
+    $("#clear-search-sname").on('click', function () {
+        $("#search_student_name").val("");
+        filter_sa_students();
     });
 
-    $("#clear-search-snumber").on('click', function() {
-       $("#search_student_number").val("");
-       filter_sa_students();
+    $("#clear-search-snumber").on('click', function () {
+        $("#search_student_number").val("");
+        filter_sa_students();
     });
 
     // Human research table search function
-    $("#persons_search").on('keyup', function() {
+    $("#persons_search").on('keyup', function () {
         var $input, filter, $table, $tr, $tdNumber, $tdName, i;
         $input = $("#persons_search")[0];
         filter = $input.value.toLowerCase();
@@ -646,27 +656,27 @@ $(document).ready(function() {
 
     // Functions for creating a teacher when creating a person in HRM
     var $role_div = $("#form_role_teacher"),
-    $module_part_div = $("#form_module_part_teacher"),
-    $create_teacher_checkbox = $("#id_create_teacher"),
-    $role_teacher = $("#id_role_teacher"),
-    $module_part_teacher = $("#id_module_part_teacher");
+        $module_part_div = $("#form_module_part_teacher"),
+        $create_teacher_checkbox = $("#id_create_teacher"),
+        $role_teacher = $("#id_role_teacher"),
+        $module_part_teacher = $("#id_module_part_teacher");
     // Function that checks for a checked checkbox and changes a form
 
-    $create_teacher_checkbox.change(function() {
-       if ($role_teacher.attr('required') && $module_part_teacher.attr('required')) {
-           $role_teacher.removeAttr('required');
-           $module_part_teacher.removeAttr('required');
-       } else {
-           $role_teacher.attr('required', 'required');
-           $module_part_teacher.attr('required', 'required');
-       }
+    $create_teacher_checkbox.change(function () {
+        if ($role_teacher.attr('required') && $module_part_teacher.attr('required')) {
+            $role_teacher.removeAttr('required');
+            $module_part_teacher.removeAttr('required');
+        } else {
+            $role_teacher.attr('required', 'required');
+            $module_part_teacher.attr('required', 'required');
+        }
     });
 
     if ($create_teacher_checkbox.checked) {
         $role_div.show();
         $module_part_div.show();
     }
-    $create_teacher_checkbox.change(function() {
+    $create_teacher_checkbox.change(function () {
         if (this.checked) {
             $role_div.show();
             $module_part_div.show();
@@ -676,13 +686,13 @@ $(document).ready(function() {
         }
     });
 
-    $("#snackbarClose").on('click', function() {
+    $("#snackbarClose").on('click', function () {
         $("#snackbar").fadeOut(500);
     });
 
     // Switch the logout menu depending on screen size.
     // Also switches the column border on the Study Adviser index page
-    $(window).on('resize', function() {
+    $(window).on('resize', function () {
         var $userDropdown = $("#user-dropdown");
         var $columnBorder = $("#search_column");
         if ($(window).width() < 992) {
@@ -697,13 +707,13 @@ $(document).ready(function() {
     });
 
     //Functions for filtering the Study adviser index students list
-    $("#module_edition_filter").children().children().children().on('click', function() {
+    $("#module_edition_filter").children().children().children().on('click', function () {
         // $("#loading-spinner-box").show();
         var $spinner_box = $("#loading-spinner-box");
         $spinner_box.removeClass("d-none");
         $spinner_box.addClass("d-block");
         var module_edition_pks = [];
-        $("#module_edition_filter").children().children().children().each(function() {
+        $("#module_edition_filter").children().children().children().each(function () {
             if ($(this).prop("checked")) {
                 module_edition_pks.push(parseInt($(this).attr('id')));
             }
@@ -721,7 +731,7 @@ $(document).ready(function() {
                 dataType: 'json',
                 url: filterURL,
                 data: data_to_send,
-                success: function(response) {
+                success: function (response) {
                     person_pks_global = JSON.parse(response['person_pks']);
                     empty = response['empty'];
                     filter_sa_students();
@@ -731,12 +741,12 @@ $(document).ready(function() {
     });
 
     // Function for flipping the expand icon
-    $(".flip-list-item").on('click', function() {
+    $(".flip-list-item").on('click', function () {
         var $icon = $(this).find(".flip-icon");
         flip_icon($icon);
         var all_collapsed = false;
-        $(this).on('shown.bs.collapse hidden.bs.collapse', function() {
-            $(this).parent().children().each(function() {
+        $(this).on('shown.bs.collapse hidden.bs.collapse', function () {
+            $(this).parent().children().each(function () {
                 if ($(this).hasClass("collapsed")) {
                     all_collapsed = true;
                     // all_collapsed === true als 1 van de list items de collapsed klasse heeft
@@ -750,7 +760,7 @@ $(document).ready(function() {
         });
     });
 
-    $(".expand_collapse").on('click', function() {
+    $(".expand_collapse").on('click', function () {
         var $ul = $(this).parent().parent().parent().parent().find(".module_part_list");
         if (collapsed) {
             $(this).text("expand_less");
@@ -778,7 +788,7 @@ function filter_sa_students() {
     } else if (empty) {
         $tr.hide();
     } else {
-        $tr.each(function() {
+        $tr.each(function () {
             $tdName = $(this).children(".person_name");
             $tdNumber = $(this).children(".person_number");
             if ($tdName || $tdNumber) {
@@ -807,7 +817,7 @@ function expand_collapse_all(ul) {
             if ($(this).find(".flip-icon").text() === "expand_more") {
                 flip_icon($(this).find(".flip-icon"));
             }
-            $(this).children("div").each(function() {
+            $(this).children("div").each(function () {
                 $(this).collapse("show");
             })
         })
@@ -817,7 +827,7 @@ function expand_collapse_all(ul) {
             if ($(this).find(".flip-icon").text() === "expand_less") {
                 flip_icon($(this).find(".flip-icon"));
             }
-            $(this).children("div").each(function() {
+            $(this).children("div").each(function () {
                 $(this).collapse("hide");
             })
         })
@@ -828,7 +838,7 @@ function flip_icon(icon) {
     var $list_item = icon.parent().parent().parent();
     if (icon.text() === "expand_less" && $list_item.attr("aria-expanded") === "true") {
         icon.text("expand_more");
-    } else if (icon.text() === "expand_more" && $list_item.attr("aria-expanded") === "false"){
+    } else if (icon.text() === "expand_more" && $list_item.attr("aria-expanded") === "false") {
         icon.text("expand_less");
     }
 }
@@ -839,35 +849,37 @@ function deleteUser(userpk, studyingspk, url) {
         type: 'GET',
         dataType: 'json',
         url: url,
-        success: function(response) {
+        success: function (response) {
             var success = response['success'],
-            personpk = response['person_pk'],
-            personName = response['person_name'],
-            personNumber = response['person_number'],
-            moduleCode = response['module_code'],
-            moduleName = response['module_name'],
-            $modal = $("#confirmModal" + personpk),
-            $messageModal = $("#message" + personpk),
-            $snackbar = $("#snackbar"),
-            $snackbarMessage = $("#snackbarMessage"),
-            message = $messageModal.html();
+                personpk = response['person_pk'],
+                personName = response['person_name'],
+                personNumber = response['person_number'],
+                moduleCode = response['module_code'],
+                moduleName = response['module_name'],
+                $modal = $("#confirmModal" + personpk),
+                $messageModal = $("#message" + personpk),
+                $snackbar = $("#snackbar"),
+                $snackbarMessage = $("#snackbarMessage"),
+                message = $messageModal.html();
             if (success) {
                 var $tablerow = $("#row" + personpk);
                 $modal.modal('hide');
-                $tablerow.hide(1000, function() { $tablerow.remove() });
-                $snackbarMessage.html(personName + " (" + personNumber +") was successfully unenrolled from module "
+                $tablerow.hide(1000, function () {
+                    $tablerow.remove()
+                });
+                $snackbarMessage.html(personName + " (" + personNumber + ") was successfully unenrolled from module "
                     + moduleName + " (" + moduleCode + ").");
                 $snackbar.fadeIn(1000);
             } else {
                 $messageModal.html(personName + " (<span class='font-italic'>" + personNumber + "</span>) was <strong>not</strong> unenrolled from " +
                     moduleName + " (<span class='font-italic'>" + moduleCode + "</span>), because there are still grades in the system for this person.");
             }
-            $modal.on('hidden.bs.modal', function() {
+            $modal.on('hidden.bs.modal', function () {
                 // Resets the modal message
                 $messageModal.html(message);
             })
         },
-        error: function(xhr, status, errorThrown) {
+        error: function (xhr, status, errorThrown) {
             console.log(status);
             console.log(errorThrown)
             // Oops, something went wrong
@@ -876,86 +888,86 @@ function deleteUser(userpk, studyingspk, url) {
 
 }
 
-jQuery(document).ready(function($) {
-  $('[data-toggle="tooltip"]').tooltip();
+jQuery(document).ready(function ($) {
+    $('[data-toggle="tooltip"]').tooltip();
 
-  if($('#colortoggle').hasClass("coloron")) {
-    $('[id^="gradeid_"]').each(function(index) {
-      var grade = $(this).find("a").attr("data-grade");
-      var mult = $(this).find("a").attr("data-grade-max")/10;
-      var color = $(this).attr("data-always-color");
+    if ($('#colortoggle').hasClass("coloron")) {
+        $('[id^="gradeid_"]').each(function (index) {
+            var grade = $(this).find("a").attr("data-grade");
+            var mult = $(this).find("a").attr("data-grade-max") / 10;
+            var color = $(this).attr("data-always-color");
 
-      if(+grade > ((+data.to)*mult)) {
-        $(this).removeClass("success warning error loading");
-        $(this).addClass("success");
-      }
-      else if(+grade >= ((+data.from)*mult)){
-        $(this).removeClass("success warning error loading");
-        $(this).addClass("warning");
-      }
-      else if(+grade < ((+data.from)*mult)) {
-        $(this).removeClass("success warning error loading");
-        $(this).addClass("error");
-      }
-      else if(grade = 'N' && color == 'True') {
-        $(this).removeClass("success warning error loading");
-        $(this).addClass("error");
-      }
-    });
-  }
+            if (+grade > ((+data.to) * mult)) {
+                $(this).removeClass("success warning error loading");
+                $(this).addClass("success");
+            }
+            else if (+grade >= ((+data.from) * mult)) {
+                $(this).removeClass("success warning error loading");
+                $(this).addClass("warning");
+            }
+            else if (+grade < ((+data.from) * mult)) {
+                $(this).removeClass("success warning error loading");
+                $(this).addClass("error");
+            }
+            else if (grade = 'N' && color == 'True') {
+                $(this).removeClass("success warning error loading");
+                $(this).addClass("error");
+            }
+        });
+    }
 });
 
-$('#colortoggle').click(function() {
-  if($(this).hasClass("coloron")) {
-    $(this).removeClass("coloron");
-    $(this).addClass("coloroff");
-    $('#coloricon').html("invert_colors");
+$('#colortoggle').click(function () {
+    if ($(this).hasClass("coloron")) {
+        $(this).removeClass("coloron");
+        $(this).addClass("coloroff");
+        $('#coloricon').html("invert_colors");
 
-    $('[id^="gradeid_"]').each(function(index) {
-      $(this).removeClass("success warning error loading");
-    });
-  }
-  else {
-    $(this).removeClass("coloroff");
-    $(this).addClass("coloron");
-    $('#coloricon').html("invert_colors_off");
+        $('[id^="gradeid_"]').each(function (index) {
+            $(this).removeClass("success warning error loading");
+        });
+    }
+    else {
+        $(this).removeClass("coloroff");
+        $(this).addClass("coloron");
+        $('#coloricon').html("invert_colors_off");
 
-    updateColoring();
-  }
+        updateColoring();
+    }
 });
 
 function updateOrRemoveColoring(select) {
-   if($("#colortoggle").hasClass("coloron")) {
-      updateColoring();
+    if ($("#colortoggle").hasClass("coloron")) {
+        updateColoring();
     }
     else {
-      select.removeClass("loading");
+        select.removeClass("loading");
     }
 }
 
 function updateColoring() {
-  if($("#colortoggle").hasClass("coloron")) {
-    $('[id^="gradeid_"]').each(function(index) {
-      $(this).removeClass("success warning error loading");
-      var color = $(this).attr('data-always-color');
-      var grade = $(this).find("a").attr("data-grade");
-      var mult = $(this).find("a").attr("data-grade-max")/10;
+    if ($("#colortoggle").hasClass("coloron")) {
+        $('[id^="gradeid_"]').each(function (index) {
+            $(this).removeClass("success warning error loading");
+            var color = $(this).attr('data-always-color');
+            var grade = $(this).find("a").attr("data-grade");
+            var mult = $(this).find("a").attr("data-grade-max") / 10;
 
-      if($(this).attr("color")) {
-        $(this).addClass($(this).attr("color"));
-      }
-      else if(+grade > ((+oldto)*mult)) {
-        $(this).addClass("success");
-      }
-      else if(+grade >= ((+oldfrom)*mult)){
-        $(this).addClass("warning");
-      }
-      else if(+grade < ((+oldfrom)*mult)) {
-        $(this).addClass("error");
-      }
-      else if(grade = 'N' && color == 'True') {
-        $(this).addClass("error");
-      }
-    });
-  }
+            if ($(this).attr("color")) {
+                $(this).addClass($(this).attr("color"));
+            }
+            else if (+grade > ((+oldto) * mult)) {
+                $(this).addClass("success");
+            }
+            else if (+grade >= ((+oldfrom) * mult)) {
+                $(this).addClass("warning");
+            }
+            else if (+grade < ((+oldfrom) * mult)) {
+                $(this).addClass("error");
+            }
+            else if (grade = 'N' && color == 'True') {
+                $(this).addClass("error");
+            }
+        });
+    }
 }

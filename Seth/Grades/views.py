@@ -501,7 +501,7 @@ class EmailBulkTestReleasedPreviewView(FormView):
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         mod_ed = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
-        person = Person.objects.filter(user=self.request.user)
+        person = Person.objects.filter(user=self.request.user).first()
         if is_coordinator_of_module(person, mod_ed):
             return super(EmailBulkTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
@@ -547,7 +547,7 @@ class EmailTestReleasedPreviewView(FormView):
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         test = get_object_or_404(Test, pk=kwargs['pk'])
-        person = Person.objects.filter(user=self.request.user)
+        person = Person.objects.filter(user=self.request.user).first()
         if is_coordinator_of_module(person, test.module_part.module_edition):
             return super(EmailTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
