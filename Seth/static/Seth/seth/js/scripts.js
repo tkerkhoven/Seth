@@ -314,8 +314,15 @@ $(document).ready(function () {
         $('#processingIndicator').css('display', processing ? 'block' : 'none');
     }).DataTable({
         "ordering": false,
-        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+        "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
+
+        "sScrollX": "100%",
         "scrollX": true,
+        "scrollY": "700",
+
+        "fixedColumns": true,
+        "fixedHeader": true,
+
 
         "processing": true,
         "language": {
