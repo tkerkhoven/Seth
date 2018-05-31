@@ -172,9 +172,15 @@ def import_module(request, pk):
                         try:
                             test = Test.objects.filter(
                                 pk=sheet[table][title_row][title_index])
-                            if test and test.filter(module_part__module_edition=module_edition):
-                                test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
-                                any_tests = True
+
+                            if test:
+                                if test.filter(module_part__module_edition=module_edition):
+                                    test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
+                                    any_tests = True
+                                else:
+                                    return bad_request(request,
+                                                       {'message': 'Attempt to register grades for a test that is not '
+                                                                   'part of this module.'})
                         except (ValueError, TypeError):
                             # search by name
                             if Test.objects.filter(
@@ -309,9 +315,14 @@ def import_module_part(request, pk):
                         try:
                             test = Test.objects.filter(
                                 pk=sheet[table][title_row][title_index])
-                            if test and test.filter(module_part=module_part):
-                                test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
-                                any_tests = True
+                            if test:
+                                if test.filter(module_part=module_part):
+                                    test_rows[title_index] = sheet[table][title_row][title_index]  # pk of Test
+                                    any_tests = True
+                                else:
+                                    return bad_request(request,
+                                                       {'message': 'Attempt to register grades for a test that is not '
+                                                                   'part of this module part.'})
                         except (ValueError, TypeError):
                             pass  # Not an int.
                         # search by name

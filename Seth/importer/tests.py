@@ -452,6 +452,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+
         self.assertTrue(
             'Attempt to register grades for a test that is not part of this module' in response.content.decode())
 
@@ -1005,10 +1006,8 @@ class ImporterTest(TestCase):
                                     {'title': 'test.xlsx', 'file': file})
         self.assertTemplateUsed(response, 'importer/students-module-imported.html')
 
-        self.assertEqual(
-            [['Pietje Puk 1', 's13371', 'Parels der Informatica', '2017-201300070-A1']],
-            response.context[0]['context']['failed']
-        )
+        self.assertTrue(Person.objects.get(university_number=university_number).name == 'Pietje PPPuk')
+        self.assertTrue(Person.objects.get(university_number=university_number).email == 'leet@example.com')
 
         if not Person.objects.filter(university_number=university_number):
             self.fail('Person imported to module does not exist.')
