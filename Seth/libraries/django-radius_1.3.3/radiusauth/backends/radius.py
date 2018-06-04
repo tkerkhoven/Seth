@@ -170,6 +170,7 @@ class RADIUSBackend(object):
         None.
         """
         if isinstance(username, basestring):
+            username = username.lower()
             username = username.encode('utf-8')
 
         if isinstance(password, basestring):
