@@ -206,7 +206,7 @@ class Studying(models.Model):
     person = models.ForeignKey(Person, on_delete=CASCADE)
     # study = models.ForeignKey(Study)
     module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
-    role = models.CharField(max_length=32)
+    role = models.CharField(max_length=32, blank=True)
 
     class Meta:
         unique_together = (('person', 'module_edition'),)
