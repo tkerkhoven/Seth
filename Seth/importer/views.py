@@ -683,7 +683,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
             '({}-{}).'.format(student.name, student.university_number, test.name, grade, test.minimum_grade,
                               test.maximum_grade))
 
-    try:
+    # try:
         grade_obj = Grade(
             student=student,
             teacher=corrector,
@@ -692,9 +692,9 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
             time=timezone.now(),
             description=description
         )
-    except Exception as e:
-        raise GradeException(e)
-    return grade_obj
+    # except Exception as e:
+    #     raise GradeException(e)
+    # return grade_obj
 
 
 def save_grades(grades):
@@ -707,7 +707,7 @@ def save_grades(grades):
     try:
         Grade.objects.bulk_create([grade for grade in grades if grade is not None])
     except Exception as e:
-        raise GradeException('Error when saving grades to te database.')
+        raise GradeException('Error when saving grades to te database.' + str(e))
 
 
 @login_required

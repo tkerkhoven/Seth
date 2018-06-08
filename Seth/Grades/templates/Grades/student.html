@@ -24,7 +24,7 @@
     {% include 'navbar.html' with active_page="gradebook" ta=True %}
     {% load grade_extras %}
     {% if studentname %}
-        <div class="container-fluid">
+        <div class="container">
             <div class="row">
                 <div class="col-lg-12">
                     <h1 class="display-4">
@@ -63,7 +63,7 @@
                                         <i class="material-icons md-24 flip-icon">expand_more</i>
                                     </span>
                                 </a>
-                                <div id="collapsePart{{ module_part.id }}" class="collapse" data-id="{{ module_part.id }}">
+                                <div>
                                     <hr class="mb-0">
                                     <div class="table-overflow mt-2">
                                         <table id="studentbook_assignments_{{ module_part.id }}" class="table table-bordered table-responsive-lg mb-0">
@@ -80,15 +80,15 @@
                                                 {% for test in tests|key:module_part %}
 
                                                     {% with grade=grades|key:test.id %}
-                                                        <tr data-toggle="collapse" data-target="#accordion" class="clickable">
+                                                        <tr data-toggle="collapse" data-target="#accordion_{{ test.id }}" class="clickable">
                                                             <td>{{ test.name }}</td>
                                                                 <td id="gradeid_{{ test.id }}" data-grade="{{ grade.grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                                    <a data-toggle="tooltip" title="{{ grade.grade }}">{{ grade.grade|round }}/<a class="text-muted">{{ test.maximum_grade }}</a></a>
+                                                                    <a>{{ grade.grade|round }}/<a class="text-muted">{{ test.maximum_grade }}</a></a>
                                                                 </td>
                                                         </tr>
 
                                                         {% if grade.description %}
-                                                        <tr id="accordion" class="collapse">
+                                                        <tr id="accordion_{{ test.id }}" class="collapse">
                                                             <td colspan="2">
                                                                 <div>{{ grade.description|linebreaks }}</div>
                                                             </td>
