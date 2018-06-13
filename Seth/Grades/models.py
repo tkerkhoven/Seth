@@ -26,7 +26,7 @@ class Module(models.Model):
 class Person(models.Model):
     name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
-    email = models.EmailField(verbose_name='Student e-mail', null=True)
+    email = models.EmailField(verbose_name='E-mail', null=True)
     user = models.ForeignKey(User, null=True, blank=True, on_delete=CASCADE)
 
     @property
@@ -206,7 +206,7 @@ class Studying(models.Model):
     person = models.ForeignKey(Person, on_delete=CASCADE)
     # study = models.ForeignKey(Study)
     module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
-    role = models.CharField(max_length=32)
+    role = models.CharField(max_length=32, blank=True)
 
     class Meta:
         unique_together = (('person', 'module_edition'),)

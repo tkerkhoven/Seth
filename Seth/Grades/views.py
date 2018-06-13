@@ -200,8 +200,7 @@ class StudentView(generic.DetailView):
 
         # Get all module edition the students participates in.
         modules_list = ModuleEdition.objects \
-            .filter(studying__person=person) \
-            .order_by('id')
+            .filter(studying__person=person)
 
         # Get all module parts and tests in these module editions.
         for module in modules_list:
