@@ -71,7 +71,7 @@
                                                 {% if tests|key:module_part %}
                                                 <tr>
                                                     <th>Test</th>
-                                                    <th>Grade</th>
+                                                    <th style="width: 8em">Grade</th>
                                                 </tr>
                                                 {% endif %}
                                             </thead>
@@ -83,7 +83,7 @@
                                                         <tr data-toggle="collapse" data-target="#accordion_{{ test.id }}" class="clickable">
                                                             <td>{{ test.name }}</td>
                                                                 <td id="gradeid_{{ test.id }}" data-grade="{{ grade.grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                                    <a>{{ grade.grade|round }}/<a class="text-muted">{{ test.maximum_grade }}</a></a>{% if grade.description %}<i class="material-icons md-24 outline">message</i>{% endif %}
+                                                                    <a>{{ grade.grade|round }}/<a class="text-muted">{{ test.maximum_grade }}</a></a>{% if grade.description %} <i class="material-icons md-24">message</i>{% endif %}
                                                                 </td>
                                                         </tr>
 
