@@ -234,8 +234,8 @@ class Grade(models.Model):
     teacher = models.ForeignKey(Person, related_name='Correcter', on_delete=CASCADE)
     student = models.ForeignKey(Person, related_name='Submitter', on_delete=CASCADE)
     time = models.DateTimeField(default=timezone.now)
-    description = models.CharField(max_length=255, blank=True)
-    grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
+    description = models.CharField(max_length=10000, blank=True)
+    grade = models.DecimalField(max_digits=20, decimal_places=1, default=1.0)
     released = models.BooleanField(default=False)
 
     def __str__(self):

@@ -191,13 +191,12 @@ class StudentView(generic.DetailView):
         grades_list = Grade.objects \
             .prefetch_related('test') \
             .filter(student=person, test__released=True) \
-            .values('grade', 'test') \
             .order_by('test_id', '-id') \
             .distinct('test_id')
 
         # Add them to a easy-to-use dictionary
         for grade in grades_list:
-            grades_dict[grade['test']] = grade['grade']
+            grades_dict[grade.test.id] = grade
 
         # Get all module edition the students participates in.
         modules_list = ModuleEdition.objects \
