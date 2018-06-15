@@ -668,14 +668,14 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
     if grade == '':
         return  # Field is empty, assume it does not need to be imported.
     try:
-        float(grade)
+        float_grade = float(grade)
     except (ValueError, TypeError):
         if test.type == 'A':
             grade = 1
         else:
             raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
                                  .format(grade, student.name, test))  # Probably a typo, give an error.
-    if test.minimum_grade > grade or grade > test.maximum_grade:
+    if test.minimum_grade > float_grade or float_grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
             '({}-{}).'.format(student.name, student.university_number, test.name, grade, test.minimum_grade,
@@ -686,7 +686,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
             student=student,
             teacher=corrector,
             test=test,
-            grade=grade,
+            grade=float_grade,
             time=timezone.now(),
             description=description
         )
