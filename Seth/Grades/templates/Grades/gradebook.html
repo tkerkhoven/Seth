@@ -166,9 +166,9 @@
                                             {% endfor %}
                                         </tr>
                                         <tr>
-                                            <td></td>
+                                            <th class="nowrap"></th>
                                             {% for test in tests %}
-                                            <td class="no-sort nowrap">
+                                            <th class="no-sort nowrap">
                                                 <a title="Grade: {{ test.minimum_grade|round }}-{{ test.maximum_grade|round }}" href="{% url 'grades:test' pk=test.id %}"> {{ test.name }} </a>
                                                 <br>
                                                 {% if test.released %}
@@ -188,7 +188,7 @@
                                                 </a>
                                                 {% endif %}
                                                 {% endif %}
-                                            </td>
+                                            </th>
                                             {% endfor %}
                                         </tr>
                                         </thead>
@@ -210,9 +210,9 @@
                                             {% endfor %}
                                         </tr>
                                         <tr>
-                                            <td class="nowrap"></td>
+                                            <th class="nowrap"></th>
                                             {% for assignment in assignments %}
-                                            <td class="no-sort">
+                                            <th class="no-sort nowrap">
                                                 <a href="{% url 'grades:test' pk=assignment.id %}">{{ assignment.name }}</a>
                                                 <br>
                                                 {% if assignment.released %}
@@ -233,7 +233,7 @@
                                                 </a>
                                                 {% endif %}
                                                 {% endif %}
-                                            </td>
+                                            </th>
                                             {% endfor %}
                                         </tr>
                                         </thead>

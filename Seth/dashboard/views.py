@@ -36,35 +36,32 @@ class DashboardView(View):
             context = {
                 'modules': self.make_modules_context()['module_editions'],
                 'time': get_current_date(),
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/index.html', context)
         if pu.is_study_adviser(person):
             return redirect('sa_dashboard')
             # return render(request, 'dashboard/sa_index.html')
         if pu.is_teacher(person):
-            print(self.make_module_parts_context()['module_parts'])
             context = {
                 'module_parts': self.make_module_parts_context()['module_parts'],
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/teacher_index.html', context)
         if pu.is_teaching_assistant(person):
-            print(Person.objects.filter(user=request.user))
             context = {
                 'module_parts': self.make_module_parts_context()['module_parts'],
-                'person': Person.objects.filter(user=request.user)[0]
+                'person': person
             }
             return render(request, 'dashboard/ta_index.html', context)
         if pu.is_student(person):
-            studying = Studying.objects.filter(person=person)
-            return redirect('grades:student', studying.get(person__user=self.request.user).person.id)
+            return redirect('grades:student', person.id)
         else:
             return redirect('not_in_seth')
 
     def make_modules_context(self):
-        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).prefetch_related(
-            'modulepart_set__test_set')
+        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user) \
+            .prefetch_related('modulepart_set__test_set')
         context = dict()
         context['module_editions'] = []
         num_grades = dict()
@@ -98,8 +95,8 @@ class DashboardView(View):
         return context
 
     def make_module_parts_context(self):
-        module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
-            'test_set')
+        module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user) \
+            .prefetch_related('test_set')
         num_grades = dict()
 
         for test in Test.objects.filter(module_part__teacher__person__user=self.request.user).annotate(num_grades=Count('grade__student', distinct=True)):
@@ -216,8 +213,8 @@ def not_found(request):
     return render(request, 'errors/404.html', status=404)
 
 
-def permission_denied(request):
-    return render(request, 'errors/403.html', status=403, )
+def permission_denied(request, exception):
+    return render(request, 'errors/403.html', status=403, context={'exception': exception})
 
 
 def bad_request(request, context):

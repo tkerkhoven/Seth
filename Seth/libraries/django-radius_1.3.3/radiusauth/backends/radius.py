@@ -57,27 +57,6 @@ ATTRIBUTE   Framed-AppleTalk-Zone   39  string
 REALM_SEPARATOR = '@'
 
 
-def utf8_encode_args(f):
-    """Decorator to encode string arguments as UTF-8"""
-    def encoded(self, *args, **kwargs):
-        nargs = []
-        for arg in args:
-            if isinstance(arg, basestring):
-                arg = arg.encode('utf-8')
-            nargs.append(arg)
-        nkwargs = {}
-        for key, val in list(kwargs.items()):
-            if isinstance(val, basestring):
-                val = val.encode('utf-8')
-            nkwargs[key] = val
-        print(self)
-        print(nargs)
-        print(nkwargs)
-        print(f)
-        return f(self, *nargs, **nkwargs)
-    return encoded
-
-
 class RADIUSBackend(object):
     """
     Standard RADIUS authentication backend for Django. Uses the server details
@@ -111,10 +90,12 @@ class RADIUSBackend(object):
         Get the pyrad client for a given server. RADIUS server is described by
         a 3-tuple: (<hostname>, <port>, <secret>).
         """
-        return Client(server=server[0],
-                      authport=server[1],
-                      secret=server[2],
-                      dict=self._get_dictionary())
+        return Client(
+            server=server[0],
+            authport=server[1],
+            secret=server[2],
+            dict=self._get_dictionary(),
+        )
 
     def _get_server_from_settings(self):
         """
@@ -123,7 +104,7 @@ class RADIUSBackend(object):
         return (
             settings.RADIUS_SERVER,
             settings.RADIUS_PORT,
-            settings.RADIUS_SECRET.encode('utf-8')
+            settings.RADIUS_SECRET.encode('utf-8'),
         )
 
     def _perform_radius_auth(self, client, packet):
@@ -171,36 +152,35 @@ class RADIUSBackend(object):
         doesn't already exist. If `password` is given, then set the user's
         password to that (regardless of whether the user was created or not).
         """
-
-        username = username.lower()
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            user = User.objects.create(username=username)
-            # user.save()
+            user = User(username=username)
 
-        # Password saving functionality disabled
+        ## Disable password caching
         # if password is not None:
         #     user.set_password(password)
         #     user.save()
 
         return user
 
-    # @utf8_encode_args
-    def authenticate(self, username, password):
+    def authenticate(self, request, username=None, password=None):
         """
         Check credentials against RADIUS server and return a User object or
         None.
         """
-        username = username.lower()
-        username = username.encode('utf-8')
-        password = password.encode('utf-8')
+        if isinstance(username, basestring):
+            username = username.encode('utf-8')
+
+        if isinstance(password, basestring):
+            password = password.encode('utf-8')
 
         server = self._get_server_from_settings()
         result = self._radius_auth(server, username, password)
 
         if result:
-            return self.get_django_user(username.decode('utf-8'))
+            # Disabled password caching by not passing password argument.
+            return self.get_django_user(username, None)
 
         return None
 
@@ -248,17 +228,18 @@ class RADIUSRealmBackend(RADIUSBackend):
         """
         return '%s@%s' % (username, realm)
 
-    # @utf8_encode_args
-    def authenticate(self, username, password, realm):
+    def authenticate(self, request, username=None, password=None, realm=None):
         """
         Check credentials against the RADIUS server identified by `realm` and
         return a User object or None. If no argument is supplied, Django will
         skip this backend and try the next one (as a TypeError will be raised
         and caught).
         """
+        if isinstance(username, basestring):
+            username = username.encode('utf-8')
 
-        username = username.encode('utf-8')
-        password = password.encode('utf-8')
+        if isinstance(password, basestring):
+            password = password.encode('utf-8')
 
         server = self.get_server(realm)
 

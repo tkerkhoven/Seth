@@ -191,18 +191,16 @@ class StudentView(generic.DetailView):
         grades_list = Grade.objects \
             .prefetch_related('test') \
             .filter(student=person, test__released=True) \
-            .values('grade', 'test') \
             .order_by('test_id', '-id') \
             .distinct('test_id')
 
         # Add them to a easy-to-use dictionary
         for grade in grades_list:
-            grades_dict[grade['test']] = grade['grade']
+            grades_dict[grade.test.id] = grade
 
         # Get all module edition the students participates in.
         modules_list = ModuleEdition.objects \
-            .filter(studying__person=person) \
-            .order_by('id')
+            .filter(studying__person=person)
 
         # Get all module parts and tests in these module editions.
         for module in modules_list:
@@ -501,7 +499,7 @@ class EmailBulkTestReleasedPreviewView(FormView):
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         mod_ed = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
-        person = Person.objects.filter(user=self.request.user)
+        person = Person.objects.filter(user=self.request.user).first()
         if is_coordinator_of_module(person, mod_ed):
             return super(EmailBulkTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:
@@ -547,7 +545,7 @@ class EmailTestReleasedPreviewView(FormView):
     # Check permissions
     def dispatch(self, request, *args, **kwargs):
         test = get_object_or_404(Test, pk=kwargs['pk'])
-        person = Person.objects.filter(user=self.request.user)
+        person = Person.objects.filter(user=self.request.user).first()
         if is_coordinator_of_module(person, test.module_part.module_edition):
             return super(EmailTestReleasedPreviewView, self).dispatch(request, *args, **kwargs)
         else:

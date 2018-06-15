@@ -665,33 +665,35 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
     :param description: An optional description.
     :return: A grade object, or None (:param grade is empty).
     """
+    interpreted_grade = 0
+
     if grade == '':
         return  # Field is empty, assume it does not need to be imported.
     try:
-        float_grade = float(grade)
+        interpreted_grade = float(grade)
     except (ValueError, TypeError):
         if test.type == 'A':
             grade = 1
         else:
             raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
                                  .format(grade, student.name, test))  # Probably a typo, give an error.
-    if test.minimum_grade > float_grade or float_grade > test.maximum_grade:
+    if test.minimum_grade > interpreted_grade or interpreted_grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
             '({}-{}).'.format(student.name, student.university_number, test.name, grade, test.minimum_grade,
                               test.maximum_grade))
 
-    try:
-        grade_obj = Grade(
-            student=student,
-            teacher=corrector,
-            test=test,
-            grade=float_grade,
-            time=timezone.now(),
-            description=description
-        )
-    except Exception as e:
-        raise GradeException(e)
+    # try:
+    grade_obj = Grade(
+        student=student,
+        teacher=corrector,
+        test=test,
+        grade=interpreted_grade,
+        time=timezone.now(),
+        description=description
+    )
+    # except Exception as e:
+    #     raise GradeException(e)
     return grade_obj
 
 
@@ -705,7 +707,7 @@ def save_grades(grades):
     try:
         Grade.objects.bulk_create([grade for grade in grades if grade is not None])
     except Exception as e:
-        raise GradeException('Error when saving grades to te database.')
+        raise GradeException('Error when saving grades to te database.' + str(e))
 
 
 @login_required
@@ -806,6 +808,12 @@ def import_student_to_module(request, pk):
                             'email': students_to_module[i][2],
                         }
                     )
+
+                    # Update name and email
+                    student.name = students_to_module[i][1]
+                    student.email = students_to_module[i][2]
+                    student.save()
+
                     if created:
                         context['created'].append([student.name, student.full_id])
 
