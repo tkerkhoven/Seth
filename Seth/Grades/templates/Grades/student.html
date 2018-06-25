@@ -83,7 +83,7 @@
                                                         <tr data-toggle="collapse" data-target="#accordion_{{ test.id }}" class="clickable">
                                                             <td>{{ test.name }}</td>
                                                                 <td id="gradeid_{{ test.id }}" data-grade="{{ grade.grade|round }}" data-grade-min="{{ test.minimum_grade }}" data-grade-max="{{ test.maximum_grade }}">
-                                                                    <a>{{ grade.grade|round }}/<a class="text-muted">{{ test.maximum_grade }}</a></a>{% if grade.description %} <i class="material-icons md-24">message</i>{% endif %}
+                                                                    <a>{{ grade.grade|round }}/<a class="text-muted">{{ test.maximum_grade }}</a></a>{% if grade.description %} <i class="material-icons md-24" title="Click row to see feedback">message</i>{% endif %}
                                                                 </td>
                                                         </tr>
 
@@ -103,22 +103,32 @@
                                                     <th>Assignments</th>
                                                     <th>Done</th>
                                                 </tr>
-                                                <tr>
+                                                <tr data-toggle="collapse" data-target=".accordion_mp{{ module_part.id }}" class="clickable">
                                                     <td>
-                                                        {% for assignment in assignments|key:module_part %}
-                                                            {% if assignment in name_override %}
-                                                                {{ name_override|key:assignment }}{% if forloop.counter != assignments|key:module_part|length %},
-                                                                {% endif %}
-                                                            {% else %}
-                                                                {{ assignment.name }}{% if forloop.counter != assignments|key:module_part|length %},
-                                                                {% endif %}
-                                                            {% endif %}
+                                                        {% for assignment in name_override %}
+                                                            {{ name_override|key:assignment }}
+                                                            {% if forloop.counter != name_override|length %},{% endif %}
                                                         {% endfor %}
+                                                         <i class="material-icons md-24" title="Click row to see the full list">message</i>
                                                     </td>
-                                                    <td>
+                                                    <td >
                                                         <i class="material-icons text-success">check_circle</i>
                                                     </td>
                                                 </tr>
+                                                {% for assignment in assignments|key:module_part %}
+                                                <tr class="accordion_mp{{ module_part.id }} collapse table-hover" style="background-color: rgba(0,0,0,.03)">
+                                                    <td>
+                                                        {{ assignment.name }}
+                                                    </td>
+                                                    <td >
+                                                        {% if grades|key:assignment.id|grade_od > 0 %}
+                                                        <i class="material-icons text-success">check_circle</i>
+                                                        {% else %}
+                                                        <i class="material-icons text-danger">cancel</i>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
                                                 {% else %}
 {#                                                    This temporarily fixes mudule parts without sign off assignments showing a text #}
 {#                                                     that implies they do exist, which confuses users #}

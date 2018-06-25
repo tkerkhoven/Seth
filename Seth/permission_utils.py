@@ -59,13 +59,13 @@ def is_study_adviser_of_study(person, study):
 
 
 def is_coordinator_assistant(person):
-    result = person and Coordinator.objects.filter(person=person, is_assistant=True)
-    return result.count() > 0
+    result = Coordinator.objects.filter(person=person, is_assistant=True)
+    return person and result.count() > 0
 
 
 def is_coordinator_assistant_of_module(person, module_edition):
-    result = person and Coordinator.objects.filter(person=person, is_assistant=True, module_edition=module_edition)
-    return result.count() > 0
+    result = Coordinator.objects.filter(person=person, is_assistant=True, module_edition=module_edition)
+    return person and result.count() > 0
 
 
 def is_coordinator_or_assistant(person):

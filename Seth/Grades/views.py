@@ -228,27 +228,28 @@ class StudentView(generic.DetailView):
 
                 # Replace the assignments with a string (Ex: x to x, x, x, x to x)
                 for assignment in assignments:
-                    if assignment.id in grades_dict and grades_dict[assignment.id] == 1.0:
+                    if assignment.id in grades_dict and grades_dict[assignment.id].grade == 1.0:
                         if streak > 0:
                             current = str(start.name) + " to " + str(assignment.name)
                             remove_list.append(assignment)
                             streak += 1
                         else:
                             start = assignment
+                            current = str(start.name)
                             streak = 1
                     else:
                         remove_list.append(assignment)
                         if streak > 0:
-                            if streak > 1:
-                                name_override_dict[start] = current
+                            # if streak > 1:
+                            name_override_dict[start] = current
                             streak = 0
                             start = None
 
                 if streak > 1:
                     name_override_dict[start] = current
 
-                for remove in remove_list:
-                    assignments.remove(remove)
+                # for remove in remove_list:
+                #     assignments.remove(remove)
 
                 assignments_dict[module_part] = assignments
 
