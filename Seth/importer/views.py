@@ -13,6 +13,8 @@ from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
 from django.views.decorators.http import require_http_methods, require_GET
+from django.views.generic import TemplateView
+
 from permission_utils import *
 
 from dashboard.views import bad_request
@@ -146,6 +148,9 @@ def import_module(request, pk):
             # Check if /any/ tests and/or grades are imported.
             any_tests = False
 
+            # List of all tests that are imported.
+            all_tests = []
+
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
                 # Check if the sheet has enough rows
@@ -199,8 +204,11 @@ def import_module(request, pk):
 
                 # Retrieve Test object beforehand to validate permissions on tests and speed up Grade creation
                 tests = dict()
+                test_prefetch = Test.objects.prefetch_related('module_part__module_edition__module')
                 for test_column in test_rows.keys():
-                    tests[test_column] = Test.objects.get(pk=test_rows[test_column])
+                    tests[test_column] = test_prefetch.get(pk=test_rows[test_column])
+
+                [all_tests.append(test) for test in tests.values() if test]
 
                 # Check excel file for invalid students
                 invalid_students = []
@@ -236,7 +244,9 @@ def import_module(request, pk):
             if not any_tests:
                 return bad_request(request, {'message': 'There were no tests recognized to import.'})
 
-            return redirect('grades:gradebook', pk)
+            return render(request=request,
+                          template_name='importer/successfully_imported.html',
+                          context={'tests': all_tests})
         else:
             return bad_request(request, {'message': 'The file that was uploaded was not recognised as a grade excel '
                                                     'file. Are you sure the file is an .xlsx file? Otherwise, download '
@@ -282,6 +292,9 @@ def import_module_part(request, pk):
 
             # Check if /any/ tests and/or grades are imported.
             any_tests = False
+
+            # List of all tests that are imported.
+            all_tests = []
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -341,6 +354,8 @@ def import_module_part(request, pk):
                 for test_column in test_rows.keys():
                     tests[test_column] = Test.objects.get(pk=test_rows[test_column])
 
+                [all_tests.append(test) for test in tests.values() if test]
+
                 # Check excel file for invalid students
                 invalid_students = []
                 for row in sheet[table][(title_row + 1):]:
@@ -373,7 +388,10 @@ def import_module_part(request, pk):
             # Check if anything was imported.
             if not any_tests:
                 return bad_request(request, {'message': 'There were no tests recognized to import.'})
-            return redirect('grades:module_part', pk)
+
+            return render(request=request,
+                          template_name='importer/successfully_imported.html',
+                          context={'tests': all_tests})
         else:
             return bad_request(request, {'message': 'The file uploaded was not recognised as a grade excel file.'
                                                     ' Are you sure the file is an .xlsx file? Otherwise, download a new'
@@ -853,6 +871,24 @@ def import_student_to_module(request, pk):
         student_form = ImportStudentModule()
         return render(request, 'importer/import-module-student.html',
                       {'form': student_form, 'pk': pk, 'module_edition': ModuleEdition.objects.get(pk=pk)})
+
+
+class SuccessfullyImportedView(LoginRequiredMixin, TemplateView):
+    """Show a message that summarizes the imported data and warns of extra steps to be taken
+    """
+    template_name = 'importer/successfully_imported.html'
+
+    tests = []
+
+    def __init__(self, tests):
+        self.tests = tests
+        super().__init__()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['tests'] = self.tests
+        return context
+
 
 
 

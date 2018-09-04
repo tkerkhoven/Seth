@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Successfully imported grades
+{% endblock %}
+
+{% block content %}
+{% include 'navbar.html' with active_page="importer" %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6">
+            <h3 class="display-3">Successfully imported grades</h3>
+            <hr>
+            Grades have successfully been imported for the following tests:<br>
+            <table class="table">
+                <tr>
+                    <th> Module Edition </th>
+                    <th> Module Part </th>
+                    <th> Test Name </th>
+                </tr>
+                {% for test in tests %}
+                    <tr>
+                        <td> {{test.module_part.module_edition }} </td>
+                        <td> {{test.module_part }} </td>
+                        <td> {{test.name }} </td>
+                    </tr>
+                {% endfor %}
+            </table>
+
+
+        </div>
+    </div>
+</div>
+
+
+</div>
+
+{% endblock %}
