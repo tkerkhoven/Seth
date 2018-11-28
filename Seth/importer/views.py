@@ -691,7 +691,7 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
         interpreted_grade = float(grade)
     except (ValueError, TypeError):
         if test.type == 'A':
-            grade = 1
+            interpreted_grade = 1
         else:
             raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
                                  .format(grade, student.name, test))  # Probably a typo, give an error.
