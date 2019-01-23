@@ -210,6 +210,8 @@ class Studying(models.Model):
 
     class Meta:
         unique_together = (('person', 'module_edition'),)
+        verbose_name = "Enrollment"
+        verbose_name_plural = "Enrollments"
 
     def __str__(self):
         return '{} - {} ({})'.format(self.person, self.module_edition, self.role)  # , self.study)

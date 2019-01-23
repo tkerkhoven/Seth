@@ -10,8 +10,9 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
-from django_select2.forms import Select2MultipleWidget
+from django_select2.forms import Select2MultipleWidget, Select2Widget
 
+from Grades.forms import StudyingCreateForm
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying, Study
 
 from dashboard.views import bad_request
@@ -539,7 +540,8 @@ class TestCreateView(generic.CreateView):
 class TestDeleteView(generic.DeleteView):
     model = Test
     template_name = 'module_management/test_delete.html'
-    success_url = reverse_lazy('module_management:module_overview')
+    success_url = reverse_lazy('module_management:module_detail')
+
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
@@ -559,6 +561,73 @@ class TestDeleteView(generic.DeleteView):
         else:
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
+
+class StudyingCreateView(generic.CreateView):
+    model = Studying
+    template_name = 'module_management/studying_create.html'
+    form_class = StudyingCreateForm
+        #modelform_factory(Studying, fields=['person', 'role'], widgets={'person': Select2Widget})
+
+    def get_initial(self):
+
+        pk = self.kwargs['pk']
+        return {
+            'module_edition': ModuleEdition.objects.get(pk=pk)
+        }
+
+
+    def get_context_data(self, **kwargs):
+        context = super(StudyingCreateView, self).get_context_data(**kwargs)
+        pk = self.kwargs['pk']
+
+        module_edition = ModuleEdition.objects.get(pk=pk)
+        context['module_edition'] = module_edition
+
+        return context
+
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+        pk = self.kwargs['pk']
+
+        if not ModuleEdition.objects.filter(Q(pk=pk) & (Q(coordinators__user=user))):
+            raise PermissionDenied()
+
+        # Try to dispatch to the right method; if a method doesn't exist,
+        # defer to the error handler. Also defer to the error handler if the
+        # request method isn't on the approved list.
+        if request.method.lower() in self.http_method_names:
+            handler = getattr(self, request.method.lower(), self.http_method_not_allowed)
+        else:
+            handler = self.http_method_not_allowed
+        return handler(request, *args, **kwargs)
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        data = self.get_form_kwargs()['data']
+        pk = self.kwargs['pk']
+
+        person_id = data['person']
+        if not person_id:
+            if not any([data['new_name'], data['new_number'], data['new_email']]):
+                raise ValidationError(message='One or more of the following fields are missing: '
+                                              'Full Name, Student Number or Email')
+            person = Person(name=data['new_name'], university_number=data['new_number'], email=data['new_email'])
+            person.save()
+            person_id = person.id
+
+        studying = Studying(
+            module_edition=ModuleEdition.objects.get(pk=pk),
+            person_id=person_id,
+            role=data['role'],
+        )
+        try:
+            studying.full_clean()
+        except ValidationError as e:
+            return bad_request(request, {'message': ('Form data is invalid: ', e.messages)})
+        studying.save()
+
+        return redirect(reverse_lazy('module_management:module_edition_detail', kwargs={'pk': pk}))
 
 
 @transaction.atomic

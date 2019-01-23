@@ -11,8 +11,15 @@ Bad request
             <div class="col-lg-12">
                 <div class="display-4 text-danger">Error</div>
                 <hr>
-                <div class="display-5 text-danger">{{ error }}</div>
-                <div class="display-5 text-danger">{{ message }}</div>
+                <div class="display-5 text-danger">
+                    {{ message.0 }}
+                </div>
+                <div class="display-6">
+                    {% for line in message.1 %}
+                        <p>{{ line }}</p>
+                    {% endfor %}
+                </div>
+{#                    <div class="display-5 text-danger">{{ errorType }}</div>#}
             </div>
         </div>
     </div>
