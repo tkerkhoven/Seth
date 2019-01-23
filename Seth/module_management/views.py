@@ -612,7 +612,12 @@ class StudyingCreateView(generic.CreateView):
             if not any([data['new_name'], data['new_number'], data['new_email']]):
                 raise ValidationError(message='One or more of the following fields are missing: '
                                               'Full Name, Student Number or Email')
-            person = Person(name=data['new_name'], university_number=data['new_number'], email=data['new_email'])
+            student_number = data['new_number']
+            if student_number[0] == 'm':
+                raise ValidationError(message='An employee cannot be enrolled to a module')
+            elif not student_number[0] == 's':
+                student_number = 's'+ student_number
+            person = Person(name=data['new_name'], university_number=student_number, email=data['new_email'])
             person.save()
             person_id = person.id
 
