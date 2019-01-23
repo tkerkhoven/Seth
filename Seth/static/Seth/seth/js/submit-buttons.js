@@ -43,6 +43,10 @@ $(document).ready(function() {
         $("#updateTestForm").submit();
     });
 
+    $("#createStudyingSave").on('click', function() {
+        $("#createStudyingForm").submit();
+    });
+
     $("#sendEmails").on('click', function() {
         $("#sendEmailForm").submit();
     });
