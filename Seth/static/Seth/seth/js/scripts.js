@@ -270,12 +270,12 @@ $(document).ready(function () {
         "ordering": false,
         "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
 
-        "sScrollX": "100%",
+        // "sScrollX": "100%",
         "scrollX": true,
-        "scrollY": "700",
+        // "scrollY": "700",
 
-        "fixedColumns": true,
-        "fixedHeader": true,
+        // "fixedColumns": true,
+        // "fixedHeader": true,
 
         "processing": true,
         "language": {
@@ -316,12 +316,12 @@ $(document).ready(function () {
         "ordering": false,
         "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
 
-        "sScrollX": "100%",
-        "scrollX": true,
-        "scrollY": "700",
-
+        "sScrollX": "500",
+        // "scrollX": true,
+        "scrollY": "100%",
+        //
         "fixedColumns": true,
-        "fixedHeader": true,
+        // "fixedHeader": true,
 
 
         "processing": true,
