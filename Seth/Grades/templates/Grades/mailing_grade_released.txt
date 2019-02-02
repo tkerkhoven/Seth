@@ -9,5 +9,5 @@ Automated regards,
 {{ module_coordinator.person.name }}
 
 =======================================
-SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from grades or any other kinds of information in this system.
+Only grades released in OSIRIS are official. No rights can be derived from grades or any other information in Seth.
 
