@@ -19,7 +19,8 @@ from django.template import loader
 from Grades import mailing
 from Grades.mailing import mail_module_edition_participants
 from dashboard.forms import EmailPreviewForm
-from permission_utils import is_coordinator_of_module, u_is_coordinator_of_module, is_study_adviser_of_study
+from permission_utils import is_coordinator_of_module, u_is_coordinator_of_module, is_study_adviser_of_study, \
+    u_is_coordinator_or_assistant_of_module, u_is_teacher_of_part
 from .models import Studying, Person, ModuleEdition, Test, ModulePart, Grade, Module, Study, Coordinator, Teacher
 
 
@@ -674,14 +675,13 @@ def bulk_release(request, *args, **kwargs):
 
         # For each test
         for pk in json_test_list:
-            tests = Test.objects.prefetch_related('grade_set').filter(module_part__module_edition__coordinators__user=user,
-                                                                      id=pk)
+            test = Test.objects.get(pk=pk)
             # If there is no test with that ID or the user doesn't have permissions to release the test, raise an error.
-            if not tests:
+            if not (u_is_coordinator_or_assistant_of_module(user=user, module_edition=test.module_part.module_edition) or u_is_teacher_of_part(user=user, module_part=test.module_part)):
                 raise PermissionDenied()
 
             # Add the test to the list of tests.
-            temp_list.append(tests[0])
+            temp_list.append(test)
 
         # Release/Retract the tests
         for test in temp_list:
@@ -705,7 +705,7 @@ def bulk_release(request, *args, **kwargs):
             data = {
                 'redirect': reverse('grades:test_send_email', kwargs={'pk': last_test})
             }
-        # Else, got to the mulitple test email page.
+        # Else, got to the multiple test email page.
         else:
             data = {
                 'redirect': reverse('grades:test_bulk_send_email', kwargs={'pk': test_list[0].module_part.module_edition.pk})
@@ -879,6 +879,11 @@ def create_grades_query(view, pk, user, type=None):
     else:
         type_str = ""
 
+    if len(Study.objects.filter(advisers__user=user)):
+        released = " AND released = TRUE"
+    else:
+        released = ""
+
     # If all grades of a module edition were requested.
     if view == 'mod_ed':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
@@ -897,7 +902,7 @@ def create_grades_query(view, pk, user, type=None):
                            .values('id') \
                            .order_by('id').distinct().query)
 
-        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")" + released + ") "
         where_test = "module_part_id IN (" + module_parts + ")"
         if type_str != "":
             where_test += " AND (" + type_str + ") "
@@ -914,7 +919,7 @@ def create_grades_query(view, pk, user, type=None):
 
         mod_ed = mod_eds[0]
 
-        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + ") "
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + released + ") "
         where_test = "module_part_id = " + pk
         if type_str != "":
             where_test += " AND (" + type_str + ") "
@@ -932,7 +937,7 @@ def create_grades_query(view, pk, user, type=None):
         mod_ed = mod_eds[0]
 
         in_test = "= " + pk + " "
-        where_test = "T.id = " + pk + " "
+        where_test = "T.id = " + pk + released + " "
 
     else:
         return None
