@@ -538,7 +538,6 @@ class EmailBulkTestReleasedPreviewView(FormView):
         return context
 
 
-
 class EmailTestReleasedPreviewView(FormView):
     template_name = 'Grades/email_preview.html'
     form_class = EmailPreviewForm

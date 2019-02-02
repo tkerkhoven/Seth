@@ -1,0 +1,21 @@
+Hello {{ person.name }},
+
+The grades for the following tests have been released:
+
+{% for mp in tests %}
+- {{ mp.name }}
+    {% for test in mp %}
+    - {{ test }}
+    {% endfor %}
+{% endfor %}
+Go to {{ domain }}{{ gradebook_path }} to see your grade.
+
+You will have to authenticate yourself with your university credentials. If after authentication you can not see your credentials, please contact your module coordinator immediately.
+
+Automated regards,
+
+{{ module_coordinator.person.name }}
+
+=======================================
+SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from grades or any other kinds of information in this system.
+
