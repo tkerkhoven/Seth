@@ -1,0 +1,113 @@
+[
+  {
+    "model": "Grades.module",
+    "pk": 1,
+    "fields": {
+      "name": "Pearls of Computer Science"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 2,
+    "fields": {
+      "name": "Software Systems"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 3,
+    "fields": {
+      "name": "Network Systems"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 4,
+    "fields": {
+      "name": "Data and Information"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 5,
+    "fields": {
+      "name": "Computer Systems"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 6,
+    "fields": {
+      "name": "Intelligent Interaction Design"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 7,
+    "fields": {
+      "name": "Discrete Structures and Efficient Algorithms"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 8,
+    "fields": {
+      "name": "Programming Paradigms"
+    }
+  },
+  {
+    "model": "Grades.module",
+    "pk": 9,
+    "fields": {
+      "name": "Web Science"
+    }
+  },
+  {
+    "model": "Grades.person",
+    "pk": 1,
+    "fields": {
+      "name": "Module Coordinator",
+      "university_number": "m12345678",
+      "email": "seth-dev-coordinator@example.com",
+      "user": 1
+    }
+  },
+  {
+    "model": "Grades.study",
+    "pk": "B-CS",
+    "fields": {
+      "name": "Technical Computer Science",
+      "modules": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "advisers": []
+    }
+  },
+  {
+    "model": "Grades.moduleedition",
+    "pk": 1,
+    "fields": {
+      "module_code": "201800001",
+      "year": 2018,
+      "module": 1,
+      "block": "1A"
+    }
+  },
+  {
+    "model": "Grades.coordinator",
+    "pk": 1,
+    "fields": {
+      "person": 1,
+      "module_edition": 1,
+      "is_assistant": false
+    }
+  }
+]

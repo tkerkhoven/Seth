@@ -26,8 +26,8 @@ class Module(models.Model):
 class Person(models.Model):
     name = models.CharField(max_length=255)
     university_number = models.CharField(max_length=16, unique=True)
-    email = models.EmailField(verbose_name='Student e-mail', null=True)
-    user = models.ForeignKey(User, null=True, on_delete=CASCADE)
+    email = models.EmailField(verbose_name='E-mail', null=True)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=CASCADE)
 
     @property
     def full_id(self):
@@ -206,10 +206,12 @@ class Studying(models.Model):
     person = models.ForeignKey(Person, on_delete=CASCADE)
     # study = models.ForeignKey(Study)
     module_edition = models.ForeignKey(ModuleEdition, on_delete=CASCADE)
-    role = models.CharField(max_length=32)
+    role = models.CharField(max_length=32, blank=True)
 
     class Meta:
         unique_together = (('person', 'module_edition'),)
+        verbose_name = "Enrollment"
+        verbose_name_plural = "Enrollments"
 
     def __str__(self):
         return '{} - {} ({})'.format(self.person, self.module_edition, self.role)  # , self.study)
@@ -234,8 +236,8 @@ class Grade(models.Model):
     teacher = models.ForeignKey(Person, related_name='Correcter', on_delete=CASCADE)
     student = models.ForeignKey(Person, related_name='Submitter', on_delete=CASCADE)
     time = models.DateTimeField(default=timezone.now)
-    description = models.CharField(max_length=255, blank=True)
-    grade = models.DecimalField(max_digits=4, decimal_places=1, default=1.0)
+    description = models.CharField(max_length=10000, blank=True)
+    grade = models.DecimalField(max_digits=20, decimal_places=1, default=1.0)
     released = models.BooleanField(default=False)
 
     def __str__(self):

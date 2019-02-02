@@ -13,6 +13,8 @@ from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
 from django.views.decorators.http import require_http_methods, require_GET
+from django.views.generic import TemplateView
+
 from permission_utils import *
 
 from dashboard.views import bad_request
@@ -57,8 +59,8 @@ class ImporterIndexView(LoginRequiredMixin, View):
         return render(request, 'importer/mcindex2.html', context)
 
     def make_modules_context(self):
-        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user)\
-            .prefetch_related('modulepart_set__test_set')
+        module_editions = ModuleEdition.objects.filter(coordinator__person__user=self.request.user).prefetch_related(
+            'modulepart_set__test_set')
 
         context = dict()
         context['module_editions'] = []
@@ -87,8 +89,8 @@ class ImporterIndexView(LoginRequiredMixin, View):
         return context
 
     def make_module_parts_context(self):
-        module_parts = ModulePart.objects.filter(teacher__person__user=self.request.user)\
-            .prefetch_related('test_set')
+        module_parts =  ModulePart.objects.filter(teacher__person__user=self.request.user).prefetch_related(
+            'test_set')
 
         context = dict()
         context['module_parts'] = []
@@ -145,6 +147,9 @@ def import_module(request, pk):
 
             # Check if /any/ tests and/or grades are imported.
             any_tests = False
+
+            # List of all tests that are imported.
+            all_tests = []
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -205,8 +210,11 @@ def import_module(request, pk):
 
                 # Retrieve Test object beforehand to validate permissions on tests and speed up Grade creation
                 tests = dict()
+                test_prefetch = Test.objects.prefetch_related('module_part__module_edition__module')
                 for test_column in test_rows.keys():
-                    tests[test_column] = Test.objects.get(pk=test_rows[test_column])
+                    tests[test_column] = test_prefetch.get(pk=test_rows[test_column])
+
+                [all_tests.append(test) for test in tests.values() if test]
 
                 # Check excel file for invalid students
                 invalid_students = []
@@ -242,7 +250,9 @@ def import_module(request, pk):
             if not any_tests:
                 return bad_request(request, {'message': 'There were no tests recognized to import.'})
 
-            return redirect('grades:gradebook', pk)
+            return render(request=request,
+                          template_name='importer/successfully_imported.html',
+                          context={'tests': all_tests})
         else:
             return bad_request(request, {'message': 'The file that was uploaded was not recognised as a grade excel '
                                                     'file. Are you sure the file is an .xlsx file? Otherwise, download '
@@ -288,6 +298,9 @@ def import_module_part(request, pk):
 
             # Check if /any/ tests and/or grades are imported.
             any_tests = False
+
+            # List of all tests that are imported.
+            all_tests = []
 
             sheet = request.FILES['file'].get_book_dict()
             for table in sheet:
@@ -352,6 +365,8 @@ def import_module_part(request, pk):
                 for test_column in test_rows.keys():
                     tests[test_column] = Test.objects.get(pk=test_rows[test_column])
 
+                [all_tests.append(test) for test in tests.values() if test]
+
                 # Check excel file for invalid students
                 invalid_students = []
                 for row in sheet[table][(title_row + 1):]:
@@ -384,7 +399,10 @@ def import_module_part(request, pk):
             # Check if anything was imported.
             if not any_tests:
                 return bad_request(request, {'message': 'There were no tests recognized to import.'})
-            return redirect('grades:module_part', pk)
+
+            return render(request=request,
+                          template_name='importer/successfully_imported.html',
+                          context={'tests': all_tests})
         else:
             return bad_request(request, {'message': 'The file uploaded was not recognised as a grade excel file.'
                                                     ' Are you sure the file is an .xlsx file? Otherwise, download a new'
@@ -676,33 +694,35 @@ def make_grade(student: Person, corrector: Person, test: Test, grade, descriptio
     :param description: An optional description.
     :return: A grade object, or None (:param grade is empty).
     """
+    interpreted_grade = 0
+
     if grade == '':
         return  # Field is empty, assume it does not need to be imported.
     try:
-        float(grade)
+        interpreted_grade = float(grade)
     except (ValueError, TypeError):
         if test.type == 'A':
-            grade = 1
+            interpreted_grade = 1
         else:
             raise GradeException('\'{}\' is not a valid input for a grade (found at {}\'s grade for {}.)'
                                  .format(grade, student.name, test))  # Probably a typo, give an error.
-    if test.minimum_grade > grade or grade > test.maximum_grade:
+    if test.minimum_grade > interpreted_grade or interpreted_grade > test.maximum_grade:
         raise GradeException(
             'Cannot register {}\'s ({}) grade for test {} because it\'s grade ({}) is outside the defined bounds '
             '({}-{}).'.format(student.name, student.university_number, test.name, grade, test.minimum_grade,
                               test.maximum_grade))
 
-    try:
-        grade_obj = Grade(
-            student=student,
-            teacher=corrector,
-            test=test,
-            grade=grade,
-            time=timezone.now(),
-            description=description
-        )
-    except Exception as e:
-        raise GradeException(e)
+    # try:
+    grade_obj = Grade(
+        student=student,
+        teacher=corrector,
+        test=test,
+        grade=interpreted_grade,
+        time=timezone.now(),
+        description=description
+    )
+    # except Exception as e:
+    #     raise GradeException(e)
     return grade_obj
 
 
@@ -716,7 +736,7 @@ def save_grades(grades):
     try:
         Grade.objects.bulk_create([grade for grade in grades if grade is not None])
     except Exception as e:
-        raise GradeException('Error when saving grades to te database.')
+        raise GradeException('Error when saving grades to te database.' + str(e))
 
 
 @login_required
@@ -862,6 +882,24 @@ def import_student_to_module(request, pk):
         student_form = ImportStudentModule()
         return render(request, 'importer/import-module-student.html',
                       {'form': student_form, 'pk': pk, 'module_edition': ModuleEdition.objects.get(pk=pk)})
+
+
+class SuccessfullyImportedView(LoginRequiredMixin, TemplateView):
+    """Show a message that summarizes the imported data and warns of extra steps to be taken
+    """
+    template_name = 'importer/successfully_imported.html'
+
+    tests = []
+
+    def __init__(self, tests):
+        self.tests = tests
+        super().__init__()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context['tests'] = self.tests
+        return context
+
 
 
 

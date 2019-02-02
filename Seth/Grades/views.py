@@ -191,18 +191,16 @@ class StudentView(generic.DetailView):
         grades_list = Grade.objects \
             .prefetch_related('test') \
             .filter(student=person, test__released=True) \
-            .values('grade', 'test') \
             .order_by('test_id', '-id') \
             .distinct('test_id')
 
         # Add them to a easy-to-use dictionary
         for grade in grades_list:
-            grades_dict[grade['test']] = grade['grade']
+            grades_dict[grade.test.id] = grade
 
         # Get all module edition the students participates in.
         modules_list = ModuleEdition.objects \
-            .filter(studying__person=person) \
-            .order_by('id')
+            .filter(studying__person=person)
 
         # Get all module parts and tests in these module editions.
         for module in modules_list:
@@ -230,27 +228,28 @@ class StudentView(generic.DetailView):
 
                 # Replace the assignments with a string (Ex: x to x, x, x, x to x)
                 for assignment in assignments:
-                    if assignment.id in grades_dict and grades_dict[assignment.id] == 1.0:
+                    if assignment.id in grades_dict and grades_dict[assignment.id].grade == 1.0:
                         if streak > 0:
                             current = str(start.name) + " to " + str(assignment.name)
                             remove_list.append(assignment)
                             streak += 1
                         else:
                             start = assignment
+                            current = str(start.name)
                             streak = 1
                     else:
                         remove_list.append(assignment)
                         if streak > 0:
-                            if streak > 1:
-                                name_override_dict[start] = current
+                            # if streak > 1:
+                            name_override_dict[start] = current
                             streak = 0
                             start = None
 
                 if streak > 1:
                     name_override_dict[start] = current
 
-                for remove in remove_list:
-                    assignments.remove(remove)
+                # for remove in remove_list:
+                #     assignments.remove(remove)
 
                 assignments_dict[module_part] = assignments
 

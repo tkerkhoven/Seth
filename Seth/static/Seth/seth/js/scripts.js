@@ -268,15 +268,17 @@ $(document).ready(function () {
         $('#processingIndicator').css('display', processing ? 'block' : 'none');
     }).DataTable({
         "ordering": false,
-        "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
+        "lengthMenu": [[25, 50, 100, 200, -1], [25, 50, 100, 200, "All"]],
 
-        // "sScrollX": "100%",
+        "sScrollX": "100%",
         "scrollX": true,
-        // "scrollY": "700",
+        "scrollY": "700",
 
-        // "fixedColumns": true,
-        // "fixedHeader": true,
+        "fixedColumns": true,
+        "fixedHeader": true,
 
+        // "responsive": true,
+        // "bAutoWidth": true,
         "processing": true,
         "language": {
             'processing': '<i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span>',
@@ -314,15 +316,17 @@ $(document).ready(function () {
         $('#processingIndicator').css('display', processing ? 'block' : 'none');
     }).DataTable({
         "ordering": false,
-        "lengthMenu": [[50, 100, 200, -1], [50, 100, 200, "All"]],
+        "lengthMenu": [[25, 50, 100, 200, -1], [25, 50, 100, 200, "All"]],
 
-        "sScrollX": "500",
-        // "scrollX": true,
-        "scrollY": "100%",
-        //
+        "sScrollX": "100%",
+        "scrollX": true,
+        "scrollY": "700",
+
         "fixedColumns": true,
-        // "fixedHeader": true,
+        "fixedHeader": true,
 
+        // "responsive": true,
+        // "bAutoWidth": true,
 
         "processing": true,
         "language": {
@@ -395,6 +399,7 @@ $(document).ready(function () {
 
         $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
         $($(e.relatedTarget).attr("href")).attr("class", "tab-pane fade");
+
     });
 
     $(document).on('keydown keyup input click', function (e) {

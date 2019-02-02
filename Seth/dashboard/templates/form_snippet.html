@@ -19,7 +19,6 @@
     {% else %}
         {{ field.errors }}
         {{ field.label_tag }}
-    {#        {{ field|field_type }}#}
         {% if field.field.required %}
             *
         {% endif %}
