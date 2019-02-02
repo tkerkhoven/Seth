@@ -73,6 +73,36 @@
     }
   },
   {
+    "model": "Grades.person",
+    "pk": 2,
+    "fields": {
+      "name": "Harry Potter",
+      "university_number": "s5123671",
+      "email": "hp-seth@mverkleij.nl",
+      "user": 2
+    }
+  },
+  {
+    "model": "Grades.person",
+    "pk": 4,
+    "fields": {
+      "name": "Hermione Granger",
+      "university_number": "s5432176",
+      "email": "hg-seth@mverkleij.nl",
+      "user": 4
+    }
+  },
+  {
+    "model": "Grades.person",
+    "pk": 5,
+    "fields": {
+      "name": "Ron Weasley",
+      "university_number": "s3493493",
+      "email": "rw-seth@mverkleij.nl",
+      "user": 3
+    }
+  },
+  {
     "model": "Grades.study",
     "pk": "B-CS",
     "fields": {
@@ -102,12 +132,137 @@
     }
   },
   {
+    "model": "Grades.modulepart",
+    "pk": 1,
+    "fields": {
+      "name": "Foo",
+      "module_edition": 1
+    }
+  },
+  {
     "model": "Grades.coordinator",
     "pk": 1,
     "fields": {
       "person": 1,
       "module_edition": 1,
       "is_assistant": false
+    }
+  },
+  {
+    "model": "Grades.test",
+    "pk": 1,
+    "fields": {
+      "module_part": 1,
+      "name": "List",
+      "type": "E",
+      "maximum_grade": "10.0",
+      "minimum_grade": "1.0",
+      "released": true
+    }
+  },
+  {
+    "model": "Grades.studying",
+    "pk": 1,
+    "fields": {
+      "person": 2,
+      "module_edition": 1,
+      "role": ""
+    }
+  },
+  {
+    "model": "Grades.studying",
+    "pk": 2,
+    "fields": {
+      "person": 4,
+      "module_edition": 1,
+      "role": ""
+    }
+  },
+  {
+    "model": "Grades.studying",
+    "pk": 3,
+    "fields": {
+      "person": 5,
+      "module_edition": 1,
+      "role": ""
+    }
+  },
+  {
+    "model": "Grades.grade",
+    "pk": 1,
+    "fields": {
+      "test": 1,
+      "teacher": 1,
+      "student": 2,
+      "time": "2019-01-24T20:17:05.340Z",
+      "description": "",
+      "grade": "4.0",
+      "released": false
+    }
+  },
+  {
+    "model": "Grades.grade",
+    "pk": 2,
+    "fields": {
+      "test": 1,
+      "teacher": 1,
+      "student": 2,
+      "time": "2019-01-24T20:17:05.406Z",
+      "description": "",
+      "grade": "4.0",
+      "released": false
+    }
+  },
+  {
+    "model": "Grades.grade",
+    "pk": 3,
+    "fields": {
+      "test": 1,
+      "teacher": 1,
+      "student": 4,
+      "time": "2019-01-24T20:17:09.131Z",
+      "description": "",
+      "grade": "5.0",
+      "released": false
+    }
+  },
+  {
+    "model": "Grades.grade",
+    "pk": 4,
+    "fields": {
+      "test": 1,
+      "teacher": 1,
+      "student": 4,
+      "time": "2019-01-24T20:17:09.181Z",
+      "description": "",
+      "grade": "5.0",
+      "released": false
+    }
+  },
+  {
+    "model": "Grades.grade",
+    "pk": 5,
+    "fields": {
+      "test": 1,
+      "teacher": 1,
+      "student": 5,
+      "time": "2019-01-24T20:17:16.287Z",
+      "description": "",
+      "grade": "6.0",
+      "released": false
+    }
+  },
+  {
+    "model": "Grades.grade",
+    "pk": 6,
+    "fields": {
+      "test": 1,
+      "teacher": 1,
+      "student": 5,
+      "time": "2019-01-24T20:17:16.364Z",
+      "description": "",
+      "grade": "6.0",
+      "released": false
     }
   }
 ]
