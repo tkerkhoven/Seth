@@ -776,94 +776,94 @@ def import_student_to_module(request, pk):
         student_form = ImportStudentForm(request.POST, request.FILES)
         if student_form.is_valid():
             file = request.FILES['file']
+
             dict = file.get_book_dict()
 
             # Select first page
             students_to_module = dict[list(dict.keys())[0]]
 
+            key_rows = {}
+
+            emailpattern = re.compile('e[-]?mail*')
+            for i in range(0,len(students_to_module[0])):
+                if 'number' in students_to_module[0][i].lower():
+                    key_rows['number'] = i
+                elif 'sortable' in students_to_module[0][i].lower():
+                    key_rows['name'] = i
+                elif emailpattern.match(students_to_module[0][i].lower()):
+                    key_rows['email'] = i
+                elif 'role' in students_to_module[0][i].lower():
+                    key_rows['role'] = i
+
+
+
             # Check dimensions
-            if not (len(students_to_module) > 1 and len(students_to_module[0]) == 4):
+            if not (len(students_to_module) > 1 and len(key_rows) == 4):
                 return bad_request(request, {'message': 'Not all required columns [university_number, name, email, '
                                                         'role] are in the excel sheet, or no rows to import.'})
 
-            string = ""
-            emailpattern = re.compile('e[-]?mail*')
-            if students_to_module[0][0].lower() == 'university_number' and students_to_module[0][
-                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and \
-                            students_to_module[0][3].lower() == 'role':
-                context = {}
-                context['created'] = []
-                context['studying'] = []
-                context['failed'] = []
+            context = {'created': [], 'studying': [], 'failed': []}
 
-                for i in range(1, len(students_to_module)):
-                    # Sanitize number input
+            for i in range(1, len(students_to_module)):
+                # Sanitize number input
 
-                    try:
-                        if str(students_to_module[i][0])[0] == 's' and int(students_to_module[i][0][1:]) > 0:
-                            username = str(students_to_module[i][0])
-                        elif str(students_to_module[i][0])[0] == 'm' and int(students_to_module[i][0][1:]) > 0:
-                            return HttpResponseBadRequest('Trying to add an employee as a student to a module.')
-                        elif int(students_to_module[i][0]) > 0:
-                            username = 's{}'.format(str(students_to_module[i][0]))
-                        else:
-                            raise ValueError
-                    except ValueError:
-                        return bad_request(request, {'message': '{} is not a student number.'
-                                                                .format(students_to_module[i][0])})
-                    user, created = User.objects.get_or_create(
-                        username=username,
-                        defaults={
-                            'email': students_to_module[i][2]
-                        }
-                    )
-
-                    student, created = Person.objects.get_or_create(
-                        university_number=str(students_to_module[i][0]),
-                        defaults={
-                            'user': user,
-                            'name': students_to_module[i][1],
-                            'email': students_to_module[i][2],
-                        }
-                    )
-
-                    # Update name and email
-                    student.name = students_to_module[i][1]
-                    student.email = students_to_module[i][2]
-                    student.save()
-
-                    if created:
-                        context['created'].append([student.name, student.full_id])
-
-                    studying, created = Studying.objects.get_or_create(
-                        person=student,
-                        module_edition=ModuleEdition.objects.get(pk=pk),
-                        defaults={
-                            'role': students_to_module[i][3],
-                        }
-                    )
-                    if created:
-                        module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
-                        module = Module.objects.get(moduleedition=module_ed)
-                        context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+                try:
+                    if str(students_to_module[i][key_rows['number']])[0] == 's' and int(students_to_module[i][key_rows['number']][1:]) > 0:
+                        username = str(students_to_module[i][key_rows['number']])
+                    elif str(students_to_module[i][key_rows['number']])[0] == 'm' and int(students_to_module[i][key_rows['number']][1:]) > 0:
+                        return HttpResponseBadRequest('Trying to add an employee as a student to a module.')
+                    elif int(students_to_module[i][key_rows['number']]) > 0:
+                        username = 's{}'.format(str(students_to_module[i][key_rows['number']]))
                     else:
-                        module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
-                        module = Module.objects.get(moduleedition=module_ed)
-                        context['failed'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
-                        context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
-                return render(request, 'importer/students-module-imported.html', context={'context': context})
-            else:
-                # print(students_to_module[0][0].lower() == 'student_id')
-                # print(students_to_module[0][1].lower() == 'name')
-                # print(emailpattern.match(students_to_module[0][2].lower()))
-                # print(startpattern.match(students_to_module[0][3].lower()))
-                # print(students_to_module[0][4].lower() == 'study')
-                # print(students_to_module[0][5].lower() == 'role')
-                return bad_request(request, {'message': 'Not all required columns [university_number, name, email, '
-                                                        'role] are in the excel sheet.'})
+                        raise ValueError
+                except ValueError:
+                    return bad_request(request, {'message': '{} is not a student number.'
+                                                            .format(students_to_module[i][key_rows['number']])})
+                user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={
+                        'email': students_to_module[i][key_rows['email']]
+                    }
+                )
+
+                student, created = Person.objects.get_or_create(
+                    university_number=username,
+                    defaults={
+                        'user': user,
+                        'name': students_to_module[i][key_rows['name']],
+                        'email': students_to_module[i][key_rows['email']],
+                    }
+                )
+
+                # Update name and email
+                student.name = students_to_module[i][key_rows['name']]
+                student.email = students_to_module[i][key_rows['email']]
+                student.save()
+
+                if created:
+                    context['created'].append([student.name, student.full_id])
+
+                studying, created = Studying.objects.get_or_create(
+                    person=student,
+                    module_edition=ModuleEdition.objects.get(pk=pk),
+                    defaults={
+                        'role': students_to_module[i][key_rows['role']],
+                    }
+                )
+                if created:
+                    module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
+                    module = Module.objects.get(moduleedition=module_ed)
+                    context['studying'].append(
+                        [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+                else:
+                    module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
+                    module = Module.objects.get(moduleedition=module_ed)
+                    context['failed'].append(
+                        [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+                    context['studying'].append(
+                        [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+            return render(request, 'importer/students-module-imported.html', context={'context': context})
+
         else:
             raise SuspiciousOperation('Bad POST')
 
