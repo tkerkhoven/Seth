@@ -879,6 +879,11 @@ def create_grades_query(view, pk, user, type=None):
     else:
         type_str = ""
 
+    if len(Study.objects.filter(advisers__user=user)):
+        released = " AND released = TRUE"
+    else:
+        released = ""
+
     # If all grades of a module edition were requested.
     if view == 'mod_ed':
         mod_eds = ModuleEdition.objects.filter(Q(coordinators__user=user) |
@@ -897,7 +902,7 @@ def create_grades_query(view, pk, user, type=None):
                            .values('id') \
                            .order_by('id').distinct().query)
 
-        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")) "
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id IN (" + module_parts + ")" + released + ") "
         where_test = "module_part_id IN (" + module_parts + ")"
         if type_str != "":
             where_test += " AND (" + type_str + ") "
@@ -914,7 +919,7 @@ def create_grades_query(view, pk, user, type=None):
 
         mod_ed = mod_eds[0]
 
-        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + ") "
+        in_test = "IN (SELECT id FROM \"Grades_test\" WHERE module_part_id = " + pk + released + ") "
         where_test = "module_part_id = " + pk
         if type_str != "":
             where_test += " AND (" + type_str + ") "
@@ -932,7 +937,7 @@ def create_grades_query(view, pk, user, type=None):
         mod_ed = mod_eds[0]
 
         in_test = "= " + pk + " "
-        where_test = "T.id = " + pk + " "
+        where_test = "T.id = " + pk + released + " "
 
     else:
         return None
