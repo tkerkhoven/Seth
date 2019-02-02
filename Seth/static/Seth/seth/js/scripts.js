@@ -315,18 +315,17 @@ $(document).ready(function () {
     var assign_table = $('#assignment_table').on('processing.dt', function (e, settings, processing) {
         $('#processingIndicator').css('display', processing ? 'block' : 'none');
     }).DataTable({
-        "ordering": false,
-        "lengthMenu": [[25, 50, 100, 200, -1], [25, 50, 100, 200, "All"]],
+        ordering: false,
+        lengthMenu: [[25, 50, 100, 200, -1], [25, 50, 100, 200, "All"]],
 
-        "sScrollX": "100%",
-        "scrollX": true,
-        "scrollY": "700",
-
-        "fixedColumns": true,
-        "fixedHeader": true,
-
-        // "responsive": true,
-        // "bAutoWidth": true,
+        ScrollY:        "300px",
+        scrollX:        "500px",
+        scrollCollapse: true,
+        paging:         false,
+        fixedColumns:   {
+            leftColumns: 1,
+            rightColumns: 0
+        },
 
         "processing": true,
         "language": {
