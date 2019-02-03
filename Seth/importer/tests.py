@@ -1,6 +1,7 @@
 import unittest
 from collections import OrderedDict
 
+from django.core.exceptions import SuspiciousOperation
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
@@ -320,12 +321,14 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
-                                    {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        try:
+            response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        except SuspiciousOperation as e:
+            self.assertTrue('Enroll these students first before retrying' in e)
+            for student in students:
+                self.assertTrue(student.university_number + '1' in e)
 
-        self.assertTrue('Enroll these students first before retrying' in response.content.decode())
-        for student in students:
-            self.assertTrue(student.university_number + '1' in response.content.decode())
+
 
     def test_module_part_import_invalid_university_number(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
