@@ -7,7 +7,7 @@ from django.forms.models import ModelForm
 from django.forms.models import modelform_factory
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views import generic
 from django.views.generic.edit import ModelFormMixin
 from django_select2.forms import Select2MultipleWidget, Select2Widget
@@ -16,6 +16,7 @@ from Grades.forms import StudyingCreateForm
 from Grades.models import Module, ModuleEdition, ModulePart, Test, Person, Coordinator, Teacher, Grade, Studying, Study
 
 from dashboard.views import bad_request
+
 
 class ModuleListView(generic.ListView):
     template_name = 'module_management/module_overview.html'
@@ -101,13 +102,15 @@ class ModuleEditionDetailView(generic.DetailView):
         context = super(ModuleEditionDetailView, self).get_context_data(**kwargs)
         pk = self.kwargs['pk']
 
-        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
+        studying = Studying.objects.filter(module_edition=pk).prefetch_related('person').order_by(
+            'person__university_number')
         context['studying'] = studying
 
         module_parts = ModulePart.objects.filter(module_edition=pk)
         context['module_parts'] = module_parts
 
-        coordinators = Coordinator.objects.filter(module_edition=pk).prefetch_related('person').order_by('person__university_number')
+        coordinators = Coordinator.objects.filter(module_edition=pk).prefetch_related('person').order_by(
+            'person__university_number')
         context['coordinators'] = coordinators
 
         studies = Study.objects.filter(modules__moduleedition=pk)
@@ -274,9 +277,11 @@ class ModulePartDetailView(generic.DetailView):
         pk = self.kwargs['pk']
 
         module_edition = ModuleEdition.objects.get(modulepart=pk)
-        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by('person__university_number')
+        studying = Studying.objects.filter(module_edition=module_edition).prefetch_related('person').order_by(
+            'person__university_number')
         context['studying'] = studying
-        teachers = Teacher.objects.filter(module_part=pk).prefetch_related('person').order_by('person__university_number')
+        teachers = Teacher.objects.filter(module_part=pk).prefetch_related('person').order_by(
+            'person__university_number')
         context['teachers'] = teachers
 
         return context
@@ -540,8 +545,10 @@ class TestCreateView(generic.CreateView):
 class TestDeleteView(generic.DeleteView):
     model = Test
     template_name = 'module_management/test_delete.html'
-    success_url = reverse_lazy('module_management:module_detail')
 
+    def get_success_url(self):
+        return reverse('module_management:module_part_detail',
+                       kwargs={'pk': ModulePart.objects.filter(test__pk=self.kwargs['pk']).first().pk})
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
@@ -562,11 +569,13 @@ class TestDeleteView(generic.DeleteView):
             handler = self.http_method_not_allowed
         return handler(request, *args, **kwargs)
 
+
 class StudyingCreateView(generic.CreateView):
     model = Studying
     template_name = 'module_management/studying_create.html'
     form_class = StudyingCreateForm
-        #modelform_factory(Studying, fields=['person', 'role'], widgets={'person': Select2Widget})
+
+    # modelform_factory(Studying, fields=['person', 'role'], widgets={'person': Select2Widget})
 
     def get_initial(self):
 
@@ -574,7 +583,6 @@ class StudyingCreateView(generic.CreateView):
         return {
             'module_edition': ModuleEdition.objects.get(pk=pk)
         }
-
 
     def get_context_data(self, **kwargs):
         context = super(StudyingCreateView, self).get_context_data(**kwargs)
@@ -584,7 +592,6 @@ class StudyingCreateView(generic.CreateView):
         context['module_edition'] = module_edition
 
         return context
-
 
     def dispatch(self, request, *args, **kwargs):
         user = request.user
@@ -616,7 +623,7 @@ class StudyingCreateView(generic.CreateView):
             if student_number[0] == 'm':
                 raise ValidationError(message='An employee cannot be enrolled to a module')
             elif not student_number[0] == 's':
-                student_number = 's'+ student_number
+                student_number = 's' + student_number
             person = Person(name=data['new_name'], university_number=student_number, email=data['new_email'])
             person.save()
             person_id = person.id

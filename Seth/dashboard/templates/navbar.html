@@ -10,7 +10,7 @@
                 </li>
                 {% if is_ta %}
                 <li class="nav-item {% if ta %}active{% endif %}">
-                    <a class="nav-link" href="{% url 'grades:student' pk=pk.pk%}">My Grades</a>
+                    <a class="nav-link" href="{% url 'grades:student' pk=student_pk.pk%}">My Grades</a>
                 </li>
                 {% endif %}
                 {% if grades_installed %}
