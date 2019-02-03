@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
 from django.views.decorators.http import require_http_methods, require_GET
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 
 from permission_utils import *
 
@@ -24,7 +24,7 @@ import re
 from Grades.exceptions import GradeException
 from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module, Study
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule, \
-    ImportModuleEditionStructureForm, COLUMN_TITLE_ROW
+    ImportModuleEditionStructureForm, COLUMN_TITLE_ROW, ImportModuleForm
 
 
 # Create your views here.
@@ -114,6 +114,148 @@ class ImporterIndexView(LoginRequiredMixin, View):
             context['module_parts'].append(part)
 
         return context
+
+
+class ImportModuleView(LoginRequiredMixin, FormView):
+    form_class = ImportModuleForm
+
+    def __init__(self, *args, **kwargs):
+        self.module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
+        super().__init__(self, args, kwargs)
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_coordinator_or_assistant_of_module(
+                Person.objects.filter(user=self.request.user).first(),
+                self.module_edition):
+            return super(ImportModuleView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You are not the module coordinator of this module.")
+
+    @transaction.atomic
+    def form_valid(self, form):
+        title_row = form.cleaned_data.get('title_row') - 1
+
+        # List of all tests that are imported.
+        imported_tests = []
+
+        sheet = form.file.get_book_dict()
+
+        for table in sheet:
+            # Skip tables in sheet that are too small
+            if title_row >= len(sheet[table]):
+                continue
+
+            tests = dict()
+
+            university_number_field = None
+
+
+            # Detect university_number and test columns
+            for title_index in range(0, len(sheet[table][title_row])):
+                # This is the university number column
+                if ('number' in str(sheet[table][title_row][title_index]).lower()) or \
+                        ('nummer' in str(sheet[table][title_row][title_index]).lower()):
+                    university_number_field = title_index
+                else:
+                    # Attempt to find a Test
+
+                    # search by ID
+                    try:
+                        test = Test.objects.filter(
+                            pk=sheet[table][title_row][title_index],
+                            module_part__module_edition=self.module_edition)
+                        if test:
+                            tests[test] = {
+                                'index':title_index,
+                                'test': test,
+                                'description': -1
+                            }  # pk of Test
+                    except (ValueError, TypeError):
+                        # search by name
+                        name = sheet[table][title_row][title_index]
+                        if name.endsWith('_description'): # 12 characters
+                            test = Test.objects.filter(name=name[:-12]).filter(module_part__module_edition=self.module_edition).first()
+                            if test:
+                                if test in tests:
+                                    tests[test]['description'] = title_index
+                                else:
+                                    tests[test] = {
+                                        'index': -1,
+                                        'test': test,
+                                        'description': title_index
+                                    }
+                            # Else we have a description field without a test..?
+                        else:
+                            test = Test.objects.filter(name=sheet[table][title_row][title_index]).filter(module_part__module_edition=self.module_edition).first()
+                            if test:
+                                if test in tests:
+                                    tests[test]['index'] = title_index
+                                else:
+                                    tests[test] = {
+                                        'index': title_index,
+                                        'test': test,
+                                        'description': -1
+                                    }
+                            # Else not a test, continue...
+
+            if university_number_field is None: # No student number column
+                continue  # Ignore this sheet
+            if len(tests.keys()) == 0: # No tests
+                continue  # Ignore this sheet
+
+            # Check if there are descriptions that have no grade associated
+            tests_without_index = [test for test in tests if test['index'] == -1]
+            if len(tests_without_index) > 0:
+                raise SuspiciousOperation('The following tests have a descriotion field in the sheet, but not a grade:\n {}'.format(tests_without_index))
+
+            # The current user's Person is the corrector of the grades.
+            teacher = Person.objects.filter(user=self.request.user).first()
+
+            grades = []
+
+            # Check excel file for invalid students
+            invalid_students = []
+            for row in sheet[table][(title_row + 1):]:
+                if not Studying.objects.filter(person__university_number__contains=row[university_number_field]).filter(
+                        module_edition=self.module_edition):
+                    invalid_students.append(row[university_number_field])
+            # Check for invalid student numbers in the university_number column, but ignore empty fields.
+            if [student for student in invalid_students if student is not '']:
+                raise SuspiciousOperation('Students {} are not enrolled in this module. '
+                                          'Enroll these students first before retrying.'
+                                          .format(invalid_students))
+
+            # Make Grades
+            for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
+                student = Person.objects.filter(university_number__contains=row[university_number_field]).first()
+                # check if this is not an empty line, else continue.
+                if student:
+                    for test in tests.keys():
+                        try:
+                            if 'description' in test:
+                                grades.append(make_grade(
+                                    student=student,
+                                    corrector=teacher,
+                                    test=test,
+                                    grade=row[test['index']]
+                                ))
+                            else:
+                                grades.append(make_grade(
+                                    student=student,
+                                    corrector=teacher,
+                                    test=test,
+                                    grade=row[test['index']],
+                                    description=row[test['description']]
+                                ))
+                        except GradeException as e:  # Called for either: bad grade, grade out of bounds
+                            return HttpResponseBadRequest(e)
+            save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
+
+
+    def form_invalid(self, form):
+        raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel '
+                                  'file. Are you sure the file is an .xlsx file? Otherwise, download '
+                                  'a new gradesheet and try using that instead.')
 
 
 @login_required
@@ -382,7 +524,7 @@ def import_module_part(request, pk):
                                     grade=row[test_column]
                                 ))
                             except GradeException as e:  # Called for either: bad grade, grade out of bounds
-                                return bad_request(request, {'error': e})
+                                return bad_request(request, {'message': e})
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
 
             # Check if anything was imported.
@@ -398,7 +540,7 @@ def import_module_part(request, pk):
                                                     ' gradesheet and try using that instead'})
     else:  # GET request
         form = GradeUploadForm()
-        return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk})
+        return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk, 'module_part': module_part})
 
 
 @login_required
@@ -483,7 +625,7 @@ def import_test(request, pk):
                                 description=row[description_field]
                             ))
                     except GradeException as e:  # Called for either: bad grade, grade out of bounds
-                        return bad_request(request, {'error': e})
+                        return bad_request(request, {'message': e})
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:test', pk)
         else:
