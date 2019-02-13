@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.db.models import Q
 import django_excel as excel
 from django.views.decorators.http import require_http_methods, require_GET
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 
 from permission_utils import *
 
@@ -24,7 +24,7 @@ import re
 from Grades.exceptions import GradeException
 from Grades.models import ModuleEdition, Grade, Test, Person, ModulePart, Studying, Module, Study
 from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentForm, ImportStudentModule, \
-    ImportModuleEditionStructureForm, COLUMN_TITLE_ROW
+    ImportModuleEditionStructureForm, COLUMN_TITLE_ROW, ImportModuleForm
 
 
 # Create your views here.
@@ -114,6 +114,148 @@ class ImporterIndexView(LoginRequiredMixin, View):
             context['module_parts'].append(part)
 
         return context
+
+
+class ImportModuleView(LoginRequiredMixin, FormView):
+    form_class = ImportModuleForm
+
+    def __init__(self, *args, **kwargs):
+        self.module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
+        super().__init__(self, args, kwargs)
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_coordinator_or_assistant_of_module(
+                Person.objects.filter(user=self.request.user).first(),
+                self.module_edition):
+            return super(ImportModuleView, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied("You are not the module coordinator of this module.")
+
+    @transaction.atomic
+    def form_valid(self, form):
+        title_row = form.cleaned_data.get('title_row') - 1
+
+        # List of all tests that are imported.
+        imported_tests = []
+
+        sheet = form.file.get_book_dict()
+
+        for table in sheet:
+            # Skip tables in sheet that are too small
+            if title_row >= len(sheet[table]):
+                continue
+
+            tests = dict()
+
+            university_number_field = None
+
+
+            # Detect university_number and test columns
+            for title_index in range(0, len(sheet[table][title_row])):
+                # This is the university number column
+                if ('number' in str(sheet[table][title_row][title_index]).lower()) or \
+                        ('nummer' in str(sheet[table][title_row][title_index]).lower()):
+                    university_number_field = title_index
+                else:
+                    # Attempt to find a Test
+
+                    # search by ID
+                    try:
+                        test = Test.objects.filter(
+                            pk=sheet[table][title_row][title_index],
+                            module_part__module_edition=self.module_edition)
+                        if test:
+                            tests[test] = {
+                                'index':title_index,
+                                'test': test,
+                                'description': -1
+                            }  # pk of Test
+                    except (ValueError, TypeError):
+                        # search by name
+                        name = sheet[table][title_row][title_index]
+                        if name.endsWith('_description'): # 12 characters
+                            test = Test.objects.filter(name=name[:-12]).filter(module_part__module_edition=self.module_edition).first()
+                            if test:
+                                if test in tests:
+                                    tests[test]['description'] = title_index
+                                else:
+                                    tests[test] = {
+                                        'index': -1,
+                                        'test': test,
+                                        'description': title_index
+                                    }
+                            # Else we have a description field without a test..?
+                        else:
+                            test = Test.objects.filter(name=sheet[table][title_row][title_index]).filter(module_part__module_edition=self.module_edition).first()
+                            if test:
+                                if test in tests:
+                                    tests[test]['index'] = title_index
+                                else:
+                                    tests[test] = {
+                                        'index': title_index,
+                                        'test': test,
+                                        'description': -1
+                                    }
+                            # Else not a test, continue...
+
+            if university_number_field is None: # No student number column
+                continue  # Ignore this sheet
+            if len(tests.keys()) == 0: # No tests
+                continue  # Ignore this sheet
+
+            # Check if there are descriptions that have no grade associated
+            tests_without_index = [test for test in tests if test['index'] == -1]
+            if len(tests_without_index) > 0:
+                raise SuspiciousOperation('The following tests have a descriotion field in the sheet, but not a grade:\n {}'.format(tests_without_index))
+
+            # The current user's Person is the corrector of the grades.
+            teacher = Person.objects.filter(user=self.request.user).first()
+
+            grades = []
+
+            # Check excel file for invalid students
+            invalid_students = []
+            for row in sheet[table][(title_row + 1):]:
+                if not Studying.objects.filter(person__university_number__contains=row[university_number_field]).filter(
+                        module_edition=self.module_edition):
+                    invalid_students.append(row[university_number_field])
+            # Check for invalid student numbers in the university_number column, but ignore empty fields.
+            if [student for student in invalid_students if student is not '']:
+                raise SuspiciousOperation('Students {} are not enrolled in this module. '
+                                          'Enroll these students first before retrying.'
+                                          .format(invalid_students))
+
+            # Make Grades
+            for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
+                student = Person.objects.filter(university_number__contains=row[university_number_field]).first()
+                # check if this is not an empty line, else continue.
+                if student:
+                    for test in tests.keys():
+                        try:
+                            if 'description' in test:
+                                grades.append(make_grade(
+                                    student=student,
+                                    corrector=teacher,
+                                    test=test,
+                                    grade=row[test['index']]
+                                ))
+                            else:
+                                grades.append(make_grade(
+                                    student=student,
+                                    corrector=teacher,
+                                    test=test,
+                                    grade=row[test['index']],
+                                    description=row[test['description']]
+                                ))
+                        except GradeException as e:  # Called for either: bad grade, grade out of bounds
+                            return HttpResponseBadRequest(e)
+            save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
+
+
+    def form_invalid(self, form):
+        raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel '
+                                  'file. Are you sure the file is an .xlsx file? Otherwise, download '
+                                  'a new gradesheet and try using that instead.')
 
 
 @login_required
@@ -382,7 +524,7 @@ def import_module_part(request, pk):
                                     grade=row[test_column]
                                 ))
                             except GradeException as e:  # Called for either: bad grade, grade out of bounds
-                                return bad_request(request, {'error': e})
+                                return bad_request(request, {'message': e})
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
 
             # Check if anything was imported.
@@ -398,7 +540,7 @@ def import_module_part(request, pk):
                                                     ' gradesheet and try using that instead'})
     else:  # GET request
         form = GradeUploadForm()
-        return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk})
+        return render(request, 'importer/importmodulepart.html', {'form': form, 'pk': pk, 'module_part': module_part})
 
 
 @login_required
@@ -483,7 +625,7 @@ def import_test(request, pk):
                                 description=row[description_field]
                             ))
                     except GradeException as e:  # Called for either: bad grade, grade out of bounds
-                        return bad_request(request, {'error': e})
+                        return bad_request(request, {'message': e})
                 save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
             return redirect('grades:test', pk)
         else:
@@ -776,94 +918,94 @@ def import_student_to_module(request, pk):
         student_form = ImportStudentForm(request.POST, request.FILES)
         if student_form.is_valid():
             file = request.FILES['file']
+
             dict = file.get_book_dict()
 
             # Select first page
             students_to_module = dict[list(dict.keys())[0]]
 
+            key_rows = {}
+
+            emailpattern = re.compile('e[-]?mail*')
+            for i in range(0,len(students_to_module[0])):
+                if 'number' in students_to_module[0][i].lower():
+                    key_rows['number'] = i
+                elif 'sortable' in students_to_module[0][i].lower():
+                    key_rows['name'] = i
+                elif emailpattern.match(students_to_module[0][i].lower()):
+                    key_rows['email'] = i
+                elif 'role' in students_to_module[0][i].lower():
+                    key_rows['role'] = i
+
+
+
             # Check dimensions
-            if not (len(students_to_module) > 1 and len(students_to_module[0]) == 4):
+            if not (len(students_to_module) > 1 and len(key_rows) == 4):
                 return bad_request(request, {'message': 'Not all required columns [university_number, name, email, '
                                                         'role] are in the excel sheet, or no rows to import.'})
 
-            string = ""
-            emailpattern = re.compile('e[-]?mail*')
-            if students_to_module[0][0].lower() == 'university_number' and students_to_module[0][
-                1].lower() == 'name' and emailpattern.match(students_to_module[0][2].lower()) and \
-                            students_to_module[0][3].lower() == 'role':
-                context = {}
-                context['created'] = []
-                context['studying'] = []
-                context['failed'] = []
+            context = {'created': [], 'studying': [], 'failed': []}
 
-                for i in range(1, len(students_to_module)):
-                    # Sanitize number input
+            for i in range(1, len(students_to_module)):
+                # Sanitize number input
 
-                    try:
-                        if str(students_to_module[i][0])[0] == 's' and int(students_to_module[i][0][1:]) > 0:
-                            username = str(students_to_module[i][0])
-                        elif str(students_to_module[i][0])[0] == 'm' and int(students_to_module[i][0][1:]) > 0:
-                            return HttpResponseBadRequest('Trying to add an employee as a student to a module.')
-                        elif int(students_to_module[i][0]) > 0:
-                            username = 's{}'.format(str(students_to_module[i][0]))
-                        else:
-                            raise ValueError
-                    except ValueError:
-                        return bad_request(request, {'message': '{} is not a student number.'
-                                                                .format(students_to_module[i][0])})
-                    user, created = User.objects.get_or_create(
-                        username=username,
-                        defaults={
-                            'email': students_to_module[i][2]
-                        }
-                    )
-
-                    student, created = Person.objects.get_or_create(
-                        university_number=str(students_to_module[i][0]),
-                        defaults={
-                            'user': user,
-                            'name': students_to_module[i][1],
-                            'email': students_to_module[i][2],
-                        }
-                    )
-
-                    # Update name and email
-                    student.name = students_to_module[i][1]
-                    student.email = students_to_module[i][2]
-                    student.save()
-
-                    if created:
-                        context['created'].append([student.name, student.full_id])
-
-                    studying, created = Studying.objects.get_or_create(
-                        person=student,
-                        module_edition=ModuleEdition.objects.get(pk=pk),
-                        defaults={
-                            'role': students_to_module[i][3],
-                        }
-                    )
-                    if created:
-                        module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
-                        module = Module.objects.get(moduleedition=module_ed)
-                        context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+                try:
+                    if str(students_to_module[i][key_rows['number']])[0] == 's' and int(students_to_module[i][key_rows['number']][1:]) > 0:
+                        username = str(students_to_module[i][key_rows['number']])
+                    elif str(students_to_module[i][key_rows['number']])[0] == 'm' and int(students_to_module[i][key_rows['number']][1:]) > 0:
+                        return HttpResponseBadRequest('Trying to add an employee as a student to a module.')
+                    elif int(students_to_module[i][key_rows['number']]) > 0:
+                        username = 's{}'.format(str(students_to_module[i][key_rows['number']]))
                     else:
-                        module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
-                        module = Module.objects.get(moduleedition=module_ed)
-                        context['failed'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
-                        context['studying'].append(
-                            [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
-                return render(request, 'importer/students-module-imported.html', context={'context': context})
-            else:
-                # print(students_to_module[0][0].lower() == 'student_id')
-                # print(students_to_module[0][1].lower() == 'name')
-                # print(emailpattern.match(students_to_module[0][2].lower()))
-                # print(startpattern.match(students_to_module[0][3].lower()))
-                # print(students_to_module[0][4].lower() == 'study')
-                # print(students_to_module[0][5].lower() == 'role')
-                return bad_request(request, {'message': 'Not all required columns [university_number, name, email, '
-                                                        'role] are in the excel sheet.'})
+                        raise ValueError
+                except ValueError:
+                    return bad_request(request, {'message': '{} is not a student number.'
+                                                            .format(students_to_module[i][key_rows['number']])})
+                user, created = User.objects.get_or_create(
+                    username=username,
+                    defaults={
+                        'email': students_to_module[i][key_rows['email']]
+                    }
+                )
+
+                student, created = Person.objects.get_or_create(
+                    university_number=username,
+                    defaults={
+                        'user': user,
+                        'name': students_to_module[i][key_rows['name']],
+                        'email': students_to_module[i][key_rows['email']],
+                    }
+                )
+
+                # Update name and email
+                student.name = students_to_module[i][key_rows['name']]
+                student.email = students_to_module[i][key_rows['email']]
+                student.save()
+
+                if created:
+                    context['created'].append([student.name, student.full_id])
+
+                studying, created = Studying.objects.get_or_create(
+                    person=student,
+                    module_edition=ModuleEdition.objects.get(pk=pk),
+                    defaults={
+                        'role': students_to_module[i][key_rows['role']],
+                    }
+                )
+                if created:
+                    module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
+                    module = Module.objects.get(moduleedition=module_ed)
+                    context['studying'].append(
+                        [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+                else:
+                    module_ed = ModuleEdition.objects.get(id=studying.module_edition.pk)
+                    module = Module.objects.get(moduleedition=module_ed)
+                    context['failed'].append(
+                        [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+                    context['studying'].append(
+                        [student.name, student.full_id, module.name, module_ed.code])  # studying.study])
+            return render(request, 'importer/students-module-imported.html', context={'context': context})
+
         else:
             raise SuspiciousOperation('Bad POST')
 

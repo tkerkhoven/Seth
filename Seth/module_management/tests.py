@@ -2141,7 +2141,6 @@ class ModuleManagementTestDeleteTests(TestCase):
         self.url_1 = reverse(self.base_url, kwargs={'pk': self.pk_1})
         self.url_2 = reverse(self.base_url, kwargs={'pk': self.pk_2})
         self.url_3 = reverse(self.base_url, kwargs={'pk': self.pk_3})
-        self.redirect_url = reverse('module_management:module_overview')
         self.user = User.objects.get(username='coordinator0')
 
     def test_no_login(self):
@@ -2217,9 +2216,12 @@ class ModuleManagementTestDeleteTests(TestCase):
     def test_deletion(self):
         self.client.logout()
         self.client.force_login(user=self.user)
+
+        mp_pk = ModulePart.objects.filter(test__pk=self.pk_3).first().pk
+
         response = self.client.post(self.url_3, follow=True)
 
-        self.assertRedirects(response, self.redirect_url)
+        self.assertRedirects(response, reverse('module_management:module_part_detail', kwargs={'pk': mp_pk}))
         self.assertFalse(Test.objects.filter(pk=self.pk_3))
 
     @skipIf(not _RUN_QUERY_TESTS, 'Only run this test to check the number of queries, e.g. to find n+1 queries.')

@@ -86,7 +86,7 @@ class KnownPersonsTest(TestCase):
     def test_as_study_adviser(self):
         study_adviser = Person.objects.filter(
             study__modules__in=Module.objects.all().values_list('pk', flat=True)
-        )
+        ).first()
 
         queryset = Person.objects.filter(
             Q(studying__module_edition__module__study__advisers=study_adviser) |

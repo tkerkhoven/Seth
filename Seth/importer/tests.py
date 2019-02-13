@@ -9,11 +9,11 @@ from pyexcel import Sheet, Book
 
 from Grades.exceptions import GradeException
 from Grades.models import *
-from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule, COLUMN_TITLE_ROW
+from importer.forms import GradeUploadForm, TestGradeUploadForm, ImportStudentModule, COLUMN_TITLE_ROW, ImportModuleForm
 from importer.views import make_grade
 
 
-@unittest.skip("ImporterStressTest is ignored by default. Comment out line 21 in Importer/tests.py to test.")
+@unittest.skip("ImporterStressTest is ignored by default. Comment out line 16 in Importer/tests.py to test.")
 class ImporterStressTest(TestCase):
     def setUp(self):
         tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
@@ -65,6 +65,71 @@ class ImporterStressTest(TestCase):
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+
+class ImportModuleViewTest(TestCase):
+    def setUp(self):
+        tcs = Study.objects.create(abbreviation='TCS', name='Technical Computer Science')
+
+        module_tcs = Module.objects.create(name='Parels der Informatica')
+
+        user = User.objects.create(username='mverkleij', password='welkom123')
+
+        teacher = Person.objects.create(name='Pietje Puk', university_number='m13377331', user=user)
+
+        module_ed = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2017, block='A1')
+
+        module_ed2 = ModuleEdition.objects.create(module_code='201300070', module=module_tcs, year=2018, block='A1')
+
+        module_parts = [
+            ModulePart.objects.create(module_edition=module_ed, name='Parel {}'.format(i), teacher=[teacher]) for i in
+            range(2)]
+
+        module_part_2 = ModulePart.objects.create(module_edition=module_ed2, name='Parel 3', teacher=[teacher])
+
+        Test.objects.create(name='Theory Test 1', module_part=module_part_2, type='E')
+
+        Coordinator.objects.create(module_edition=module_ed, person=teacher, is_assistant=False)
+
+        tests = [Test.objects.create(name='Theory Test {}'.format(course.name), module_part=course, type='E') for course
+                 in module_parts]
+
+        students = [Person.objects.create(name='Pietje Puk {}'.format(i), university_number='s1337{}'.format(i)) for i
+                    in range(2)]
+
+        [Studying.objects.create(module_edition=module_ed, person=student, role='s') for student in students]
+
+    # CORRECT TESTS
+
+    def test_module_description_import(self):
+        module_edition = \
+            ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
+        students = Person.objects.filter(studying__module_edition=module_edition)
+
+        tests = Test.objects.filter(module_part__module_edition=module_edition)
+
+        table = [['' for _ in range(len(tests) + 2)] for _ in range(COLUMN_TITLE_ROW)] + [
+            ['university_number', 'name'] + [test.name + str for test in tests for str in ['', '_description'] ]]
+
+        for student in students:
+            table.append([student.university_number, student.name] + ['{}{}'.format((divmod(i, 9)[1] + 1), string)
+                                                                      if i != 1 else ''
+                                                                      for i in range(len(tests))
+                                                                      for string in ['', ' Goed gedaan']])
+
+        sheet = Sheet(sheet=table)
+
+        content = sheet.save_as(filename='test.xlsx')
+        self.client.force_login(User.objects.get(username='mverkleij'))
+        form = ImportModuleForm(files={'file': SimpleUploadedFile('test.xlsx', open('test.xlsx', 'rb').read())})
+        file = ContentFile(open('test.xlsx', 'rb').read())
+        file.name = 'test.xlsx'
+        #
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk), {'title': 'test.xlsx',
+                                                                                      'file': file,
+                                                                                      'title_row': COLUMN_TITLE_ROW + 1
+                                                                                      })
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
 
 class ImporterTest(TestCase):
@@ -127,7 +192,8 @@ class ImporterTest(TestCase):
                                                                                       'file': file,
                                                                                       'title_row': COLUMN_TITLE_ROW + 1
                                                                                       })
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_module_part_import(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -152,7 +218,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_test_import(self):
         module_edition = \
@@ -203,7 +269,8 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_module_part_import_by_name(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -227,7 +294,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     # TEST INVALID STUDENT NUMBER
 
@@ -372,6 +439,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
+        # print(response.content.decode())
         self.assertTrue('GradeException' in response.content.decode())
 
     def test_test_import_invalid_grade(self):
@@ -403,6 +471,7 @@ class ImporterTest(TestCase):
 
     # INVALID TEST
 
+    @unittest.skip("Checking this was removed and is now ignored silently instead.")
     def test_module_import_invalid_test(self):
         module_edition = \
             ModuleEdition.objects.filter(coordinator__person__user__username='mverkleij').filter(year='2017')[0]
@@ -430,6 +499,7 @@ class ImporterTest(TestCase):
         self.assertTrue(
             'Attempt to register grades for a test that is not part of this module.' in response.content.decode())
 
+    @unittest.skip("Checking this was removed and is now ignored silently instead.")
     def test_module_part_import_invalid_test(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
         students = Person.objects.filter(studying__module_edition__modulepart=module_part)
@@ -505,7 +575,8 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_module_part_import_extra_columns(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -530,7 +601,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_test_import_extra_columns(self):
         module_edition = \
@@ -680,7 +751,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_module_part_import_no_university_number(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -704,7 +775,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     # EXTRA ROWS
 
@@ -733,7 +804,8 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
+
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_module_part_import_extra_row(self):
         module_part = ModulePart.objects.filter(module_edition__coordinator__person__user__username='mverkleij')[0]
@@ -759,7 +831,7 @@ class ImporterTest(TestCase):
 
         response = self.client.post('/importer/module_part/{}'.format(module_part.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
-        self.assertRedirects(response, '/grades/module-part/{}/'.format(module_part.pk))
+        self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
     def test_test_import_extra_row(self):
         module_edition = \
@@ -1006,7 +1078,7 @@ class ImporterTest(TestCase):
         self.assertTemplateUsed(response, 'importer/students-module-imported.html')
 
         self.assertEqual(
-            [['Pietje Puk 1', 's13371', 'Parels der Informatica', '2017-201300070-A1']],
+            [['Pietje PPPuk', 's13371', 'Parels der Informatica', '2017-201300070-A1']],
             response.context[0]['context']['failed']
         )
 

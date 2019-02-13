@@ -676,7 +676,7 @@ class EditDataTest(TestCase):
 
         # Release
         response = self.client.post(url_release, {'tests': json.dumps([pk])})
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 200)
 
         # Edit
         response = self.client.get(url_edit)
