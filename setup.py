@@ -22,6 +22,10 @@ setup(
         'pyexcel-xlsx', # .xslx file support
                         # No .ods yet, but should not be hard to add
         'django-debug-toolbar',
-        'django_select2' #Intelligent dropdowns
+        'django_select2', #Intelligent dropdowns
+        'celery',
+        'task',
+        'django-celery',
+        'anyjson',
     ]
 )

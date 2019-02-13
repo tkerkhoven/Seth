@@ -10,6 +10,7 @@ from django.db.models import When
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import redirect, get_object_or_404, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views import generic, View
 import django_excel as excel
@@ -509,15 +510,17 @@ class EmailBulkTestReleasedPreviewView(FormView):
 
     def get_initial(self):
         mod_ed = ModuleEdition.objects.filter(pk=self.kwargs['pk']).prefetch_related('module').first()
-        print(Person.objects.get(user=self.request.user).name)
+        person = Person.objects.get(user=self.request.user)
+
         return {'mod_ed': mod_ed.pk,
                 'subject': '[SETH] {} ({}-{}) Grades released.'.format(mod_ed.module.name, mod_ed.year, mod_ed.block),
-                'message': 'Dear student, \n\nThe grades for some tests have been released. Go to {} to see your '
-                           'grades.'
-                           '\n\nKind regards,\n\n{}\n\n=======================================\n'
-                           'SETH is in BETA. Only grades released in OSIRIS are official. No rights can be derived from'
-                           ' grades or any other kinds of information in this system.'
-                           .format(mailing.DOMAIN, Person.objects.get(user=self.request.user).name)}
+                'message': render_to_string('Grades/mailing_grades_released.jinja', {
+                    'module_part': mod_ed.module.name,
+                    'domain': mailing.DOMAIN,
+                    'gradebook_path': reverse('grades:student', kwargs={'pk':person.id}),
+                    'module_coordinator': person.name
+                    })
+                }
 
     def form_valid(self, form):
         mod_ed = get_object_or_404(ModuleEdition, pk=self.kwargs['pk'])
@@ -537,7 +540,6 @@ class EmailBulkTestReleasedPreviewView(FormView):
         context['bulk'] = True
         context['pk'] = context['view'].kwargs['pk']
         return context
-
 
 
 class EmailTestReleasedPreviewView(FormView):
