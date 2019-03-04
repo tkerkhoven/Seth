@@ -117,28 +117,42 @@ class ImporterIndexView(LoginRequiredMixin, View):
 
 
 class ImportModuleView(LoginRequiredMixin, FormView):
+    template_name = 'importer/importmoduleclass.html'
     form_class = ImportModuleForm
 
-    def __init__(self, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         self.module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
-        super().__init__(self, args, kwargs)
-
-    def dispatch(self, request, *args, **kwargs):
-        if is_coordinator_or_assistant_of_module(
+        if not is_coordinator_or_assistant_of_module(
                 Person.objects.filter(user=self.request.user).first(),
                 self.module_edition):
-            return super(ImportModuleView, self).dispatch(request, *args, **kwargs)
-        else:
             raise PermissionDenied("You are not the module coordinator of this module.")
+        return render(request, self.template_name, self.get_context_data())
+
+    def get_context_data(self, **kwargs):
+        return {'pk': self.kwargs['pk'], 'form': self.get_form(ImportModuleForm)}
+    #
+    # def dispatch(self, request, *args, **kwargs):
+    #     self.module_edition = get_object_or_404(ModuleEdition, pk=kwargs['pk'])
+    #     if is_coordinator_or_assistant_of_module(
+    #             Person.objects.filter(user=self.request.user).first(),
+    #             self.module_edition):
+    #         return super(ImportModuleView, self).dispatch(request, *args, **kwargs)
+    #     else:
+    #         raise PermissionDenied("You are not the module coordinator of this module.")
 
     @transaction.atomic
     def form_valid(self, form):
+        self.module_edition = get_object_or_404(ModuleEdition, pk=self.kwargs['pk'])
+        if not is_coordinator_or_assistant_of_module(
+                Person.objects.filter(user=self.request.user).first(),
+                self.module_edition):
+            raise PermissionDenied("You are not the module coordinator of this module.")
         title_row = form.cleaned_data.get('title_row') - 1
 
         # List of all tests that are imported.
         imported_tests = []
 
-        sheet = form.file.get_book_dict()
+        sheet = form.files['file'].get_book_dict()
 
         for table in sheet:
             # Skip tables in sheet that are too small
@@ -173,7 +187,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                     except (ValueError, TypeError):
                         # search by name
                         name = sheet[table][title_row][title_index]
-                        if name.endsWith('_description'): # 12 characters
+                        if name.endswith("_description"): # 12 characters
                             test = Test.objects.filter(name=name[:-12]).filter(module_part__module_edition=self.module_edition).first()
                             if test:
                                 if test in tests:
@@ -204,7 +218,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                 continue  # Ignore this sheet
 
             # Check if there are descriptions that have no grade associated
-            tests_without_index = [test for test in tests if test['index'] == -1]
+            tests_without_index = [test for test in tests if tests[test]['index'] == -1]
             if len(tests_without_index) > 0:
                 raise SuspiciousOperation('The following tests have a descriotion field in the sheet, but not a grade:\n {}'.format(tests_without_index))
 
@@ -232,25 +246,27 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                 if student:
                     for test in tests.keys():
                         try:
-                            if 'description' in test:
+                            if 'description' in tests[test]:
                                 grades.append(make_grade(
                                     student=student,
                                     corrector=teacher,
                                     test=test,
-                                    grade=row[test['index']]
+                                    grade=row[tests[test]['index']],
+                                    description=row[tests[test]['description']]
                                 ))
                             else:
                                 grades.append(make_grade(
                                     student=student,
                                     corrector=teacher,
                                     test=test,
-                                    grade=row[test['index']],
-                                    description=row[test['description']]
+                                    grade=row[tests[test]['index']]
                                 ))
                         except GradeException as e:  # Called for either: bad grade, grade out of bounds
                             return HttpResponseBadRequest(e)
             save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
-
+        return render(request=self.request,
+                          template_name='importer/successfully_imported.html',
+                          context={'tests': tests.keys()})
 
     def form_invalid(self, form):
         raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel '
