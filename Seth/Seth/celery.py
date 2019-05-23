@@ -1,6 +1,5 @@
 import os
 import sys
-from mailing.mail import send_email_default, send_email
 from celery.utils.log import get_task_logger
 from celery import Celery
 from Seth import settings
@@ -20,7 +19,7 @@ with open('{}secrets/rabbitmq_user'.format(OS_PATH)) as user:
 app = Celery('Seth', broker=broker_url)
 
 
-app.autodiscover_tasks()
+app.autodiscover_tasks('Grades')
 
 
 

@@ -16,7 +16,7 @@ import os
 import sys
 
 import djcelery
-from mailing.mail import send_email_default
+# from mailing.mail import send_email_default
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

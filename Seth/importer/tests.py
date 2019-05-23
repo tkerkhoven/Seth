@@ -62,7 +62,7 @@ class ImporterStressTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertRedirects(response, '/grades/modules/{}/'.format(module_edition.pk))
 
@@ -188,7 +188,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk), {'title': 'test.xlsx',
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk), {'title': 'test.xlsx',
                                                                                       'file': file,
                                                                                       'title_row': COLUMN_TITLE_ROW + 1
                                                                                       })
@@ -267,7 +267,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
@@ -320,7 +320,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('Enroll these students first before retrying' in response.content.decode())
@@ -409,7 +409,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTrue('GradeException' in response.content.decode())
@@ -494,7 +494,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue(
             'Attempt to register grades for a test that is not part of this module.' in response.content.decode())
@@ -573,7 +573,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
@@ -698,7 +698,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTrue('There were no tests recognized to import' in response.content.decode())
 
@@ -749,7 +749,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
         self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
 
@@ -802,7 +802,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': COLUMN_TITLE_ROW + 1})
 
         self.assertTemplateUsed(response, template_name='importer/successfully_imported.html')
@@ -886,7 +886,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': -1})
         self.assertTrue('The file that was uploaded was not recognised as a grade excel file. Are you '
                         'sure the file is an .xlsx file? Otherwise, download a new gradesheet and try '
@@ -943,7 +943,7 @@ class ImporterTest(TestCase):
         file = ContentFile(open('test.xlsx', 'rb').read())
         file.name = 'test.xlsx'
 
-        response = self.client.post('/importer/module/{}'.format(module_edition.pk),
+        response = self.client.post('/importer/import_module/{}'.format(module_edition.pk),
                                     {'title': 'test.xlsx', 'file': file, 'title_row': len(table) + 2})
         self.assertTrue('The file that was uploaded was not recognised as a grade excel file.'
                         in response.content.decode())
@@ -982,11 +982,11 @@ class ImporterTest(TestCase):
 
         table = [['university_number', 'name', 'email', 'role']]
 
-        university_number = 's54321'
+        university_number = '54321'
 
         table.append([university_number, 'Pietje PPPuk', 'leet@example.com', 's'])
 
-        university_number = '54221'
+        university_number = 's54221'
 
         table.append([university_number, 'Pietje PPuk', 'baz@example.com', 's'])
 

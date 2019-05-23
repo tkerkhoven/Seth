@@ -154,6 +154,15 @@ class ImportModuleView(LoginRequiredMixin, FormView):
 
         sheet = form.files['file'].get_book_dict()
 
+        all_tests = dict()
+
+        if not any([len(table) > title_row for table in sheet]):
+            return bad_request(self.request, {
+                'message': 'The file that was uploaded was not recognised as a grade '
+                           'excel file. Are you sure the file is an .xlsx file, and '
+                           'that all fields are present? Otherwise, download a new '
+                           'gradesheet and try using that instead.'})
+
         for table in sheet:
             # Skip tables in sheet that are too small
             if title_row >= len(sheet[table]):
@@ -177,7 +186,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                     try:
                         test = Test.objects.filter(
                             pk=sheet[table][title_row][title_index],
-                            module_part__module_edition=self.module_edition)
+                            module_part__module_edition=self.module_edition).first()
                         if test:
                             tests[test] = {
                                 'index':title_index,
@@ -220,7 +229,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
             # Check if there are descriptions that have no grade associated
             tests_without_index = [test for test in tests if tests[test]['index'] == -1]
             if len(tests_without_index) > 0:
-                raise SuspiciousOperation('The following tests have a descriotion field in the sheet, but not a grade:\n {}'.format(tests_without_index))
+                raise bad_request(self.request, {'message': 'The following tests have a descriotion field in the sheet, but not a grade:\n {}'.format(tests_without_index)})
 
             # The current user's Person is the corrector of the grades.
             teacher = Person.objects.filter(user=self.request.user).first()
@@ -235,9 +244,9 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                     invalid_students.append(row[university_number_field])
             # Check for invalid student numbers in the university_number column, but ignore empty fields.
             if [student for student in invalid_students if student is not '']:
-                raise SuspiciousOperation('Students {} are not enrolled in this module. '
-                                          'Enroll these students first before retrying.'
-                                          .format(invalid_students))
+                return bad_request(self.request, {'message': 'Students {} are not enrolled in this module.\n '
+                                               'Enroll these students first before retrying'
+                                   .format(invalid_students)})
 
             # Make Grades
             for row in sheet[table][(title_row + 1):]:  # Walk horizontally over table
@@ -246,7 +255,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                 if student:
                     for test in tests.keys():
                         try:
-                            if 'description' in tests[test]:
+                            if tests[test]['description'] > 0:
                                 grades.append(make_grade(
                                     student=student,
                                     corrector=teacher,
@@ -264,14 +273,22 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                         except GradeException as e:  # Called for either: bad grade, grade out of bounds
                             return HttpResponseBadRequest(e)
             save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
+            all_tests = {**all_tests, **tests}
+
+        any_tests = len(all_tests.keys()) > 0
+        # Check if anything was imported.
+        if not any_tests:
+            return bad_request(self.request,
+                               {'message': 'There were no tests recognized to import.'})
+
         return render(request=self.request,
                           template_name='importer/successfully_imported.html',
-                          context={'tests': tests.keys()})
+                          context={'tests': all_tests.keys()})
 
     def form_invalid(self, form):
-        raise SuspiciousOperation('The file that was uploaded was not recognised as a grade excel '
+        return bad_request(self.request, {'message': 'The file that was uploaded was not recognised as a grade excel '
                                   'file. Are you sure the file is an .xlsx file? Otherwise, download '
-                                  'a new gradesheet and try using that instead.')
+                                  'a new gradesheet and try using that instead.'})
 
 
 @login_required
@@ -692,7 +709,7 @@ def export_module(request, pk):
         table.append(['', 'Grade between >'] + ['{} - {}'.format(test.minimum_grade, test.maximum_grade) for test in tests])
 
     # Add machine-readable header row.
-    table.append(['university_number', 'name'] + [test.pk for test in tests])
+    table.append(['university_number', 'name'] + [test.name for test in tests])
 
     # pre-fill student numbers
     for student in students:
@@ -946,7 +963,7 @@ def import_student_to_module(request, pk):
             for i in range(0,len(students_to_module[0])):
                 if 'number' in students_to_module[0][i].lower():
                     key_rows['number'] = i
-                elif 'sortable' in students_to_module[0][i].lower():
+                elif 'name' in students_to_module[0][i].lower():
                     key_rows['name'] = i
                 elif emailpattern.match(students_to_module[0][i].lower()):
                     key_rows['email'] = i
