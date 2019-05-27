@@ -273,7 +273,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                         except GradeException as e:  # Called for either: bad grade, grade out of bounds
                             return HttpResponseBadRequest(e)
             save_grades(grades)  # Bulk-save grades. Also prevents a partial import of the sheet.
-            all_tests = {**all_tests, **tests}
+            all_tests.update(tests)
 
         any_tests = len(all_tests.keys()) > 0
         # Check if anything was imported.
