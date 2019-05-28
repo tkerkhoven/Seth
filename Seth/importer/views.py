@@ -753,7 +753,7 @@ def export_module_part(request, pk):
         table.append(['', 'Grade between >'] + ['{} - {}'.format(test['minimum_grade'], test['maximum_grade']) for test in tests])
 
     # Add machine-readable header row.
-    table.append(['university_number', 'name'] + [test['pk'] for test in tests])
+    table.append(['university_number', 'name'] + [test['name'] for test in tests])
 
     # pre-fill student numbers
     for student in students:
@@ -797,7 +797,7 @@ def export_module_part_signoff(request, pk):
         table.append(['', 'Grade between >'] + ['{} - {}'.format(test['minimum_grade'], test['maximum_grade']) for test in tests])
 
     # Add machine-readable header row.
-    table.append(['university_number', 'name'] + [test['pk'] for test in tests])
+    table.append(['university_number', 'name'] + [test['name'] for test in tests])
 
     # pre-fill student numbers
     for student in students:
