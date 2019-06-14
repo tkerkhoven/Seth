@@ -196,7 +196,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
                     except (ValueError, TypeError):
                         # search by name
                         name = sheet[table][title_row][title_index]
-                        if name.endswith("_description"): # 12 characters
+                        if name.lower().endswith("_description"): # 12 characters
                             test = Test.objects.filter(name=name[:-12]).filter(module_part__module_edition=self.module_edition).first()
                             if test:
                                 if test in tests:
@@ -283,7 +283,7 @@ class ImportModuleView(LoginRequiredMixin, FormView):
 
         return render(request=self.request,
                           template_name='importer/successfully_imported.html',
-                          context={'tests': all_tests.keys()})
+                          context={'tests': [(key, all_tests[key]['description'] >= 0) for key in all_tests]})
 
     def form_invalid(self, form):
         return bad_request(self.request, {'message': 'The file that was uploaded was not recognised as a grade excel '

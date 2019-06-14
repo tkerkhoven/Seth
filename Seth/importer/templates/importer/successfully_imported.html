@@ -28,9 +28,9 @@ Successfully imported grades
                 </tr>
                 {% for test in tests %}
                     <tr>
-                        <td> {{test.module_part.module_edition }} </td>
-                        <td> {{test.module_part }} </td>
-                        <td> {{test.name }} </td>
+                        <td> {{test.0.module_part.module_edition }} </td>
+                        <td> {{test.0.module_part }} </td>
+                        <td> {{test.0.name }} {% if test.1 %} <b>(with description)</b> {% endif %}</td>
                     </tr>
                 {% endfor %}
             </table>
